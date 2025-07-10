@@ -72,7 +72,8 @@ class Lexer(string sourceCode)
         if (char.IsLetter(c) || c == '_')
             return ReadIdentifierOrKeyword(c);
 
-        throw new Exception($"Unexpected character '{c}' at {line}:{col}");
+        Log.Error($"Unexpected character '{c}' at {line}:{col}");
+        return null;
     }
 
     Token ReadNumber(char first)

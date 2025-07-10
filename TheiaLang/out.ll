@@ -4,6 +4,10 @@ declare i32 @puts(i8*, ...)
 
 define i32 @main() {
 entry:
+  %fg = alloca i1
+  store i1 0, i1* %fg
+  %ffg = alloca i1
+  store i1 1, i1* %ffg
   %a = alloca i32
   store i32 5, i32* %a
   %b = alloca i32

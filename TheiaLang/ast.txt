@@ -1,6 +1,10 @@
 Program
   FunctionDeclaration: int main()
     BlockSatement
+      VariableDeclaration: bool fg =
+        Literal: false
+      VariableDeclaration: bool ffg =
+        Literal: true
       VariableDeclaration: int a =
         Literal: 5
       VariableDeclaration: int b =

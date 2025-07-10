@@ -40,3 +40,15 @@ sw2.Stop();
 
 Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");
 Console.WriteLine("======================================================");
+
+public class Log
+{
+    public static void Error(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Error.Write("Error: ");
+        Console.ResetColor();
+        Console.Error.WriteLine(message);
+        Environment.Exit(1);
+    }
+}

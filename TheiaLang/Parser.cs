@@ -67,7 +67,7 @@ public class Parser(List<Token> tokens)
             return new VariableDeclarationStatement(typeTok.Lexeme, nameTok.Lexeme, init);
         }
 
-        // assignment: IDENT '=' expr ';'
+        // assignment: identifier '=' expr ';'
         if (Peek().Type == TokenType.Identifier && PeekNext().Type == TokenType.Operator_Equals)
         {
             Token nameTok = Advance();
@@ -77,7 +77,9 @@ public class Parser(List<Token> tokens)
             return new AssignmentStatement(nameTok.Lexeme, expr);
         }
 
-        throw new Exception($"Unexpected token {Peek().Type} at {Peek().Line}:{Peek().Column}");
+        Log.Error($"Unexpected token {Peek().Type} at {Peek().Line}:{Peek().Column}");
+        Environment.Exit(1);
+        return null;
     }
 
     private IExpression ParseExpression() => ParseComparison();
@@ -145,9 +147,10 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        throw new Exception($"Unexpected token {Peek().Type} in expression");
+        Log.Error($"Unexpected token {Peek().Type} in expression");
+        Environment.Exit(1);
+        return null;
     }
-
 
 
     private bool Match(TokenType type)
@@ -159,14 +162,18 @@ public class Parser(List<Token> tokens)
     private Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
-        throw new Exception($"{message} at {Peek().Line}:{Peek().Column}");
+        Log.Error($"{message} at {Peek().Line}:{Peek().Column}");
+        Environment.Exit(1);
+        return null;
     }
 
     private Token ConsumeTypeKeyword()
     {
         Token t = Peek();
         if (IsTypeKeyword(t.Type)) return Advance();
-        throw new Exception($"Expected type keyword at {t.Line}:{t.Column}");
+        Log.Error($"Expected type keyword at {t.Line}:{t.Column}");
+        Environment.Exit(1);
+        return null;
     }
 
     private static bool IsTypeKeyword(TokenType t)
