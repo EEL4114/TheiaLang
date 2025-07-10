@@ -1,28 +1,41 @@
-﻿using TheiaLang;
+﻿using System.Diagnostics;
+using TheiaLang;
 
-class Program
+Stopwatch sw = new Stopwatch();
+Stopwatch sw2 = new Stopwatch();
+sw.Start();
+sw2.Start();
+
+string code = File.ReadAllText("Example.tia");
+Lexer lexer = new Lexer(code);
+
+List<Token> tokens = new List<Token>();
+Token token;
+
+do
 {
-    static void Main()
-    {
-        string code = File.ReadAllText("Example.tia");
-        Lexer lexer = new Lexer(code);
+    token = lexer.NextToken();
+    tokens.Add(token);
+    Console.WriteLine(token);
+} while (token.Type != TokenType.EOF);
 
-        List<Token> tokens = new List<Token>();
-        Token token;
+Console.WriteLine($"Lexer took {sw2.ElapsedMilliseconds} ms");
+sw2.Restart();
 
-        do
-        {
-            token = lexer.NextToken();
-            tokens.Add(token);
-            Console.WriteLine(token);
-        } while (token.Type != TokenType.EOF);
+Parser parser = new Parser(tokens);
+ProgramNode ast = parser.ParseProgram();
+Console.WriteLine($"Parser took {sw2.ElapsedMilliseconds} ms");
+sw2.Restart();
 
-        Parser parser = new Parser(tokens);
-        ProgramNode ast = parser.ParseProgram();
+using StreamWriter writer = new StreamWriter("ast.txt");
+AstPrinter.Print(ast, writer);
+Console.WriteLine($"AST building took {sw2.ElapsedMilliseconds} ms");
+sw2.Restart();
 
-        using StreamWriter writer = new StreamWriter("ast.txt");
-        AstPrinter.Print(ast, writer);
+IRGenerator.Emit(ast, "out.ll");
 
-        Console.WriteLine("Parsed OK!");
-    }
-}
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "out.ll -O2 -o out.exe")?.WaitForExit();
+Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
+sw2.Stop();
+
+Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");

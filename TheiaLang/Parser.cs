@@ -121,13 +121,19 @@ public class Parser(List<Token> tokens)
     private IExpression ParsePrimary()
     {
         if (Match(TokenType.Literal_s32) || Match(TokenType.Literal_f32) || Match(TokenType.Literal_bool))
-            return new LiteralExpression(Previous().Lexeme switch
+        {
+            object v;
+
+            v = Previous().Lexeme switch
             {
                 string s when int.TryParse(s, out var i) => i,
                 string s when double.TryParse(s, out var d) => d,
                 string s when bool.TryParse(s, out var b) => b,
                 _ => throw new Exception("Invalid literal")
-            });
+            };
+
+            return new LiteralExpression(v, Previous().Lexeme);
+        }
 
         if (Match(TokenType.Identifier))
             return new IdentifierExpression(Previous().Lexeme);

@@ -32,7 +32,7 @@ public sealed record VariableDeclarationStatement(
 
 public sealed record AssignmentStatement(
     string TargetName,
-    IExpression Expr
+    IExpression Expression
 ) : IStatement;
 
 public sealed record ReturnStatement(
@@ -48,7 +48,8 @@ public sealed record BinaryExpression(
 ) : IExpression;
 
 public sealed record LiteralExpression(
-    object Value       // boxed int, double, bool
+    object Value,       // boxed int, double, bool
+    string Lexeme
 ) : IExpression;
 
 public sealed record IdentifierExpression(

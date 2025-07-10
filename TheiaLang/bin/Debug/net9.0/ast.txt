@@ -10,11 +10,11 @@ Program
           Identifier: a
           Identifier: b
       VariableDeclaration: float f =
-        Literal: 25
+        Literal: 2.5
       Assign: f =
         BinaryExpression: *
           Identifier: f
-          Literal: 20
+          Literal: 2.0
       VariableDeclaration: bool ok =
         BinaryExpression: >
           Identifier: c

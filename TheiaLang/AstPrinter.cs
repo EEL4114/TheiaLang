@@ -38,7 +38,7 @@ static class AstPrinter
 
             case AssignmentStatement a:
                 w.WriteLine($"{Indent(indent)}Assign: {a.TargetName} =");
-                PrintExpression(a.Expr, w, indent + 2);
+                PrintExpression(a.Expression, w, indent + 2);
                 break;
 
             case ReturnStatement r:
@@ -57,7 +57,7 @@ static class AstPrinter
         switch (expr)
         {
             case LiteralExpression lit:
-                w.WriteLine($"{Indent(indent)}Literal: {lit.Value}");
+                w.WriteLine($"{Indent(indent)}Literal: {lit.Lexeme}");
                 break;
 
             case IdentifierExpression id:
