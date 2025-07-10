@@ -146,6 +146,7 @@ public static class IRGenerator
                     if (ty == "i32") op = bin.Op switch
                     {
                         "+" => "add",
+                        "-" => "sub",
                         "*" => "mul",
                         ">" => "icmp sgt",
                         "<" => "icmp slt",
@@ -154,6 +155,7 @@ public static class IRGenerator
                     else if (ty == "double") op = bin.Op switch
                     {
                         "+" => "fadd",
+                        "-" => "fsub",
                         "*" => "fmul",
                         ">" => "fcmp ogt",
                         "<" => "fcmp olt",

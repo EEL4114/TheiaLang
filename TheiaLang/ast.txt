@@ -19,6 +19,12 @@ Program
         BinaryExpression: *
           Identifier: f
           Literal: 2.0
+      VariableDeclaration: float g =
+        Literal: 3.0
+      VariableDeclaration: float h =
+        BinaryExpression: -
+          Identifier: f
+          Identifier: g
       VariableDeclaration: bool ok =
         BinaryExpression: >
           Identifier: c

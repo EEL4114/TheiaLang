@@ -99,7 +99,7 @@ public class Parser(List<Token> tokens)
     private IExpression ParseAdditive()
     {
         var expr = ParseMultiplicative();
-        while (Match(TokenType.Operator_Plus) /*|| Match(TokenType.Operator_Minus)*/)
+        while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
         {
             string op = Previous().Lexeme;
             var right = ParseMultiplicative();

@@ -7,8 +7,8 @@ public enum TokenType
     Identifier = 000,
 
     Literal_bool = 100,
-    Literal_s32 = 102,
-    Literal_f32 = 103,
+    Literal_s32 = 101,
+    Literal_f32 = 102,
 
     Keyword_bool = 200,
     Keyword_int = 201,
@@ -16,11 +16,12 @@ public enum TokenType
 
     Keyword_return = 300,
 
-    Operator_Plus = 400,
-    Operator_Equals = 401,
-    Operator_Mult = 402,
-    Operator_Greater = 403,
-    Operator_Less = 404,
+    Operator_Equals = 400,
+    Operator_Plus = 401,
+    Operator_Minus = 402,
+    Operator_Mult = 403,
+    Operator_Greater = 405,
+    Operator_Less = 406,
 
     Punctuation_Dot = 500,
     Punctuation_Semicolon = 501,
@@ -61,6 +62,7 @@ class Lexer(string sourceCode)
             case '{': return MakeToken(TokenType.Punctuation_BraceL, "{");
             case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
             case '+': return MakeToken(TokenType.Operator_Plus, "+");
+            case '-': return MakeToken(TokenType.Operator_Minus, "-");
             case '*': return MakeToken(TokenType.Operator_Mult, "*");
             case '=': return MakeToken(TokenType.Operator_Equals, "=");
             case '>': return MakeToken(TokenType.Operator_Greater, ">");
