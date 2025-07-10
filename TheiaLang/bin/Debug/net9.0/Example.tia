@@ -1,0 +1,12 @@
+int main()
+{
+    int a = 5;
+    int b = 10;
+    int c = a + b;
+
+    float f = 2.5;
+    f = f * 2.0;
+
+    bool ok = c > 5;
+    return c;
+}
