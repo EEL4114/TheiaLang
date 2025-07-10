@@ -80,7 +80,7 @@ public class Parser(List<Token> tokens)
             return new AssignmentStatement(nameTok.Lexeme, expr);
         }
 
-        Log.Error($"Unexpected token {Peek().Type} at {Peek().Line}:{Peek().Column}");
+        Log.Error($"Unexpected token {Peek().Type} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
         Environment.Exit(1);
         return null;
     }

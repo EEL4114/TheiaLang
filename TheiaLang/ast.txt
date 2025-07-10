@@ -1,6 +1,9 @@
 Program
   FunctionDeclaration: s32 main()
     BlockSatement
+      VariableDeclaration: s32 defaultInt
+      VariableDeclaration: f32 defaultFloat
+      VariableDeclaration: Bool defaultBool
       VariableDeclaration: Bool fg =
         Literal: false
       VariableDeclaration: Bool ffg =

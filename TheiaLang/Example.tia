@@ -1,5 +1,11 @@
 int main()
 {
+    int defaultInt;
+    float defaultFloat;
+    bool defaultBool;
+
+    s32 default_s32;
+
     bool fg = false;
     bool ffg = true;
     int a = 5;
