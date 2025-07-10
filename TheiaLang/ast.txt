@@ -1,31 +1,31 @@
 Program
-  FunctionDeclaration: int main()
+  FunctionDeclaration: s32 main()
     BlockSatement
-      VariableDeclaration: bool fg =
+      VariableDeclaration: Bool fg =
         Literal: false
-      VariableDeclaration: bool ffg =
+      VariableDeclaration: Bool ffg =
         Literal: true
-      VariableDeclaration: int a =
+      VariableDeclaration: s32 a =
         Literal: 5
-      VariableDeclaration: int b =
+      VariableDeclaration: s32 b =
         Literal: 10
-      VariableDeclaration: int c =
+      VariableDeclaration: s32 c =
         BinaryExpression: Add
           Identifier: a
           Identifier: b
-      VariableDeclaration: float f =
+      VariableDeclaration: f32 f =
         Literal: 2.5
       Assign: f =
         BinaryExpression: Multiply
           Identifier: f
           Literal: 2.0
-      VariableDeclaration: float g =
+      VariableDeclaration: f32 g =
         Literal: 3.0
-      VariableDeclaration: float h =
+      VariableDeclaration: f32 h =
         BinaryExpression: Subtract
           Identifier: f
           Identifier: g
-      VariableDeclaration: bool ok =
+      VariableDeclaration: Bool ok =
         BinaryExpression: Greater
           Identifier: c
           Literal: 5

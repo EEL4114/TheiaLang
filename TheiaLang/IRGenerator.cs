@@ -29,9 +29,9 @@ public static class IRGenerator
 
         string returnType = fn.ReturnType switch
         {
-            "int" => "i32",
-            "float" => "f32",
-            "bool" => "i1",
+            Type.s32 => "i32",
+            Type.f32 => "f32",
+            Type.Bool => "i1",
             _ => throw new Exception($"Unsupported return type {fn.ReturnType}")
         };
 
@@ -43,12 +43,12 @@ public static class IRGenerator
             if (statement is not VariableDeclarationStatement variableDeclaration)
                 continue;
 
-            string varType = variableDeclaration.VarType switch
+            string varType = variableDeclaration.Type switch
             {
-                "int" => "i32",
-                "float" => "double",
-                "bool" => "i1",
-                _ => throw new Exception($"Bad var type {variableDeclaration.VarType}")
+                Type.s32 => "i32",
+                Type.f32 => "double",
+                Type.Bool => "i1",
+                _ => throw new Exception($"Bad var type {variableDeclaration.Type}")
             };
 
             varTypes[variableDeclaration.Name] = varType;

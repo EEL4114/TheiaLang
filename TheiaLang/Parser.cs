@@ -16,7 +16,7 @@ public class Parser(List<Token> tokens)
     FunctionDeclaration ParseFunction()
     {
         Token retTypeToken = ConsumeTypeKeyword();
-        string returnType = retTypeToken.Lexeme;
+        Type returnType = StringToType(retTypeToken.Lexeme);
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -58,13 +58,16 @@ public class Parser(List<Token> tokens)
         // variable declaration?
         if (IsTypeKeyword(Peek().Type))
         {
-            Token typeTok = Advance();
-            Token nameTok = Consume(TokenType.Identifier, "Expected variable name");
+            Token typeToken = Advance();
+            Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
             IExpression? init = null;
             if (Match(TokenType.Operator_Equals))
                 init = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
-            return new VariableDeclarationStatement(typeTok.Lexeme, nameTok.Lexeme, init);
+
+            Type type = StringToType(typeToken.Lexeme);
+
+            return new VariableDeclarationStatement(type, nameToken.Lexeme, init);
         }
 
         // assignment: identifier '=' expr ';'
@@ -159,6 +162,7 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
+    #region Conversion
     static BinaryOperator StringToBinaryOperator(string lexeme)
     {
         return lexeme switch
@@ -174,6 +178,17 @@ public class Parser(List<Token> tokens)
         };
     }
 
+    static Type StringToType(string lexeme)
+    {
+        return lexeme switch
+        {
+            "int" => Type.s32,
+            "float" => Type.f32,
+            "bool" => Type.Bool,
+            _ => throw new Exception($"Unsupported Type '{lexeme}'"),
+        };
+    }
+    #endregion
 
     #region Helpers
     bool Match(TokenType type)

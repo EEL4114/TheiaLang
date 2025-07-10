@@ -30,7 +30,7 @@ static class AstPrinter
         switch (stmt)
         {
             case VariableDeclarationStatement vd:
-                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.VarType} {vd.Name}" +
+                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.Type} {vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init is not null)
                     PrintExpression(vd.Init, w, indent + 2);

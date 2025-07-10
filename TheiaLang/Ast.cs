@@ -15,8 +15,15 @@ public enum BinaryOperator
     NotEqual
 }
 
+public enum Type
+{
+    s32,
+    f32,
+    Bool,
+}
+
 public sealed record FunctionDeclaration(
-    string ReturnType,          // "int", "float", "bool"
+    Type ReturnType,          // "int", "float", "bool"
     string Name,                // e.g. "main"
     List<Parameter> Parameters, // empty for now
     BlockSatement Body          // the { … } body
@@ -27,7 +34,7 @@ public sealed record ProgramNode(
 );
 
 public sealed record Parameter(
-    string Type,
+    Type Type,
     string Name
 );
 
@@ -37,7 +44,7 @@ public sealed record BlockSatement(
 ) : IStatement;
 
 public sealed record VariableDeclarationStatement(
-    string VarType,             // "int", "float", "bool"
+    Type Type,             // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
 ) : IStatement;
