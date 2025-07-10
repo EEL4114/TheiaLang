@@ -20,6 +20,7 @@ public enum TokenType
     Operator_Equals = 401,
     Operator_Mult = 402,
     Operator_Greater = 403,
+    Operator_Less = 404,
 
     Punctuation_Dot = 500,
     Punctuation_Semicolon = 501,
@@ -74,7 +75,7 @@ class Lexer(string sourceCode)
         throw new Exception($"Unexpected character '{c}' at {line}:{col}");
     }
 
-    private Token ReadNumber(char first)
+    Token ReadNumber(char first)
     {
         int startCol = col - 1;
         StringBuilder sb = new StringBuilder().Append(first);
@@ -95,7 +96,7 @@ class Lexer(string sourceCode)
         return new Token(TokenType.Literal_s32, sb.ToString(), line, startCol);
     }
 
-    private Token ReadIdentifierOrKeyword(char first)
+    Token ReadIdentifierOrKeyword(char first)
     {
         int startCol = col - 1;
         StringBuilder sb = new StringBuilder().Append(first);
@@ -115,7 +116,7 @@ class Lexer(string sourceCode)
         };
     }
 
-    private Token MakeToken(TokenType type, string lexeme)
+    Token MakeToken(TokenType type, string lexeme)
     => new Token(type, lexeme, line, col - lexeme.Length);
 
     void SkipWhiteSpaceAndComments()
@@ -151,15 +152,15 @@ class Lexer(string sourceCode)
         }
     }
 
-    private char Peek() => pos < source?.Length ? source[pos] : '\0';
-    private char PeekNext() => pos + 1 < source.Length ? source[pos + 1] : '\0';
+    char Peek() => pos < source?.Length ? source[pos] : '\0';
+    char PeekNext() => pos + 1 < source.Length ? source[pos + 1] : '\0';
 
-    private char Advance()
+    char Advance()
     {
         char c = source[pos++];
         col++;
         return c;
     }
 
-    private bool IsAtEnd() => pos >= source.Length;
+    bool IsAtEnd() => pos >= source.Length;
 }

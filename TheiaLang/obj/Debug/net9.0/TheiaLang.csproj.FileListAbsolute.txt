@@ -12,3 +12,4 @@ C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\refint\TheiaLang.dll
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.pdb
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.genruntimeconfig.cache
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\ref\TheiaLang.dll
+C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.sourcelink.json

@@ -3,7 +3,6 @@ namespace TheiaLang;
 public interface IStatement { }
 public interface IExpression { }
 
-
 public sealed record FunctionDeclaration(
     string ReturnType,          // "int", "float", "bool"
     string Name,                // e.g. "main"
@@ -20,6 +19,7 @@ public sealed record Parameter(
     string Name
 );
 
+#region  statements
 public sealed record BlockSatement(
     List<IStatement> Statements
 ) : IStatement;
@@ -38,8 +38,9 @@ public sealed record AssignmentStatement(
 public sealed record ReturnStatement(
     IExpression Expr
 ) : IStatement;
+#endregion
 
-
+#region  expressions
 public sealed record BinaryExpression(
     IExpression Left,
     string Op,    // "+", "*", ">", etc.
@@ -53,3 +54,4 @@ public sealed record LiteralExpression(
 public sealed record IdentifierExpression(
     string Name
 ) : IExpression;
+#endregion

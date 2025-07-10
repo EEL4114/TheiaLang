@@ -7,12 +7,19 @@ class Program
         string code = File.ReadAllText("Example.tia");
         Lexer lexer = new Lexer(code);
 
+        List<Token> tokens = new List<Token>();
         Token token;
 
         do
         {
             token = lexer.NextToken();
+            tokens.Add(token);
             Console.WriteLine(token);
         } while (token.Type != TokenType.EOF);
+
+        Parser parser = new Parser(tokens);
+        ProgramNode ast = parser.ParseProgram();
+
+        Console.WriteLine("Parsed OK!");
     }
 }
