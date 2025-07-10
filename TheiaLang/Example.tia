@@ -5,6 +5,8 @@ int main()
     bool defaultBool;
 
     s32 default_s32;
+    f32 default_f32;
+    bool default_bool;
 
     bool fg = false;
     bool ffg = true;

@@ -7,6 +7,9 @@ entry:
   %defaultInt = alloca i32
   %defaultFloat = alloca double
   %defaultBool = alloca i1
+  %default_s32 = alloca i32
+  %default_f32 = alloca double
+  %default_bool = alloca i1
   %fg = alloca i1
   store i1 0, i1* %fg
   %ffg = alloca i1

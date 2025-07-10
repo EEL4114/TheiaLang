@@ -11,8 +11,8 @@ public enum TokenType
     Literal_f32 = 102,
 
     Keyword_bool = 200,
-    Keyword_int = 201,
-    Keyword_float = 202,
+    Keyword_s32 = 201,
+    Keyword_f32 = 202,
 
     Keyword_return = 300,
 
@@ -109,8 +109,10 @@ class Lexer(string sourceCode)
         var lex = sb.ToString();
         return lex switch
         {
-            "int" => new Token(TokenType.Keyword_int, lex, line, startCol),
-            "float" => new Token(TokenType.Keyword_float, lex, line, startCol),
+            "int" => new Token(TokenType.Keyword_s32, lex, line, startCol),
+            "s32" => new Token(TokenType.Keyword_s32, lex, line, startCol),
+            "float" => new Token(TokenType.Keyword_f32, lex, line, startCol),
+            "f32" => new Token(TokenType.Keyword_f32, lex, line, startCol),
             "bool" => new Token(TokenType.Keyword_bool, lex, line, startCol),
             "return" => new Token(TokenType.Keyword_return, lex, line, startCol),
             "true" => new Token(TokenType.Literal_bool, lex, line, startCol),

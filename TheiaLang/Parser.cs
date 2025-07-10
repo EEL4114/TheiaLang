@@ -183,7 +183,9 @@ public class Parser(List<Token> tokens)
         return lexeme switch
         {
             "int" => Type.s32,
+            "s32" => Type.s32,
             "float" => Type.f32,
+            "f32" => Type.f32,
             "bool" => Type.Bool,
             _ => throw new Exception($"Unsupported Type '{lexeme}'"),
         };
@@ -215,8 +217,8 @@ public class Parser(List<Token> tokens)
     }
 
     static bool IsTypeKeyword(TokenType t)
-        => t == TokenType.Keyword_int
-        || t == TokenType.Keyword_float
+        => t == TokenType.Keyword_s32
+        || t == TokenType.Keyword_f32
         || t == TokenType.Keyword_bool;
 
     bool Check(TokenType type)

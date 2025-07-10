@@ -4,6 +4,9 @@ Program
       VariableDeclaration: s32 defaultInt
       VariableDeclaration: f32 defaultFloat
       VariableDeclaration: Bool defaultBool
+      VariableDeclaration: s32 default_s32
+      VariableDeclaration: f32 default_f32
+      VariableDeclaration: Bool default_bool
       VariableDeclaration: Bool fg =
         Literal: false
       VariableDeclaration: Bool ffg =
