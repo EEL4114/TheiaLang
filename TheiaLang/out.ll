@@ -1,5 +1,6 @@
 ; ModuleID = 'theia_module'
-declare i32 @printf(i8*, ...)
+declare i32 @puts(i8*, ...)
+@.theia_print_str = private constant[19 x i8] c"Hello from Theia!\0A\00"
 
 define i32 @main() {
 entry:
@@ -21,7 +22,9 @@ entry:
   %tmp5 = load double, double* %f
   %tmp6 = fmul double %tmp5, 2.0
   store double %tmp6, double* %f
+call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   %tmp7 = load i32, i32* %c
   ret i32 %tmp7
+  ret i32 0
 }
 

@@ -31,7 +31,7 @@ public static class IRGenerator
         string returnType = fn.ReturnType switch
         {
             "int" => "i32",
-            "float" => "f32",   // LLVM default f64
+            "float" => "f32",
             "bool" => "i1",
             _ => throw new Exception($"Unsupported return type {fn.ReturnType}")
         };
@@ -84,6 +84,7 @@ public static class IRGenerator
                         sb.AppendLine(
                           "call i32 @puts(i8* getelementptr inbounds " +
                           "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
+
                         var (code, val) = EmitExpression(r.Expr);
                         sb.Append(code);
                         var ty = InferExpressionType(r.Expr);
@@ -94,12 +95,14 @@ public static class IRGenerator
             }
         }
 
-        if (!fn.Body.Statements.Exists(s => s is ReturnStatement))
-            sb.AppendLine(returnType == "i1"
-                ? "  ret i1 0"
-                : returnType == "double"
-                    ? "  ret double 0.0"
-                    : "  ret i32 0");
+        bool hasReturn = fn.Body.Statements.Any(s => s is ReturnStatement);
+
+        if (returnType == "i1")
+            sb.AppendLine("  ret i1 0");
+        else if (returnType == "double")
+            sb.AppendLine("  ret double 0.0");
+        else // assume i32
+            sb.AppendLine("  ret i32 0");
 
         sb.AppendLine("}");
         sb.AppendLine();

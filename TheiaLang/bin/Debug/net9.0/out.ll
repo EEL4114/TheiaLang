@@ -25,5 +25,6 @@ entry:
 call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   %tmp7 = load i32, i32* %c
   ret i32 %tmp7
+  ret i32 0
 }
 
