@@ -37,7 +37,6 @@ public sealed record Token(
     int Line,
     int Column);
 
-
 class Lexer(string sourceCode)
 {
     readonly string source = sourceCode;
