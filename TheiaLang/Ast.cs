@@ -3,6 +3,18 @@ namespace TheiaLang;
 public interface IStatement { }
 public interface IExpression { }
 
+public enum BinaryOperator
+{
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Greater,
+    Less,
+    Equal,
+    NotEqual
+}
+
 public sealed record FunctionDeclaration(
     string ReturnType,          // "int", "float", "bool"
     string Name,                // e.g. "main"
@@ -43,7 +55,7 @@ public sealed record ReturnStatement(
 #region  expressions
 public sealed record BinaryExpression(
     IExpression Left,
-    string Op,    // "+", "*", ">", etc.
+    BinaryOperator Op,    // "+", "*", ">", etc.
     IExpression Right
 ) : IExpression;
 

@@ -90,8 +90,11 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_Greater) || Match(TokenType.Operator_Less))
         {
             string op = Previous().Lexeme;
+
+            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+
             var right = ParseAdditive();
-            expr = new BinaryExpression(expr, op, right);
+            expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
     }
@@ -102,8 +105,10 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
         {
             string op = Previous().Lexeme;
+            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+
             var right = ParseMultiplicative();
-            expr = new BinaryExpression(expr, op, right);
+            expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
     }
@@ -114,8 +119,10 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_Mult) /*|| Match(TokenType.Operator_Slash)*/)
         {
             string op = Previous().Lexeme;
+            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+
             var right = ParsePrimary();
-            expr = new BinaryExpression(expr, op, right);
+            expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
     }
@@ -152,14 +159,30 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
+    static BinaryOperator StringToBinaryOperator(string lexeme)
+    {
+        return lexeme switch
+        {
+            "+" => BinaryOperator.Add,
+            "-" => BinaryOperator.Subtract,
+            "*" => BinaryOperator.Multiply,
+            "/" => BinaryOperator.Divide,
+            "=" => BinaryOperator.Equal,
+            ">" => BinaryOperator.Greater,
+            "<" => BinaryOperator.Less,
+            _ => throw new Exception($"Can't parse '{lexeme}' as Binary Operator"),
+        };
+    }
 
-    private bool Match(TokenType type)
+
+    #region Helpers
+    bool Match(TokenType type)
     {
         if (Check(type)) { Advance(); return true; }
         return false;
     }
 
-    private Token Consume(TokenType type, string message)
+    Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
         Log.Error($"{message} at {Peek().Line}:{Peek().Column}");
@@ -167,7 +190,7 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
-    private Token ConsumeTypeKeyword()
+    Token ConsumeTypeKeyword()
     {
         Token t = Peek();
         if (IsTypeKeyword(t.Type)) return Advance();
@@ -176,26 +199,27 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
-    private static bool IsTypeKeyword(TokenType t)
+    static bool IsTypeKeyword(TokenType t)
         => t == TokenType.Keyword_int
         || t == TokenType.Keyword_float
         || t == TokenType.Keyword_bool;
 
-    private bool Check(TokenType type)
+    bool Check(TokenType type)
         => !IsAtEnd() && Peek().Type == type;
 
-    private Token Advance()
+    Token Advance()
         => pos < tokens.Count ? tokens[pos++] : tokens[^1];
 
-    private bool IsAtEnd()
+    bool IsAtEnd()
         => Peek().Type == TokenType.EOF;
 
-    private Token Peek()
+    Token Peek()
         => tokens[pos];
 
-    private Token PeekNext()
+    Token PeekNext()
         => pos + 1 < tokens.Count ? tokens[pos + 1] : tokens[^1];
 
-    private Token Previous()
+    Token Previous()
         => tokens[pos - 1];
+    #endregion
 }

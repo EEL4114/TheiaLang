@@ -10,23 +10,23 @@ Program
       VariableDeclaration: int b =
         Literal: 10
       VariableDeclaration: int c =
-        BinaryExpression: +
+        BinaryExpression: Add
           Identifier: a
           Identifier: b
       VariableDeclaration: float f =
         Literal: 2.5
       Assign: f =
-        BinaryExpression: *
+        BinaryExpression: Multiply
           Identifier: f
           Literal: 2.0
       VariableDeclaration: float g =
         Literal: 3.0
       VariableDeclaration: float h =
-        BinaryExpression: -
+        BinaryExpression: Subtract
           Identifier: f
           Identifier: g
       VariableDeclaration: bool ok =
-        BinaryExpression: >
+        BinaryExpression: Greater
           Identifier: c
           Literal: 5
       Return

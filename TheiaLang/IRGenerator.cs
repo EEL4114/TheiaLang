@@ -145,20 +145,20 @@ public static class IRGenerator
 
                     if (ty == "i32") op = bin.Op switch
                     {
-                        "+" => "add",
-                        "-" => "sub",
-                        "*" => "mul",
-                        ">" => "icmp sgt",
-                        "<" => "icmp slt",
+                        BinaryOperator.Add => "add",
+                        BinaryOperator.Subtract => "sub",
+                        BinaryOperator.Multiply => "mul",
+                        BinaryOperator.Greater => "icmp sgt",
+                        BinaryOperator.Less => "icmp slt",
                         _ => throw new Exception($"Op {bin.Op}")
                     };
                     else if (ty == "double") op = bin.Op switch
                     {
-                        "+" => "fadd",
-                        "-" => "fsub",
-                        "*" => "fmul",
-                        ">" => "fcmp ogt",
-                        "<" => "fcmp olt",
+                        BinaryOperator.Add => "fadd",
+                        BinaryOperator.Subtract => "fsub",
+                        BinaryOperator.Multiply => "fmul",
+                        BinaryOperator.Greater => "fcmp ogt",
+                        BinaryOperator.Less => "fcmp olt",
                         _ => throw new Exception($"Op {bin.Op}")
                     };
                     else throw new Exception($"Unsupported ty {ty}");
