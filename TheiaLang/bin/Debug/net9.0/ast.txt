@@ -1,0 +1,23 @@
+Program
+  FunctionDeclaration: int main()
+    BlockSatement
+      VariableDeclaration: int a =
+        Literal: 5
+      VariableDeclaration: int b =
+        Literal: 10
+      VariableDeclaration: int c =
+        BinaryExpression: +
+          Identifier: a
+          Identifier: b
+      VariableDeclaration: float f =
+        Literal: 25
+      Assign: f =
+        BinaryExpression: *
+          Identifier: f
+          Literal: 20
+      VariableDeclaration: bool ok =
+        BinaryExpression: >
+          Identifier: c
+          Literal: 5
+      Return
+        Identifier: c

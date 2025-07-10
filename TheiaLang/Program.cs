@@ -20,6 +20,9 @@ class Program
         Parser parser = new Parser(tokens);
         ProgramNode ast = parser.ParseProgram();
 
+        using StreamWriter writer = new StreamWriter("ast.txt");
+        AstPrinter.Print(ast, writer);
+
         Console.WriteLine("Parsed OK!");
     }
 }
