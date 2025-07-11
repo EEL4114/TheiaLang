@@ -20,6 +20,7 @@ public enum TokenType
     Operator_Plus = 401,
     Operator_Minus = 402,
     Operator_Mult = 403,
+    Operator_Div = 404,
     Operator_Greater = 405,
     Operator_Less = 406,
 

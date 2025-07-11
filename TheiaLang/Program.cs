@@ -34,7 +34,7 @@ sw2.Restart();
 
 IRGenerator.Emit(ast, "out.ll");
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "out.ll -O2 -o out.exe")?.WaitForExit();
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "out.ll -O3 -o out.exe")?.WaitForExit();
 Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 

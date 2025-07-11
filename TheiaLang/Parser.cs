@@ -16,7 +16,7 @@ public class Parser(List<Token> tokens)
     FunctionDeclaration ParseFunction()
     {
         Token retTypeToken = ConsumeTypeKeyword();
-        Type returnType = StringToType(retTypeToken.Lexeme);
+        Type returnType = TokenTypeToType(retTypeToken.Type);
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -65,7 +65,7 @@ public class Parser(List<Token> tokens)
                 init = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
 
-            Type type = StringToType(typeToken.Lexeme);
+            Type type = TokenTypeToType(typeToken.Type);
 
             return new VariableDeclarationStatement(type, nameToken.Lexeme, init);
         }
@@ -92,9 +92,9 @@ public class Parser(List<Token> tokens)
         var expr = ParseAdditive();
         while (Match(TokenType.Operator_Greater) || Match(TokenType.Operator_Less))
         {
-            string op = Previous().Lexeme;
+            Token op = Previous();
 
-            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
 
             var right = ParseAdditive();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
@@ -107,8 +107,8 @@ public class Parser(List<Token> tokens)
         var expr = ParseMultiplicative();
         while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
         {
-            string op = Previous().Lexeme;
-            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+            Token op = Previous();
+            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
 
             var right = ParseMultiplicative();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
@@ -121,8 +121,8 @@ public class Parser(List<Token> tokens)
         var expr = ParsePrimary();
         while (Match(TokenType.Operator_Mult) /*|| Match(TokenType.Operator_Slash)*/)
         {
-            string op = Previous().Lexeme;
-            BinaryOperator binaryOperatorType = StringToBinaryOperator(op);
+            Token op = Previous();
+            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
 
             var right = ParsePrimary();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
@@ -163,31 +163,32 @@ public class Parser(List<Token> tokens)
     }
 
     #region Conversion
-    static BinaryOperator StringToBinaryOperator(string lexeme)
+    static BinaryOperator OperatorTypeToType(TokenType tokenType)
     {
-        return lexeme switch
+        return tokenType switch
         {
-            "+" => BinaryOperator.Add,
-            "-" => BinaryOperator.Subtract,
-            "*" => BinaryOperator.Multiply,
-            "/" => BinaryOperator.Divide,
-            "=" => BinaryOperator.Equal,
-            ">" => BinaryOperator.Greater,
-            "<" => BinaryOperator.Less,
-            _ => throw new Exception($"Can't parse '{lexeme}' as Binary Operator"),
+            TokenType.Operator_Plus => BinaryOperator.Add,
+            TokenType.Operator_Minus => BinaryOperator.Subtract,
+            TokenType.Operator_Mult => BinaryOperator.Multiply,
+            TokenType.Operator_Div => BinaryOperator.Divide,
+            TokenType.Operator_Equals => BinaryOperator.Equal,
+            TokenType.Operator_Greater => BinaryOperator.Greater,
+            TokenType.Operator_Less => BinaryOperator.Less,
+            _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
         };
     }
 
-    static Type StringToType(string lexeme)
+    static Type TokenTypeToType(TokenType tokenType)
     {
-        return lexeme switch
+        return tokenType switch
         {
-            "int" => Type.s32,
-            "s32" => Type.s32,
-            "float" => Type.f32,
-            "f32" => Type.f32,
-            "bool" => Type.Bool,
-            _ => throw new Exception($"Unsupported Type '{lexeme}'"),
+            TokenType.Literal_s32 => Type.s32,
+            TokenType.Keyword_s32 => Type.s32,
+            TokenType.Literal_f32 => Type.f32,
+            TokenType.Keyword_f32 => Type.f32,
+            TokenType.Literal_bool => Type.Bool,
+            TokenType.Keyword_bool => Type.Bool,
+            _ => throw new Exception($"Unsupported Type '{tokenType}'"),
         };
     }
     #endregion
