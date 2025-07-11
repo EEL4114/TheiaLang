@@ -216,34 +216,28 @@ public class Parser(List<Token> tokens)
     }
 
     #region Conversion
-    static BinaryOperator OperatorTypeToType(TokenType tokenType)
+    static BinaryOperator OperatorTypeToType(TokenType tokenType) => tokenType switch
     {
-        return tokenType switch
-        {
-            TokenType.Operator_Plus => BinaryOperator.Add,
-            TokenType.Operator_Minus => BinaryOperator.Subtract,
-            TokenType.Operator_Mult => BinaryOperator.Multiply,
-            TokenType.Operator_Div => BinaryOperator.Divide,
-            TokenType.Operator_Equals => BinaryOperator.Equal,
-            TokenType.Operator_Greater => BinaryOperator.Greater,
-            TokenType.Operator_Less => BinaryOperator.Less,
-            _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
-        };
-    }
+        TokenType.Operator_Plus => BinaryOperator.Add,
+        TokenType.Operator_Minus => BinaryOperator.Subtract,
+        TokenType.Operator_Mult => BinaryOperator.Multiply,
+        TokenType.Operator_Div => BinaryOperator.Divide,
+        TokenType.Operator_Equals => BinaryOperator.Equal,
+        TokenType.Operator_Greater => BinaryOperator.Greater,
+        TokenType.Operator_Less => BinaryOperator.Less,
+        _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
+    };
 
-    static Type TokenTypeToType(TokenType tokenType)
+    static Type TokenTypeToType(TokenType tokenType) => tokenType switch
     {
-        return tokenType switch
-        {
-            TokenType.Literal_s32 => Type.s32,
-            TokenType.Keyword_s32 => Type.s32,
-            TokenType.Literal_f32 => Type.f32,
-            TokenType.Keyword_f32 => Type.f32,
-            TokenType.Literal_bool => Type.Bool,
-            TokenType.Keyword_bool => Type.Bool,
-            _ => throw new Exception($"Unsupported Type '{tokenType}'"),
-        };
-    }
+        TokenType.Literal_s32 => Type.s32,
+        TokenType.Keyword_s32 => Type.s32,
+        TokenType.Literal_f32 => Type.f32,
+        TokenType.Keyword_f32 => Type.f32,
+        TokenType.Literal_bool => Type.Bool,
+        TokenType.Keyword_bool => Type.Bool,
+        _ => throw new Exception($"Unsupported Type '{tokenType}'"),
+    };
     #endregion
 
     #region Helpers

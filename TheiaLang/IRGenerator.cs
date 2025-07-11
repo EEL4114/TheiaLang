@@ -16,13 +16,28 @@ public static class IRGenerator
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();
 
+        foreach (var decl in program.Declarations)
+            if (decl is StructDeclaration sd)
+                EmitStructType(sd, sb);
+
+        sb.AppendLine();
+
         foreach (var node in program.Declarations)
             if (node is FunctionDeclaration function)
                 EmitFunction(function, sb);
-            else
-                Console.WriteLine($"Node wasn't of type FunctionDeclaration - we need to implement that!!");
 
         File.WriteAllText(pathLl, sb.ToString());
+    }
+
+    static void EmitStructType(StructDeclaration sd, StringBuilder sb)
+    {
+        var fieldIr = string.Join(
+            ", ",
+            sd.Fields.Select(f => TypeToIr(f.Type))
+        );
+
+        // emit: %StructName = type { <field1>, <field2>, … }
+        sb.AppendLine($"%{sd.Name} = type {{ {fieldIr} }}");
     }
 
     static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
@@ -200,16 +215,23 @@ public static class IRGenerator
         }
     }
 
-    private static string InferExpressionType(IExpression expr)
+    static string InferExpressionType(IExpression expr) => expr switch
     {
-        return expr switch
-        {
-            LiteralExpression lit when lit.Value is int => "i32",
-            LiteralExpression lit when lit.Value is double => "double",
-            LiteralExpression lit when lit.Value is bool => "i1",
-            IdentifierExpression id when varTypes.ContainsKey(id.Name) => varTypes[id.Name],
-            BinaryExpression bin => InferExpressionType(bin.Left),
-            _ => throw new Exception("Cannot infer type")
-        };
-    }
+        LiteralExpression lit when lit.Value is int => "i32",
+        LiteralExpression lit when lit.Value is double => "double",
+        LiteralExpression lit when lit.Value is bool => "i1",
+        IdentifierExpression id when varTypes.ContainsKey(id.Name) => varTypes[id.Name],
+        BinaryExpression bin => InferExpressionType(bin.Left),
+        _ => throw new Exception("Cannot infer type")
+    };
+
+    static string TypeToIr(Type t) => t switch
+    {
+        Type.s32 => "i32",
+        Type.f32 => "double",  // f64 in LLVM
+        Type.Bool => "i1",
+        // once you have string support:
+        // Type.String => "%String",
+        _ => throw new NotSupportedException($"No IR for type {t}")
+    };
 }
