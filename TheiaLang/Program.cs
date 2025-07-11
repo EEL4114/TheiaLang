@@ -6,7 +6,8 @@ Stopwatch sw2 = new Stopwatch();
 sw.Start();
 sw2.Start();
 
-string code = File.ReadAllText("Example.tia");
+string programName = "Example";
+string code = File.ReadAllText(programName + ".tia");
 Lexer lexer = new Lexer(code);
 
 List<Token> tokens = new List<Token>();
@@ -27,14 +28,14 @@ ProgramNode ast = parser.ParseProgram();
 Console.WriteLine($"Parser took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
-using StreamWriter writer = new StreamWriter("ast.txt");
+using StreamWriter writer = new StreamWriter($"{programName}_ast.txt");
 AstPrinter.Print(ast, writer);
 Console.WriteLine($"AST building took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
 IRGenerator.Emit(ast, "Example.ll");
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "Example.ll -O3 -o Example.exe")?.WaitForExit();
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"{programName}.ll -O3 -o {programName}.exe")?.WaitForExit();
 Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 
