@@ -8,15 +8,18 @@ public class Parser(List<Token> tokens)
     {
         List<INode> nodes = new List<INode>();
         while (!IsAtEnd())
-            nodes.Add(ParseFunction());
+            if (Match(TokenType.Keyword_struct))
+                nodes.Add(ParseStructDeclaration());
+            else
+                nodes.Add(ParseFunctionDeclaration());
 
         return new ProgramNode(nodes);
     }
 
-    FunctionDeclaration ParseFunction()
+    FunctionDeclaration ParseFunctionDeclaration()
     {
-        Token retTypeToken = ConsumeTypeKeyword();
-        Type returnType = TokenTypeToType(retTypeToken.Type);
+        Token returnTypeToken = ConsumeTypeKeyword();
+        Type returnType = TokenTypeToType(returnTypeToken.Type);
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -32,6 +35,45 @@ public class Parser(List<Token> tokens)
         BlockSatement body = ParseBlock();
 
         return new FunctionDeclaration(returnType, name, parameters, body);
+    }
+
+    StructDeclaration ParseStructDeclaration()
+    {
+        // we've already consumed 'struct'
+        var nameTok = Consume(TokenType.Identifier, "Expected struct name");
+        var name = nameTok.Lexeme;
+
+        Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after struct name");
+
+        var fields = new List<Parameter>();
+        if (!Check(TokenType.Punctuation_ParenthesisR))
+        {
+            do
+            {
+                // reuse your func‐param logic
+                var typeTok = ConsumeTypeKeyword();
+                var fieldType = TokenTypeToType(typeTok.Type);
+                var idTok = Consume(TokenType.Identifier, "Expected field name");
+                fields.Add(new Parameter(fieldType, idTok.Lexeme));
+            } while (Match(TokenType.Punctuation_Comma));
+        }
+        Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after struct fields");
+
+        // either semicolon‐form or brace‐form
+        var methods = new List<FunctionDeclaration>();
+        if (Match(TokenType.Punctuation_Semicolon))
+        {
+            // no methods
+        }
+        else
+        {
+            Consume(TokenType.Punctuation_BraceL, "Expected '{' to start struct body");
+            while (!Check(TokenType.Punctuation_BraceR) && !IsAtEnd())
+                methods.Add(ParseFunctionDeclaration());
+            Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct body");
+        }
+
+        return new StructDeclaration(name, fields, methods);
     }
 
     BlockSatement ParseBlock()
@@ -80,7 +122,7 @@ public class Parser(List<Token> tokens)
             return new AssignmentStatement(nameTok.Lexeme, expr);
         }
 
-        Log.Error($"Unexpected token {Peek().Type} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
+        Log.Error(1, $"Unexpected token {Peek().Type} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
         Environment.Exit(1);
         return null;
     }
@@ -168,7 +210,7 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        Log.Error($"Unexpected token {Peek().Type} in expression");
+        Log.Error(2, $"Unexpected token {Peek().Type} in expression");
         Environment.Exit(1);
         return null;
     }
@@ -214,7 +256,7 @@ public class Parser(List<Token> tokens)
     Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
-        Log.Error($"{message} at {Peek().Line}:{Peek().Column}");
+        Log.Error(3, $"{message} at {Peek().Line}:{Peek().Column}");
         Environment.Exit(1);
         return null;
     }
@@ -223,7 +265,7 @@ public class Parser(List<Token> tokens)
     {
         Token t = Peek();
         if (IsTypeKeyword(t.Type)) return Advance();
-        Log.Error($"Expected type keyword at {t.Line}:{t.Column}");
+        Log.Error(4, $"Expected type keyword at {t.Line}:{t.Column}");
         Environment.Exit(1);
         return null;
     }

@@ -16,7 +16,7 @@ public static class IRGenerator
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();
 
-        foreach (var node in program.Functions)
+        foreach (var node in program.Declarations)
             if (node is FunctionDeclaration function)
                 EmitFunction(function, sb);
             else

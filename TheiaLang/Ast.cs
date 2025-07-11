@@ -35,8 +35,14 @@ public sealed record FunctionDeclaration(
     BlockSatement Body          // the { … } body
 ) : INode;
 
+public sealed record StructDeclaration(
+    string Name,
+    List<Parameter> Fields,
+    List<FunctionDeclaration> Methods    // empty if “;”‐form
+) : INode;
+
 public sealed record ProgramNode(
-    List<INode> Functions
+    List<INode> Declarations
 );
 
 public sealed record Parameter(

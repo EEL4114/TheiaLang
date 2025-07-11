@@ -4,34 +4,36 @@ namespace TheiaLang;
 
 public enum TokenType
 {
-    Identifier = 000,
+    Identifier,
 
-    Literal_bool = 100,
-    Literal_s32 = 101,
-    Literal_f32 = 102,
+    Literal_bool,
+    Literal_s32,
+    Literal_f32,
 
-    Keyword_bool = 200,
-    Keyword_s32 = 201,
-    Keyword_f32 = 202,
+    Keyword_bool,
+    Keyword_s32,
+    Keyword_f32,
+    Keyword_struct,
 
-    Keyword_return = 300,
+    Keyword_return,
 
-    Operator_Equals = 400,
-    Operator_Plus = 401,
-    Operator_Minus = 402,
-    Operator_Mult = 403,
-    Operator_Div = 404,
-    Operator_Greater = 405,
-    Operator_Less = 406,
+    Operator_Equals,
+    Operator_Plus,
+    Operator_Minus,
+    Operator_Mult,
+    Operator_Div,
+    Operator_Greater,
+    Operator_Less,
 
-    Punctuation_Dot = 500,
-    Punctuation_Semicolon = 501,
-    Punctuation_ParenthesisL = 502,
-    Punctuation_ParenthesisR = 503,
-    Punctuation_BraceL = 504,
-    Punctuation_BraceR = 505,
+    Punctuation_Comma,
+    Punctuation_Dot,
+    Punctuation_Semicolon,
+    Punctuation_ParenthesisL,
+    Punctuation_ParenthesisR,
+    Punctuation_BraceL,
+    Punctuation_BraceR,
 
-    EOF = 42069,
+    EOF
 }
 
 public sealed record Token(
@@ -57,6 +59,8 @@ class Lexer(string sourceCode)
         //  single char punctuation
         switch (c)
         {
+            case ',': return MakeToken(TokenType.Punctuation_Comma, ",");
+            case '.': return MakeToken(TokenType.Punctuation_Dot, ".");
             case ';': return MakeToken(TokenType.Punctuation_Semicolon, ";");
             case '(': return MakeToken(TokenType.Punctuation_ParenthesisL, "(");
             case ')': return MakeToken(TokenType.Punctuation_ParenthesisR, ")");
@@ -75,7 +79,7 @@ class Lexer(string sourceCode)
         if (char.IsLetter(c) || c == '_')
             return ReadIdentifierOrKeyword(c);
 
-        Log.Error($"Unexpected character '{c}' at {line}:{col}");
+        Log.Error(0, $"Unexpected character '{c}' at {line + 1}:{col}");
         return null;
     }
 
@@ -118,6 +122,7 @@ class Lexer(string sourceCode)
             "return" => new Token(TokenType.Keyword_return, lex, line, startCol),
             "true" => new Token(TokenType.Literal_bool, lex, line, startCol),
             "false" => new Token(TokenType.Literal_bool, lex, line, startCol),
+            "struct" => new Token(TokenType.Keyword_struct, lex, line, startCol),
             _ => new Token(TokenType.Identifier, lex, line, startCol),
         };
     }
