@@ -2,7 +2,6 @@ C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.GeneratedMSBu
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.AssemblyInfoInputs.cache
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.AssemblyInfo.cs
 C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.csproj.CoreCompileInputs.cache
-C:\Users\Erik\Documents\Theia\TheiaLang\obj\Debug\net9.0\TheiaLang.sourcelink.json
 C:\Users\Erik\Documents\Theia\TheiaLang\bin\Debug\net9.0\TheiaLang.exe
 C:\Users\Erik\Documents\Theia\TheiaLang\bin\Debug\net9.0\TheiaLang.deps.json
 C:\Users\Erik\Documents\Theia\TheiaLang\bin\Debug\net9.0\TheiaLang.runtimeconfig.json
