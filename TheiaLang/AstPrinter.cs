@@ -8,8 +8,9 @@ static class AstPrinter
     private static void PrintProgram(ProgramNode p, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}Program");
-        foreach (var fn in p.Functions)
-            PrintFunction(fn, w, indent + 2);
+        foreach (var node in p.Functions)
+            if (node is FunctionDeclaration function)
+                PrintFunction(function, w, indent + 2);
     }
 
     private static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)

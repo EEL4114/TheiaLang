@@ -1,7 +1,8 @@
 namespace TheiaLang;
 
-public interface IStatement { }
-public interface IExpression { }
+public interface INode { }
+public interface IStatement : INode { }
+public interface IExpression : INode { }
 
 public enum UnaryOperator
 {
@@ -32,10 +33,10 @@ public sealed record FunctionDeclaration(
     string Name,                // e.g. "main"
     List<Parameter> Parameters, // empty for now
     BlockSatement Body          // the { … } body
-);
+) : INode;
 
 public sealed record ProgramNode(
-    List<FunctionDeclaration> Functions
+    List<INode> Functions
 );
 
 public sealed record Parameter(
@@ -66,10 +67,10 @@ public sealed record ReturnStatement(
 
 #region  expressions
 
-public sealed record UnaryExpr(
+public sealed record UnaryExpression(
     UnaryOperator Op,
     IExpression Operand
-) : IExpression;
+) : IExpression, INode;
 
 public sealed record BinaryExpression(
     IExpression Left,

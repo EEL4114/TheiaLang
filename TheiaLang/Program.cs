@@ -32,9 +32,9 @@ AstPrinter.Print(ast, writer);
 Console.WriteLine($"AST building took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
-IRGenerator.Emit(ast, "out.ll");
+IRGenerator.Emit(ast, "Example.ll");
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "out.ll -O3 -o out.exe")?.WaitForExit();
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", "Example.ll -O3 -o Example.exe")?.WaitForExit();
 Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 

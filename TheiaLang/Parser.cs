@@ -6,11 +6,11 @@ public class Parser(List<Token> tokens)
 
     public ProgramNode ParseProgram()
     {
-        List<FunctionDeclaration> functions = new List<FunctionDeclaration>();
+        List<INode> nodes = new List<INode>();
         while (!IsAtEnd())
-            functions.Add(ParseFunction());
+            nodes.Add(ParseFunction());
 
-        return new ProgramNode(functions);
+        return new ProgramNode(nodes);
     }
 
     FunctionDeclaration ParseFunction()
@@ -136,7 +136,7 @@ public class Parser(List<Token> tokens)
         {
             // we’ve consumed the ‘-’
             var operand = ParseUnary();
-            return new UnaryExpr(UnaryOperator.Negate, operand);
+            return new UnaryExpression(UnaryOperator.Negate, operand);
         }
         return ParsePrimary();
     }

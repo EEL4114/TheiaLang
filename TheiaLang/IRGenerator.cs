@@ -16,8 +16,11 @@ public static class IRGenerator
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();
 
-        foreach (var fn in program.Functions)
-            EmitFunction(fn, sb);
+        foreach (var node in program.Functions)
+            if (node is FunctionDeclaration function)
+                EmitFunction(function, sb);
+            else
+                Console.WriteLine($"Node wasn't of type FunctionDeclaration - we need to implement that!!");
 
         File.WriteAllText(pathLl, sb.ToString());
     }
@@ -112,7 +115,7 @@ public static class IRGenerator
         StringBuilder code = new StringBuilder();
         switch (expression)
         {
-            case UnaryExpr un:
+            case UnaryExpression un:
                 {
                     // 1) emit operand
                     var (cl, val) = EmitExpression(un.Operand);
@@ -129,7 +132,6 @@ public static class IRGenerator
                         "double" => "fsub",  // float:   0.0 - x
                         _ => throw new NotSupportedException($"Unary - on {type}")
                     };
-                    Console.WriteLine(type);
 
                     // 4) emit it
                     //    for integers, use literal zero; for double use 0.0
@@ -186,6 +188,7 @@ public static class IRGenerator
                         BinaryOperator.Less => "fcmp olt",
                         _ => throw new Exception($"Op {bin.Op}")
                     };
+
                     else throw new Exception($"Unsupported ty {ty}");
 
                     code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
