@@ -7,6 +7,10 @@ Program
       VariableDeclaration: s32 default_s32
       VariableDeclaration: f32 default_f32
       VariableDeclaration: Bool default_bool
+      VariableDeclaration: s32 i =
+        <unknown expression UnaryExpr>
+      VariableDeclaration: f32 j =
+        <unknown expression UnaryExpr>
       VariableDeclaration: Bool fg =
         Literal: false
       VariableDeclaration: Bool ffg =

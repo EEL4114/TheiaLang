@@ -3,6 +3,11 @@ namespace TheiaLang;
 public interface IStatement { }
 public interface IExpression { }
 
+public enum UnaryOperator
+{
+    Negate
+}
+
 public enum BinaryOperator
 {
     Add,
@@ -60,6 +65,12 @@ public sealed record ReturnStatement(
 #endregion
 
 #region  expressions
+
+public sealed record UnaryExpr(
+    UnaryOperator Op,
+    IExpression Operand
+) : IExpression;
+
 public sealed record BinaryExpression(
     IExpression Left,
     BinaryOperator Op,    // "+", "*", ">", etc.

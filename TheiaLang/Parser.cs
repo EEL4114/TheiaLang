@@ -118,16 +118,27 @@ public class Parser(List<Token> tokens)
 
     private IExpression ParseMultiplicative()
     {
-        var expr = ParsePrimary();
-        while (Match(TokenType.Operator_Mult) /*|| Match(TokenType.Operator_Slash)*/)
+        var expr = ParseUnary();
+        while (Match(TokenType.Operator_Mult) || Match(TokenType.Operator_Div))
         {
-            Token op = Previous();
-            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
-
-            var right = ParsePrimary();
-            expr = new BinaryExpression(expr, binaryOperatorType, right);
+            var op = Previous().Type == TokenType.Operator_Mult
+                ? BinaryOperator.Multiply
+                : BinaryOperator.Divide;
+            var right = ParseUnary();
+            expr = new BinaryExpression(expr, op, right);
         }
         return expr;
+    }
+
+    private IExpression ParseUnary()
+    {
+        if (Match(TokenType.Operator_Minus))
+        {
+            // we’ve consumed the ‘-’
+            var operand = ParseUnary();
+            return new UnaryExpr(UnaryOperator.Negate, operand);
+        }
+        return ParsePrimary();
     }
 
     private IExpression ParsePrimary()

@@ -8,6 +8,9 @@ int main()
     f32 default_f32;
     bool default_bool;
 
+    int i = -1;
+    float j = -1.0;
+
     bool fg = false;
     bool ffg = true;
     int a = 5;

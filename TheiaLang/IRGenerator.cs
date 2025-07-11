@@ -112,6 +112,31 @@ public static class IRGenerator
         StringBuilder code = new StringBuilder();
         switch (expression)
         {
+            case UnaryExpr un:
+                {
+                    // 1) emit operand
+                    var (cl, val) = EmitExpression(un.Operand);
+                    code.Append(code);
+
+                    // 2) generate a fresh temp
+                    var tmp = $"tmp{tmpCounter++}";
+
+                    // 3) pick instruction based on type
+                    string type = InferExpressionType(un.Operand);
+                    string instr = type switch
+                    {
+                        "i32" => "sub",   // integer: 0 - x
+                        "double" => "fsub",  // float:   0.0 - x
+                        _ => throw new NotSupportedException($"Unary - on {type}")
+                    };
+                    Console.WriteLine(type);
+
+                    // 4) emit it
+                    //    for integers, use literal zero; for double use 0.0
+                    var zero = type == "i32" ? "0" : "0.0";
+                    code.AppendLine($"  %{tmp} = {instr} {type} {zero}, {val}");
+                    return (code, $"%{tmp}");
+                }
             case LiteralExpression literalExpression:
                 {
                     if (literalExpression.Value is int i) return (code, literalExpression.Lexeme);
