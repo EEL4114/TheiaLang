@@ -1,4 +1,4 @@
-struct Point(s32 x, s32 y);
+struct Vector3(float x, float y, float z);
 int main()
 {
     int defaultInt;
