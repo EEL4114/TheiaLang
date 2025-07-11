@@ -79,6 +79,7 @@ public static class IRGenerator
                 var (exprCode, exprRes) = EmitExpression(variableDeclaration.Init);
                 sb.Append(exprCode);
                 sb.AppendLine($"  store {varType} {exprRes}, {varType}* %{variableDeclaration.Name}");
+                sb.AppendLine();
             }
         }
 
@@ -207,6 +208,8 @@ public static class IRGenerator
                     else throw new Exception($"Unsupported ty {ty}");
 
                     code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
+                    code.AppendLine();
+
                     return (code, $"%{tmp}");
                 }
 
