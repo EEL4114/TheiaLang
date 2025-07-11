@@ -1,4 +1,11 @@
 struct Vector3(float x, float y, float z);
+struct Entity(float health)
+{
+    int Kill()
+    {
+        return 0;
+    }
+}
 
 int main()
 {

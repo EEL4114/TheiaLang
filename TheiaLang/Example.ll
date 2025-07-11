@@ -3,6 +3,14 @@ declare i32 @puts(i8*, ...)
 @.theia_print_str = private constant[19 x i8] c"Hello from Theia!\0A\00"
 
 %Vector3 = type { double, double, double }
+%Entity = type { double }
+
+define i32 @Entity.Kill() {
+entry:
+call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
+  ret i32 0
+  ret i32 0
+}
 
 define i32 @main() {
 entry:

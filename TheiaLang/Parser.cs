@@ -19,7 +19,7 @@ public class Parser(List<Token> tokens)
     FunctionDeclaration ParseFunctionDeclaration()
     {
         Token returnTypeToken = ConsumeTypeKeyword();
-        Type returnType = TokenTypeToType(returnTypeToken.Type);
+        Type returnType = TokenTypeToType(returnTypeToken.TokenType);
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -52,7 +52,7 @@ public class Parser(List<Token> tokens)
             {
                 // reuse your func‐param logic
                 var typeTok = ConsumeTypeKeyword();
-                var fieldType = TokenTypeToType(typeTok.Type);
+                var fieldType = TokenTypeToType(typeTok.TokenType);
                 var idTok = Consume(TokenType.Identifier, "Expected field name");
                 fields.Add(new Parameter(fieldType, idTok.Lexeme));
             } while (Match(TokenType.Punctuation_Comma));
@@ -98,7 +98,7 @@ public class Parser(List<Token> tokens)
         }
 
         // variable declaration?
-        if (IsTypeKeyword(Peek().Type))
+        if (IsTypeKeyword(Peek().TokenType))
         {
             Token typeToken = Advance();
             Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
@@ -107,13 +107,13 @@ public class Parser(List<Token> tokens)
                 init = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
 
-            Type type = TokenTypeToType(typeToken.Type);
+            Type type = TokenTypeToType(typeToken.TokenType);
 
             return new VariableDeclarationStatement(type, nameToken.Lexeme, init);
         }
 
         // assignment: identifier '=' expr ';'
-        if (Peek().Type == TokenType.Identifier && PeekNext().Type == TokenType.Operator_Equals)
+        if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Operator_Equals)
         {
             Token nameTok = Advance();
             Advance(); // consume '='
@@ -122,7 +122,7 @@ public class Parser(List<Token> tokens)
             return new AssignmentStatement(nameTok.Lexeme, expr);
         }
 
-        Log.Error(1, $"Unexpected token {Peek().Type} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
+        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
         Environment.Exit(1);
         return null;
     }
@@ -136,7 +136,7 @@ public class Parser(List<Token> tokens)
         {
             Token op = Previous();
 
-            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
+            BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
             var right = ParseAdditive();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
@@ -150,7 +150,7 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
         {
             Token op = Previous();
-            BinaryOperator binaryOperatorType = OperatorTypeToType(op.Type);
+            BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
             var right = ParseMultiplicative();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
@@ -163,7 +163,7 @@ public class Parser(List<Token> tokens)
         var expr = ParseUnary();
         while (Match(TokenType.Operator_Mult) || Match(TokenType.Operator_Div))
         {
-            var op = Previous().Type == TokenType.Operator_Mult
+            var op = Previous().TokenType == TokenType.Operator_Mult
                 ? BinaryOperator.Multiply
                 : BinaryOperator.Divide;
             var right = ParseUnary();
@@ -210,7 +210,7 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        Log.Error(2, $"Unexpected token {Peek().Type} in expression");
+        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression");
         Environment.Exit(1);
         return null;
     }
@@ -258,9 +258,8 @@ public class Parser(List<Token> tokens)
     Token ConsumeTypeKeyword()
     {
         Token t = Peek();
-        if (IsTypeKeyword(t.Type)) return Advance();
-        Log.Error(4, $"Expected type keyword at {t.Line}:{t.Column}");
-        Environment.Exit(1);
+        if (IsTypeKeyword(t.TokenType)) return Advance();
+        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {t.Line}:{t.Column}");
         return null;
     }
 
@@ -270,13 +269,13 @@ public class Parser(List<Token> tokens)
         || t == TokenType.Keyword_bool;
 
     bool Check(TokenType type)
-        => !IsAtEnd() && Peek().Type == type;
+        => !IsAtEnd() && Peek().TokenType == type;
 
     Token Advance()
         => pos < tokens.Count ? tokens[pos++] : tokens[^1];
 
     bool IsAtEnd()
-        => Peek().Type == TokenType.EOF;
+        => Peek().TokenType == TokenType.EOF;
 
     Token Peek()
         => tokens[pos];

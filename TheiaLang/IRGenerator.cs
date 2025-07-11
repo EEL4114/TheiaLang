@@ -16,22 +16,44 @@ public static class IRGenerator
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();
 
-        foreach (var decl in program.Declarations)
+        foreach (INode decl in program.Declarations)
             if (decl is StructDeclaration sd)
                 EmitStructType(sd, sb);
 
         sb.AppendLine();
 
-        foreach (var node in program.Declarations)
-            if (node is FunctionDeclaration function)
-                EmitFunction(function, sb);
+        foreach (INode node in program.Declarations)
+        {
+            switch (node)
+            {
+                case FunctionDeclaration fn:
+                    EmitFunction(fn, sb);
+                    break;
+
+                case StructDeclaration sd:
+                    // for each method, emit it as a real LLVM function
+                    foreach (FunctionDeclaration method in sd.Methods)
+                    {
+                        // create a synthetic FunctionDeclaration with a mangled name
+                        string mangle = $"{sd.Name}.{method.Name}";
+                        FunctionDeclaration md = new FunctionDeclaration(
+                            ReturnType: method.ReturnType,
+                            Name: mangle,
+                            Parameters: method.Parameters,
+                            Body: method.Body
+                        );
+                        EmitFunction(md, sb);
+                    }
+                    break;
+            }
+        }
 
         File.WriteAllText(pathLl, sb.ToString());
     }
 
     static void EmitStructType(StructDeclaration sd, StringBuilder sb)
     {
-        var fieldIr = string.Join(
+        string fieldIr = string.Join(
             ", ",
             sd.Fields.Select(f => TypeToIr(f.Type))
         );
@@ -76,22 +98,22 @@ public static class IRGenerator
 
             if (variableDeclaration.Init != null)
             {
-                var (exprCode, exprRes) = EmitExpression(variableDeclaration.Init);
+                (StringBuilder exprCode, string exprRes) = EmitExpression(variableDeclaration.Init);
                 sb.Append(exprCode);
                 sb.AppendLine($"  store {varType} {exprRes}, {varType}* %{variableDeclaration.Name}");
                 sb.AppendLine();
             }
         }
 
-        foreach (var statement in fn.Body.Statements)
+        foreach (IStatement statement in fn.Body.Statements)
         {
             switch (statement)
             {
                 case AssignmentStatement a:
                     {
-                        var (code, val) = EmitExpression(a.Expression);
+                        (StringBuilder code, string val) = EmitExpression(a.Expression);
                         sb.Append(code);
-                        var ty = InferExpressionType(a.Expression);
+                        string ty = InferExpressionType(a.Expression);
 
                         sb.AppendLine($"  store {ty} {val}, {ty}* %{a.TargetName}");
                     }
@@ -103,9 +125,9 @@ public static class IRGenerator
                           "call i32 @puts(i8* getelementptr inbounds " +
                           "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
 
-                        var (code, val) = EmitExpression(r.Expr);
+                        (StringBuilder code, string val) = EmitExpression(r.Expr);
                         sb.Append(code);
-                        var ty = InferExpressionType(r.Expr);
+                        string ty = InferExpressionType(r.Expr);
 
                         sb.AppendLine($"  ret {ty} {val}");
                     }
@@ -134,11 +156,11 @@ public static class IRGenerator
             case UnaryExpression un:
                 {
                     // 1) emit operand
-                    var (cl, val) = EmitExpression(un.Operand);
+                    (StringBuilder cl, string val) = EmitExpression(un.Operand);
                     code.Append(code);
 
                     // 2) generate a fresh temp
-                    var tmp = $"tmp{tmpCounter++}";
+                    string tmp = $"tmp{tmpCounter++}";
 
                     // 3) pick instruction based on type
                     string type = InferExpressionType(un.Operand);
@@ -151,7 +173,7 @@ public static class IRGenerator
 
                     // 4) emit it
                     //    for integers, use literal zero; for double use 0.0
-                    var zero = type == "i32" ? "0" : "0.0";
+                    string zero = type == "i32" ? "0" : "0.0";
                     code.AppendLine($"  %{tmp} = {instr} {type} {zero}, {val}");
                     return (code, $"%{tmp}");
                 }
@@ -166,24 +188,24 @@ public static class IRGenerator
                 {
                     // load from local
                     // we assume naming "%<name>_val" for the loaded value
-                    if (!allocas.TryGetValue(id.Name, out var ptrName)
-                         || !varTypes.TryGetValue(id.Name, out var varTy))
+                    if (!allocas.TryGetValue(id.Name, out string? ptrName)
+                         || !varTypes.TryGetValue(id.Name, out string? varTy))
                         throw new Exception($"Undefined variable '{id.Name}'");
 
-                    var tmp = $"tmp{tmpCounter++}";   // unique per reference
-                    var ty = InferExpressionType(expression);
+                    string tmp = $"tmp{tmpCounter++}";   // unique per reference
+                    string ty = InferExpressionType(expression);
                     code.AppendLine($"  %{tmp} = load {ty}, {ty}* %{id.Name}");
                     return (code, $"%{tmp}");
                 }
             case BinaryExpression bin:
                 {
-                    var (cl, vl) = EmitExpression(bin.Left);
-                    var (cr, vr) = EmitExpression(bin.Right);
+                    (StringBuilder cl, string vl) = EmitExpression(bin.Left);
+                    (StringBuilder cr, string vr) = EmitExpression(bin.Right);
                     code.Append(cl);
                     code.Append(cr);
 
-                    var ty = InferExpressionType(bin.Left);
-                    var tmp = $"tmp{tmpCounter++}";
+                    string ty = InferExpressionType(bin.Left);
+                    string tmp = $"tmp{tmpCounter++}";
                     string op;
 
                     if (ty == "i32") op = bin.Op switch

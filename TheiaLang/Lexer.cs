@@ -37,7 +37,7 @@ public enum TokenType
 }
 
 public sealed record Token(
-    TokenType Type,
+    TokenType TokenType,
     string Lexeme,
     int Line,
     int Column);
