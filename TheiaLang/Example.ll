@@ -17,9 +17,6 @@ entry:
   %i = alloca i32
   store i32 3, i32* %i
 
-  %i = alloca i32
-  store i32 4, i32* %i
-
   %health = alloca i32
   store i32 7, i32* %health
 

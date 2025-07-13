@@ -3,8 +3,6 @@ Program
     BlockSatement
       VariableDeclaration: s32 i =
         Literal: 3
-      VariableDeclaration: s32 i =
-        Literal: 4
       VariableDeclaration: s32 health =
         Literal: 7
       Return

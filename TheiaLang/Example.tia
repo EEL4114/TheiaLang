@@ -1,7 +1,7 @@
 struct Vector3(float x, float y, float z);
+
 struct Entity(float health)
 {
-
     int Kill()
     {
         return 0;
@@ -11,7 +11,7 @@ struct Entity(float health)
 int m()
 {
     int i = 3;
-    int i = 4;
+    int i = 3;
     int health = 7;
     return 0;
 }

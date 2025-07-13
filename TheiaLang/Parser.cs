@@ -3,6 +3,7 @@ namespace TheiaLang;
 public class Scope : INode
 {
     public string Name;
+    public string FullName => $"{Parent?.Name}.{Name}";
     public INode? DeclaringNode;
     public Scope? Parent { get; }
     public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
@@ -20,7 +21,7 @@ public class Scope : INode
     public void Declare(string name, INode node)
     {
         if (Symbols.ContainsKey(name))
-            Log.Error(6, $"Identifier '{name}' already declared in the scope '{Name}'");
+            Log.Error(6, $"Identifier '{name}' already declared in the scope '{FullName}'");
         Symbols[name] = node;
     }
 }
