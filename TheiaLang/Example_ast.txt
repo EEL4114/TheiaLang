@@ -1,6 +1,16 @@
 Program
+  FunctionDeclaration: s32 m()
+    BlockSatement
+      VariableDeclaration: s32 i =
+        Literal: 3
+      VariableDeclaration: s32 health =
+        Literal: 7
+      Return
+        Literal: 0
   FunctionDeclaration: s32 main()
     BlockSatement
+      Assign: i =
+        Literal: 8
       VariableDeclaration: s32 defaultInt
       VariableDeclaration: f32 defaultFloat
       VariableDeclaration: Bool defaultBool

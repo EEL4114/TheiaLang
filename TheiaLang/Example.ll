@@ -12,6 +12,19 @@ call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_s
   ret i32 0
 }
 
+define i32 @m() {
+entry:
+  %i = alloca i32
+  store i32 3, i32* %i
+
+  %health = alloca i32
+  store i32 7, i32* %health
+
+call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
+  ret i32 0
+  ret i32 0
+}
+
 define i32 @main() {
 entry:
   %defaultInt = alloca i32
@@ -66,6 +79,7 @@ entry:
 
   store i1 %tmp9, i1* %ok
 
+  store i32 8, i32* %i
   %tmp10 = load double, double* %f
   %tmp11 = fmul double %tmp10, 2.0
 

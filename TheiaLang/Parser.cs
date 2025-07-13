@@ -1,11 +1,41 @@
 namespace TheiaLang;
 
+public class Scope : INode
+{
+    public string Name;
+    public INode? DeclaringNode;
+    public Scope? Parent { get; }
+    public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
+    public Dictionary<string, INode> Symbols { get; } = new Dictionary<string, INode>();
+
+    public Scope(string name, INode? declaringNode, Scope? parent)
+    {
+        Name = name;
+        DeclaringNode = declaringNode;
+        Parent = parent;
+        parent?.Children.Add(name, this);
+    }
+
+    // convenience for parser when you hit a declaration
+    public void Declare(string name, INode node)
+    {
+        if (Symbols.ContainsKey(name))
+            throw new Exception($"‘{name}’ already declared in this scope");
+        Symbols[name] = node;
+    }
+}
+
 public class Parser(List<Token> tokens)
 {
     int pos = 0;
+    Scope globalScope;
+    Scope currentScope;
 
     public ProgramNode ParseProgram()
     {
+        globalScope = new Scope("Global", null, null);
+        currentScope = globalScope;   // global scope
+
         List<INode> nodes = new List<INode>();
         while (!IsAtEnd())
             if (Match(TokenType.Keyword_struct))
@@ -16,6 +46,7 @@ public class Parser(List<Token> tokens)
         return new ProgramNode(nodes);
     }
 
+    #region Declarations
     FunctionDeclaration ParseFunctionDeclaration()
     {
         Token returnTypeToken = ConsumeTypeKeyword();
@@ -26,57 +57,81 @@ public class Parser(List<Token> tokens)
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after function name");
         List<Parameter> parameters = new List<Parameter>();
+        List<IStatement> body = new List<IStatement>();
+
+        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnType, name, parameters, body);
 
         if (!Check(TokenType.Punctuation_ParenthesisR))
             Console.WriteLine("We actually do have parameters, how unexpected!");
+        // we will not deal with this for now!!!
 
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after parameters");
 
-        BlockSatement body = ParseBlock();
+        // initialise only with name, since we can't really mutate a Record later
+        EnterScope(name, null);
+        currentScope.DeclaringNode = functionDeclaration;
+        body.AddRange(ParseBlock());
 
-        return new FunctionDeclaration(returnType, name, parameters, body);
+        // fill out AST reference
+        ExitScope();
+        currentScope.Declare(name, functionDeclaration);
+
+        return functionDeclaration;
     }
 
     StructDeclaration ParseStructDeclaration()
     {
         // we've already consumed 'struct'
-        var nameTok = Consume(TokenType.Identifier, "Expected struct name");
-        var name = nameTok.Lexeme;
+        Token nameToken = Consume(TokenType.Identifier, "Expected struct name");
+        string name = nameToken.Lexeme;
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after struct name");
 
-        var fields = new List<Parameter>();
+
+        List<Parameter> fields = new List<Parameter>();
+        List<FunctionDeclaration> methods = new List<FunctionDeclaration>();
+
+        StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
+        EnterScope(name);
+        currentScope.DeclaringNode = structDeclaration;
+
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
             {
-                // reuse your func‐param logic
-                var typeTok = ConsumeTypeKeyword();
-                var fieldType = TokenTypeToType(typeTok.TokenType);
-                var idTok = Consume(TokenType.Identifier, "Expected field name");
-                fields.Add(new Parameter(fieldType, idTok.Lexeme));
+                Token typeToken = ConsumeTypeKeyword();
+                Type fieldType = TokenTypeToType(typeToken.TokenType);
+                Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
+                Parameter parameter = new Parameter(fieldType, identifierToken.Lexeme);
+                currentScope.Declare(identifierToken.Lexeme, parameter);
+                fields.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
         }
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after struct fields");
 
         // either semicolon‐form or brace‐form
-        var methods = new List<FunctionDeclaration>();
-        if (Match(TokenType.Punctuation_Semicolon))
-        {
-            // no methods
-        }
-        else
+
+        if (!Match(TokenType.Punctuation_Semicolon))
         {
             Consume(TokenType.Punctuation_BraceL, "Expected '{' to start struct body");
+            // initialise only with name
             while (!Check(TokenType.Punctuation_BraceR) && !IsAtEnd())
-                methods.Add(ParseFunctionDeclaration());
+            {
+                FunctionDeclaration functionDeclaration = ParseFunctionDeclaration();
+                methods.Add(functionDeclaration);
+            }
             Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct body");
         }
 
-        return new StructDeclaration(name, fields, methods);
-    }
+        ExitScope();
+        currentScope.Declare(name, structDeclaration);
 
-    BlockSatement ParseBlock()
+        return structDeclaration;
+    }
+    #endregion
+    #region Statements
+
+    List<IStatement> ParseBlock()
     {
         Consume(TokenType.Punctuation_BraceL, "Expected '{' to start block");
         List<IStatement> statements = new List<IStatement>();
@@ -85,14 +140,14 @@ public class Parser(List<Token> tokens)
             statements.Add(ParseStatement());
 
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after block");
-        return new BlockSatement(statements);
+        return statements;
     }
 
     IStatement ParseStatement()
     {
         if (Match(TokenType.Keyword_return))
         {
-            var expr = ParseExpression();
+            IExpression expr = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after return value");
             return new ReturnStatement(expr);
         }
@@ -109,7 +164,9 @@ public class Parser(List<Token> tokens)
 
             Type type = TokenTypeToType(typeToken.TokenType);
 
-            return new VariableDeclarationStatement(type, nameToken.Lexeme, init);
+            VariableDeclaration variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
+            currentScope.Declare(nameToken.Lexeme, variableDeclaration);
+            return variableDeclaration;
         }
 
         // assignment: identifier '=' expr ';'
@@ -126,19 +183,21 @@ public class Parser(List<Token> tokens)
         Environment.Exit(1);
         return null;
     }
+    #endregion
 
+    #region  Expressions
     private IExpression ParseExpression() => ParseComparison();
 
     private IExpression ParseComparison()
     {
-        var expr = ParseAdditive();
+        IExpression expr = ParseAdditive();
         while (Match(TokenType.Operator_Greater) || Match(TokenType.Operator_Less))
         {
             Token op = Previous();
 
             BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
-            var right = ParseAdditive();
+            IExpression right = ParseAdditive();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
@@ -146,13 +205,13 @@ public class Parser(List<Token> tokens)
 
     private IExpression ParseAdditive()
     {
-        var expr = ParseMultiplicative();
+        IExpression expr = ParseMultiplicative();
         while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
         {
             Token op = Previous();
             BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
-            var right = ParseMultiplicative();
+            IExpression right = ParseMultiplicative();
             expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
@@ -160,13 +219,13 @@ public class Parser(List<Token> tokens)
 
     private IExpression ParseMultiplicative()
     {
-        var expr = ParseUnary();
+        IExpression expr = ParseUnary();
         while (Match(TokenType.Operator_Mult) || Match(TokenType.Operator_Div))
         {
-            var op = Previous().TokenType == TokenType.Operator_Mult
+            BinaryOperator op = Previous().TokenType == TokenType.Operator_Mult
                 ? BinaryOperator.Multiply
                 : BinaryOperator.Divide;
-            var right = ParseUnary();
+            IExpression right = ParseUnary();
             expr = new BinaryExpression(expr, op, right);
         }
         return expr;
@@ -177,7 +236,7 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Operator_Minus))
         {
             // we’ve consumed the ‘-’
-            var operand = ParseUnary();
+            IExpression operand = ParseUnary();
             return new UnaryExpression(UnaryOperator.Negate, operand);
         }
         return ParsePrimary();
@@ -191,9 +250,9 @@ public class Parser(List<Token> tokens)
 
             v = Previous().Lexeme switch
             {
-                string s when int.TryParse(s, out var i) => i,
-                string s when double.TryParse(s, out var d) => d,
-                string s when bool.TryParse(s, out var b) => b,
+                string s when int.TryParse(s, out int i) => i,
+                string s when double.TryParse(s, out double d) => d,
+                string s when bool.TryParse(s, out bool b) => b,
                 _ => throw new Exception("Invalid literal")
             };
 
@@ -201,11 +260,16 @@ public class Parser(List<Token> tokens)
         }
 
         if (Match(TokenType.Identifier))
-            return new IdentifierExpression(Previous().Lexeme);
+        {
+            string name = Previous().Lexeme;
+            IdentifierExpression identifierExpression = new IdentifierExpression(name);
+
+            return identifierExpression;
+        }
 
         if (Match(TokenType.Punctuation_ParenthesisL))
         {
-            var inner = ParseExpression();
+            IExpression inner = ParseExpression();
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
             return inner;
         }
@@ -214,6 +278,7 @@ public class Parser(List<Token> tokens)
         Environment.Exit(1);
         return null;
     }
+    #endregion
 
     #region Conversion
     static BinaryOperator OperatorTypeToType(TokenType tokenType) => tokenType switch
@@ -285,5 +350,17 @@ public class Parser(List<Token> tokens)
 
     Token Previous()
         => tokens[pos - 1];
+
+    void EnterScope(string name, INode? declaringNode = null)
+    {
+        currentScope = new Scope(name, declaringNode, currentScope);
+    }
+
+    void ExitScope()
+    {
+        if (currentScope.Parent == null)
+            throw new InvalidOperationException("Attempted to exit global scope");
+        currentScope = currentScope.Parent;
+    }
     #endregion
 }

@@ -28,18 +28,26 @@ public enum Type
     Bool,
 }
 
+#region  Declarations
 public sealed record FunctionDeclaration(
-    Type ReturnType,          // "int", "float", "bool"
-    string Name,                // e.g. "main"
-    List<Parameter> Parameters, // empty for now
-    BlockSatement Body          // the { … } body
+    Type ReturnType,                // "int", "float", "bool"
+    string Name,                    // e.g. "main"
+    List<Parameter> Parameters,     // empty for now
+    List<IStatement> Statements     // the { … } body
 ) : INode;
 
 public sealed record StructDeclaration(
     string Name,
     List<Parameter> Fields,
-    List<FunctionDeclaration> Methods    // empty if “;”‐form
+    List<FunctionDeclaration> Methods   // empty if “;”‐form
 ) : INode;
+
+public sealed record VariableDeclaration(
+    Type Type,                  // "int", "float", "bool"
+    string Name,
+    IExpression? Init           // null if no initializer
+) : IStatement;
+#endregion
 
 public sealed record ProgramNode(
     List<INode> Declarations
@@ -48,19 +56,9 @@ public sealed record ProgramNode(
 public sealed record Parameter(
     Type Type,
     string Name
-);
+) : INode;
 
-#region  statements
-public sealed record BlockSatement(
-    List<IStatement> Statements
-) : IStatement;
-
-public sealed record VariableDeclarationStatement(
-    Type Type,             // "int", "float", "bool"
-    string Name,
-    IExpression? Init           // null if no initializer
-) : IStatement;
-
+#region  Statements
 public sealed record AssignmentStatement(
     string TargetName,
     IExpression Expression
@@ -71,7 +69,7 @@ public sealed record ReturnStatement(
 ) : IStatement;
 #endregion
 
-#region  expressions
+#region  Expressions
 
 public sealed record UnaryExpression(
     UnaryOperator Op,

@@ -32,17 +32,17 @@ public static class IRGenerator
 
                 case StructDeclaration sd:
                     // for each method, emit it as a real LLVM function
-                    foreach (FunctionDeclaration method in sd.Methods)
+                    foreach (FunctionDeclaration function in sd.Methods)
                     {
                         // create a synthetic FunctionDeclaration with a mangled name
-                        string mangle = $"{sd.Name}.{method.Name}";
-                        FunctionDeclaration md = new FunctionDeclaration(
-                            ReturnType: method.ReturnType,
+                        string mangle = $"{sd.Name}.{function.Name}";
+                        FunctionDeclaration functionDeclaration = new FunctionDeclaration(
+                            ReturnType: function.ReturnType,
                             Name: mangle,
-                            Parameters: method.Parameters,
-                            Body: method.Body
+                            Parameters: function.Parameters,
+                            Statements: function.Statements
                         );
-                        EmitFunction(md, sb);
+                        EmitFunction(functionDeclaration, sb);
                     }
                     break;
             }
@@ -62,6 +62,7 @@ public static class IRGenerator
         sb.AppendLine($"%{sd.Name} = type {{ {fieldIr} }}");
     }
 
+    #region Functions
     static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
     {
         allocas = new Dictionary<string, string>();
@@ -78,9 +79,9 @@ public static class IRGenerator
         sb.AppendLine($"define {returnType} @{fn.Name}() {{");
         sb.AppendLine("entry:");
 
-        foreach (IStatement statement in fn.Body.Statements)
+        foreach (IStatement statement in fn.Statements)
         {
-            if (statement is not VariableDeclarationStatement variableDeclaration)
+            if (statement is not VariableDeclaration variableDeclaration)
                 continue;
 
             string varType = variableDeclaration.Type switch
@@ -88,7 +89,7 @@ public static class IRGenerator
                 Type.s32 => "i32",
                 Type.f32 => "double",
                 Type.Bool => "i1",
-                _ => throw new Exception($"Bad var type {variableDeclaration.Type}")
+                _ => throw new Exception($"Bad variable type {variableDeclaration.Type}")
             };
 
             varTypes[variableDeclaration.Name] = varType;
@@ -105,7 +106,7 @@ public static class IRGenerator
             }
         }
 
-        foreach (IStatement statement in fn.Body.Statements)
+        foreach (IStatement statement in fn.Statements)
         {
             switch (statement)
             {
@@ -135,7 +136,7 @@ public static class IRGenerator
             }
         }
 
-        bool hasReturn = fn.Body.Statements.Any(s => s is ReturnStatement);
+        bool hasReturn = fn.Statements.Any(s => s is ReturnStatement);
 
         if (returnType == "i1")
             sb.AppendLine("  ret i1 0");
@@ -147,7 +148,9 @@ public static class IRGenerator
         sb.AppendLine("}");
         sb.AppendLine();
     }
+    #endregion
 
+    #region Expressions
     static (StringBuilder, string) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();
@@ -239,7 +242,9 @@ public static class IRGenerator
                 throw new Exception($"Expr not supported: {expression.GetType().Name}");
         }
     }
+    #endregion
 
+    #region  Helpers
     static string InferExpressionType(IExpression expr) => expr switch
     {
         LiteralExpression lit when lit.Value is int => "i32",
@@ -259,4 +264,5 @@ public static class IRGenerator
         // Type.String => "%String",
         _ => throw new NotSupportedException($"No IR for type {t}")
     };
+    #endregion
 }

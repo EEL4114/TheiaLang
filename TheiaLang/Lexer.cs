@@ -55,7 +55,6 @@ class Lexer(string sourceCode)
             return new Token(TokenType.EOF, "", line, col);
 
         char c = Advance();
-
         //  single char punctuation
         switch (c)
         {
@@ -111,19 +110,19 @@ class Lexer(string sourceCode)
         while (Peek() is char ch && (char.IsLetterOrDigit(ch) || ch == '_'))
             sb.Append(Advance());
 
-        var lex = sb.ToString();
-        return lex switch
+        string lexeme = sb.ToString();
+        return lexeme switch
         {
-            "int" => new Token(TokenType.Keyword_s32, lex, line, startCol),
-            "s32" => new Token(TokenType.Keyword_s32, lex, line, startCol),
-            "float" => new Token(TokenType.Keyword_f32, lex, line, startCol),
-            "f32" => new Token(TokenType.Keyword_f32, lex, line, startCol),
-            "bool" => new Token(TokenType.Keyword_bool, lex, line, startCol),
-            "return" => new Token(TokenType.Keyword_return, lex, line, startCol),
-            "true" => new Token(TokenType.Literal_bool, lex, line, startCol),
-            "false" => new Token(TokenType.Literal_bool, lex, line, startCol),
-            "struct" => new Token(TokenType.Keyword_struct, lex, line, startCol),
-            _ => new Token(TokenType.Identifier, lex, line, startCol),
+            "int" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "s32" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "float" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "f32" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "bool" => new Token(TokenType.Keyword_bool, lexeme, line, startCol),
+            "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
+            "true" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
+            "false" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
+            "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
+            _ => new Token(TokenType.Identifier, lexeme, line, startCol),
         };
     }
 

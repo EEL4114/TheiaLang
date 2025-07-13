@@ -40,7 +40,7 @@ Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 
 Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");
-Console.WriteLine("======================================================");
+Console.WriteLine("==================================================");
 
 public class Log
 {
