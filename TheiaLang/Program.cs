@@ -17,7 +17,6 @@ do
 {
     token = lexer.NextToken();
     tokens.Add(token);
-    Console.WriteLine(token);
 } while (token.TokenType != TokenType.EOF);
 
 Console.WriteLine($"Lexer took {sw2.ElapsedMilliseconds} ms");

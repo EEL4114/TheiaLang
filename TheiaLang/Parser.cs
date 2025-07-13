@@ -20,7 +20,7 @@ public class Scope : INode
     public void Declare(string name, INode node)
     {
         if (Symbols.ContainsKey(name))
-            throw new Exception($"‘{name}’ already declared in this scope");
+            Log.Error(6, $"Identifier '{name}' already declared in the scope '{Name}'");
         Symbols[name] = node;
     }
 }

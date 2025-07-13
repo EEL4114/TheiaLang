@@ -8,7 +8,7 @@ static class AstPrinter
     private static void PrintProgram(ProgramNode p, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}Program");
-        foreach (var node in p.Declarations)
+        foreach (INode node in p.Declarations)
             if (node is FunctionDeclaration function)
                 PrintFunction(function, w, indent + 2);
     }
@@ -16,13 +16,13 @@ static class AstPrinter
     private static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {fn.ReturnType} {fn.Name}()");
-        PrintBlock(fn.Body, w, indent + 2);
+        PrintBlock(fn.Statements, w, indent + 2);
     }
 
-    private static void PrintBlock(BlockSatement block, TextWriter w, int indent)
+    private static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}BlockSatement");
-        foreach (var stmt in block.Statements)
+        foreach (IStatement stmt in block)
             PrintStatement(stmt, w, indent + 2);
     }
 
