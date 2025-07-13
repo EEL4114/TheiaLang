@@ -11,7 +11,6 @@ struct Entity(float health)
 int m()
 {
     int i = 3;
-    int i = 3;
     int health = 7;
     return 0;
 }

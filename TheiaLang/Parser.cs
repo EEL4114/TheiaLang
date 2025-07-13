@@ -14,7 +14,13 @@ public class Scope : INode
         Name = name;
         DeclaringNode = declaringNode;
         Parent = parent;
-        parent?.Children.Add(name, this);
+        if (parent == null)
+            return;
+
+        if (!parent.Children.ContainsKey(name))
+            parent.Children.Add(name, this);
+        else
+            Log.Error(6, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
     }
 
     // convenience for parser when you hit a declaration
