@@ -144,13 +144,6 @@ public static class IRGenerator
 
         bool hasReturn = fn.Statements.Any(s => s is ReturnStatement);
 
-        if (returnType == "i1")
-            sb.AppendLine("  ret i1 0");
-        else if (returnType == "double")
-            sb.AppendLine("  ret double 0.0");
-        else // assume i32
-            sb.AppendLine("  ret i32 0");
-
         sb.AppendLine("}");
         sb.AppendLine();
     }
