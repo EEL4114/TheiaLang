@@ -2,6 +2,7 @@ using TheiaLang;
 
 static class AstPrinter
 {
+    const int tab = 4;
     public static void Print(ProgramNode program, TextWriter w)
         => PrintProgram(program, w, 0);
 
@@ -9,21 +10,36 @@ static class AstPrinter
     {
         w.WriteLine($"{Indent(indent)}Program");
         foreach (INode node in p.Declarations)
+        {
             if (node is FunctionDeclaration function)
-                PrintFunction(function, w, indent + 2);
+                PrintFunction(function, w, indent);
+            if (node is StructDeclaration structDeclaration)
+                PrintStruct(structDeclaration, w, indent);
+        }
+    }
+
+    private static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
+    {
+        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}");
+        if (structDeclaration.Functions.Count == 0)
+            w.WriteLine();
+
+        foreach (FunctionDeclaration function in structDeclaration.Functions)
+            PrintFunction(function, w, indent + tab);
     }
 
     private static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {fn.ReturnType} {fn.Name}()");
-        PrintBlock(fn.Statements, w, indent + 2);
+        PrintBlock(fn.Statements, w, indent + tab);
     }
 
     private static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}BlockSatement");
         foreach (IStatement stmt in block)
-            PrintStatement(stmt, w, indent + 2);
+            PrintStatement(stmt, w, indent + tab);
+        w.WriteLine();
     }
 
     private static void PrintStatement(IStatement stmt, TextWriter w, int indent)
@@ -34,17 +50,17 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.Type} {vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init is not null)
-                    PrintExpression(vd.Init, w, indent + 2);
+                    PrintExpression(vd.Init, w, indent + tab);
                 break;
 
             case AssignmentStatement a:
                 w.WriteLine($"{Indent(indent)}Assign: {a.TargetName} =");
-                PrintExpression(a.Expression, w, indent + 2);
+                PrintExpression(a.Expression, w, indent + tab);
                 break;
 
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return");
-                PrintExpression(r.Expr, w, indent + 2);
+                PrintExpression(r.Expr, w, indent + tab);
                 break;
 
             default:
@@ -67,8 +83,8 @@ static class AstPrinter
 
             case BinaryExpression bin:
                 w.WriteLine($"{Indent(indent)}BinaryExpression: {bin.Op}");
-                PrintExpression(bin.Left, w, indent + 2);
-                PrintExpression(bin.Right, w, indent + 2);
+                PrintExpression(bin.Left, w, indent + tab);
+                PrintExpression(bin.Right, w, indent + tab);
                 break;
 
             default:
