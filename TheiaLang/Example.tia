@@ -8,6 +8,8 @@ struct Entity(float health)
     }
 }
 
+union StringData(int i, float f);
+
 int m()
 {
     int i = 3;

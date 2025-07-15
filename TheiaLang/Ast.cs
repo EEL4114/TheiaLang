@@ -36,11 +36,11 @@ public class FunctionDeclaration : INode
     public Scope? Scope;
     public readonly Type ReturnType;              // "int", "float", "bool"
     public string Name;                   // e.g. "main"
-    public readonly List<Parameter> Parameters;     // empty for now
+    public readonly List<TypeNamePair> Parameters;     // empty for now
     public readonly List<IStatement> Statements;     // the { … } body
     public FunctionDeclaration(Type returnType,
                                string name,
-                               List<Parameter> paramaters,
+                               List<TypeNamePair> paramaters,
                                List<IStatement> statements)
     {
         ReturnType = returnType;
@@ -54,11 +54,11 @@ public class StructDeclaration : INode
 {
     public Scope? Scope;
     public readonly string Name;
-    public readonly List<Parameter> Fields;
+    public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
 
     public StructDeclaration(string name,
-                             List<Parameter> fields,
+                             List<TypeNamePair> fields,
                              List<FunctionDeclaration> functions)
     {
         Name = name;
@@ -66,6 +66,11 @@ public class StructDeclaration : INode
         Functions = functions;
     }
 }
+
+public record UnionDeclaration(
+    string Name,
+    List<TypeNamePair> Variants
+) : INode;
 
 public record VariableDeclaration(
     Type Type,                  // "int", "float", "bool"
@@ -78,7 +83,7 @@ public sealed record ProgramNode(
     List<INode> Declarations
 );
 
-public sealed record Parameter(
+public sealed record TypeNamePair(
     Type Type,
     string Name
 ) : INode;

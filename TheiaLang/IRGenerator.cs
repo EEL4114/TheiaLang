@@ -150,6 +150,7 @@ public static class IRGenerator
     #endregion
 
     #region Expressions
+
     static (StringBuilder, string) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();

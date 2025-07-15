@@ -14,6 +14,7 @@ public enum TokenType
     Keyword_s32,
     Keyword_f32,
     Keyword_struct,
+    Keyword_union,
 
     Keyword_return,
 
@@ -122,6 +123,7 @@ class Lexer(string sourceCode)
             "true" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
             "false" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
             "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
+            "union" => new Token(TokenType.Keyword_union, lexeme, line, startCol),
             _ => new Token(TokenType.Identifier, lexeme, line, startCol),
         };
     }
