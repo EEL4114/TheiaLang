@@ -5,10 +5,12 @@ namespace TheiaLang;
 public static class IRGenerator
 {
     static Dictionary<string, string> allocas;
-    private static Dictionary<string, string> varTypes;
+    static Dictionary<string, string> varTypes;
     static ulong tmpCounter = 0;
-    public static void Emit(ProgramNode program, string pathLl)
+    static Scope? currentScope;
+    public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
     {
+        currentScope = globalScope;
         StringBuilder sb = new StringBuilder();
 
         sb.AppendLine("; ModuleID = 'theia_module'");
@@ -23,30 +25,29 @@ public static class IRGenerator
         sb.AppendLine();
 
         foreach (INode node in program.Declarations)
-        {
             switch (node)
             {
                 case FunctionDeclaration fn:
+                    fn.Name = $"{fn.Scope!.FullName}";
                     EmitFunction(fn, sb);
                     break;
 
                 case StructDeclaration sd:
                     // for each method, emit it as a real LLVM function
-                    foreach (FunctionDeclaration function in sd.Methods)
+                    foreach (FunctionDeclaration function in sd.Functions)
                     {
                         // create a synthetic FunctionDeclaration with a mangled name
-                        string mangle = $"{sd.Name}.{function.Name}";
+                        string mangle = $"{function.Scope!.FullName}";
                         FunctionDeclaration functionDeclaration = new FunctionDeclaration(
-                            ReturnType: function.ReturnType,
-                            Name: mangle,
-                            Parameters: function.Parameters,
-                            Statements: function.Statements
+                            returnType: function.ReturnType,
+                            name: mangle,
+                            paramaters: function.Parameters,
+                            statements: function.Statements
                         );
                         EmitFunction(functionDeclaration, sb);
                     }
                     break;
             }
-        }
 
         File.WriteAllText(pathLl, sb.ToString());
     }
@@ -107,7 +108,6 @@ public static class IRGenerator
         }
 
         foreach (IStatement statement in fn.Statements)
-        {
             switch (statement)
             {
                 case AssignmentStatement a:
@@ -134,7 +134,6 @@ public static class IRGenerator
                     }
                     break;
             }
-        }
 
         bool hasReturn = fn.Statements.Any(s => s is ReturnStatement);
 
@@ -264,5 +263,26 @@ public static class IRGenerator
         // Type.String => "%String",
         _ => throw new NotSupportedException($"No IR for type {t}")
     };
+
+    static void EnterScope(string scopeName)
+    {
+        if (currentScope == null)
+            throw new Exception("'currentScope' is null!");
+
+        if (!currentScope.Children.ContainsKey(scopeName))   // verify that we can enter that scope
+            Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope.FullName}'");
+
+        currentScope = currentScope.Children[scopeName];
+    }
+
+    static void ExitScope()
+    {
+        if (currentScope == null)
+            throw new Exception("'currentScope' is null!");
+
+        if (currentScope.Parent == null)
+            Log.Error(9, $"Can't exit out of scope '{currentScope.FullName}'");
+        currentScope = currentScope.Parent;
+    }
     #endregion
 }

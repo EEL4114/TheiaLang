@@ -23,7 +23,7 @@ Console.WriteLine($"Lexer took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
 Parser parser = new Parser(tokens);
-ProgramNode ast = parser.ParseProgram();
+(ProgramNode ast, Scope globalScope) = parser.ParseProgram();
 Console.WriteLine($"Parser took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
@@ -32,9 +32,9 @@ AstPrinter.Print(ast, writer);
 Console.WriteLine($"AST building took {sw2.ElapsedMilliseconds} ms");
 sw2.Restart();
 
-IRGenerator.Emit(ast, "Example.ll");
+IRGenerator.Emit(ast, globalScope, "Example.ll");
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"{programName}.ll -O3 -o {programName}.exe")?.WaitForExit();
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"{programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
 Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 

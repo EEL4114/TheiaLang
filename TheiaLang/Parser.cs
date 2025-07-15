@@ -3,7 +3,10 @@ namespace TheiaLang;
 public class Scope : INode
 {
     public string Name;
-    public string FullName => $"{Parent?.Name}.{Name}";
+    public string FullName =>
+        Parent == null || string.IsNullOrEmpty(Parent.FullName)
+            ? Name
+            : $"{Parent.FullName}.{Name}";
     public INode? DeclaringNode;
     public Scope? Parent { get; }
     public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
@@ -20,7 +23,7 @@ public class Scope : INode
         if (!parent.Children.ContainsKey(name))
             parent.Children.Add(name, this);
         else
-            Log.Error(6, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
+            Log.Error(7, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
     }
 
     // convenience for parser when you hit a declaration
@@ -38,9 +41,9 @@ public class Parser(List<Token> tokens)
     Scope globalScope;
     Scope currentScope;
 
-    public ProgramNode ParseProgram()
+    public (ProgramNode, Scope) ParseProgram()
     {
-        globalScope = new Scope("Global", null, null);
+        globalScope = new Scope("", null, null);
         currentScope = globalScope;   // global scope
 
         List<INode> nodes = new List<INode>();
@@ -50,7 +53,7 @@ public class Parser(List<Token> tokens)
             else
                 nodes.Add(ParseFunctionDeclaration());
 
-        return new ProgramNode(nodes);
+        return (new ProgramNode(nodes), globalScope);
     }
 
     #region Declarations
@@ -76,6 +79,7 @@ public class Parser(List<Token> tokens)
 
         // initialise only with name, since we can't really mutate a Record later
         EnterScope(name, null);
+        functionDeclaration.Scope = currentScope;
         currentScope.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
 
@@ -100,6 +104,7 @@ public class Parser(List<Token> tokens)
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
         EnterScope(name);
+        structDeclaration.Scope = currentScope;
         currentScope.DeclaringNode = structDeclaration;
 
         if (!Check(TokenType.Punctuation_ParenthesisR))

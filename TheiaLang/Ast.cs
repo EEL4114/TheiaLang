@@ -1,3 +1,5 @@
+using System.Dynamic;
+
 namespace TheiaLang;
 
 public interface INode { }
@@ -29,20 +31,43 @@ public enum Type
 }
 
 #region  Declarations
-public sealed record FunctionDeclaration(
-    Type ReturnType,                // "int", "float", "bool"
-    string Name,                    // e.g. "main"
-    List<Parameter> Parameters,     // empty for now
-    List<IStatement> Statements     // the { … } body
-) : INode;
+public class FunctionDeclaration : INode
+{
+    public Scope? Scope;
+    public readonly Type ReturnType;              // "int", "float", "bool"
+    public string Name;                   // e.g. "main"
+    public readonly List<Parameter> Parameters;     // empty for now
+    public readonly List<IStatement> Statements;     // the { … } body
+    public FunctionDeclaration(Type returnType,
+                               string name,
+                               List<Parameter> paramaters,
+                               List<IStatement> statements)
+    {
+        ReturnType = returnType;
+        Name = name;
+        Parameters = paramaters;
+        Statements = statements;
+    }
+}
 
-public sealed record StructDeclaration(
-    string Name,
-    List<Parameter> Fields,
-    List<FunctionDeclaration> Methods   // empty if “;”‐form
-) : INode;
+public class StructDeclaration : INode
+{
+    public Scope? Scope;
+    public readonly string Name;
+    public readonly List<Parameter> Fields;
+    public readonly List<FunctionDeclaration> Functions;
 
-public sealed record VariableDeclaration(
+    public StructDeclaration(string name,
+                             List<Parameter> fields,
+                             List<FunctionDeclaration> functions)
+    {
+        Name = name;
+        Fields = fields;
+        Functions = functions;
+    }
+}
+
+public record VariableDeclaration(
     Type Type,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
