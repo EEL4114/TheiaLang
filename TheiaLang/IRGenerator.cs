@@ -38,13 +38,8 @@ public static class IRGenerator
                     {
                         // create a synthetic FunctionDeclaration with a mangled name
                         string mangle = $"{function.Scope!.FullName}";
-                        FunctionDeclaration functionDeclaration = new FunctionDeclaration(
-                            returnType: function.ReturnType,
-                            name: mangle,
-                            paramaters: function.Parameters,
-                            statements: function.Statements
-                        );
-                        EmitFunction(functionDeclaration, sb);
+                        function.Name = mangle;
+                        EmitFunction(function, sb);
                     }
                     break;
             }
@@ -77,7 +72,19 @@ public static class IRGenerator
             _ => throw new Exception($"Unsupported return type {fn.ReturnType}")
         };
 
-        sb.AppendLine($"define {returnType} @{fn.Name}() {{");
+        List<string> args = new List<string>();
+        if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
+        {
+            string structPtrType = $"%{parentStruct.Name}*";
+            args.Add($"{structPtrType} %this");
+        }
+
+        string paramList = "";
+
+        if (args.Count > 0)
+            paramList = string.Join(", ", args);
+
+        sb.AppendLine($"define {returnType} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
 
         foreach (IStatement statement in fn.Statements)

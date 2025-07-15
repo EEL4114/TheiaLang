@@ -30,6 +30,7 @@ static class AstPrinter
 
     private static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
     {
+        Console.WriteLine($"{fn.Name} {fn.Scope.FullName}");
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {fn.ReturnType} {fn.Name}()");
         PrintBlock(fn.Statements, w, indent + tab);
     }

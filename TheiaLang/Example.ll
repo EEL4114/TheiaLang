@@ -5,7 +5,7 @@ declare i32 @puts(i8*, ...)
 %Vector3 = type { double, double, double }
 %Entity = type { double }
 
-define i32 @Entity.Kill() {
+define i32 @Entity.Kill(%Entity* %this) {
 entry:
 call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   ret i32 0
