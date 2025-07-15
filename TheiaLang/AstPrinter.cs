@@ -6,7 +6,7 @@ static class AstPrinter
     public static void Print(ProgramNode program, TextWriter w)
         => PrintProgram(program, w, 0);
 
-    private static void PrintProgram(ProgramNode p, TextWriter w, int indent)
+    static void PrintProgram(ProgramNode p, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}Program");
         foreach (INode node in p.Declarations)
@@ -15,12 +15,17 @@ static class AstPrinter
                 PrintFunction(function, w, indent);
             if (node is StructDeclaration structDeclaration)
                 PrintStruct(structDeclaration, w, indent);
+            if (node is UnionDeclaration unionDeclaration)
+                PrintUnion(unionDeclaration, w, indent);
         }
     }
 
-    private static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
+    static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}");
+        foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
+            PrintTypeNamePair(typeNamePair, w, indent + tab);
+
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
 
@@ -28,13 +33,26 @@ static class AstPrinter
             PrintFunction(function, w, indent + tab);
     }
 
-    private static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
+    static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
+    {
+        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}");
+        foreach (TypeNamePair variant in unionDeclaration.Variants)
+            PrintTypeNamePair(variant, w, indent + tab);
+        w.WriteLine();
+    }
+
+    static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
+    {
+        w.WriteLine($"{Indent(indent)}{typeNamePair.Type} {typeNamePair.Name}");
+    }
+
+    static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {fn.ReturnType} {fn.Name}()");
         PrintBlock(fn.Statements, w, indent + tab);
     }
 
-    private static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
+    static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}BlockSatement");
         foreach (IStatement stmt in block)
@@ -42,7 +60,7 @@ static class AstPrinter
         w.WriteLine();
     }
 
-    private static void PrintStatement(IStatement stmt, TextWriter w, int indent)
+    static void PrintStatement(IStatement stmt, TextWriter w, int indent)
     {
         switch (stmt)
         {
@@ -69,7 +87,7 @@ static class AstPrinter
         }
     }
 
-    private static void PrintExpression(IExpression expr, TextWriter w, int indent)
+    static void PrintExpression(IExpression expr, TextWriter w, int indent)
     {
         switch (expr)
         {
@@ -93,5 +111,5 @@ static class AstPrinter
         }
     }
 
-    private static string Indent(int n) => new string(' ', n);
+    static string Indent(int n) => new string(' ', n);
 }

@@ -1,11 +1,19 @@
 Program
 StructDeclaration: Vector3
+    f32 x
+    f32 y
+    f32 z
 
 StructDeclaration: Entity
+    f32 health
     FunctionDeclaration: s32 Kill()
         BlockSatement
             Return
                 Literal: 0
+
+UnionDeclaration: StringData
+    s32 i
+    f32 f
 
 FunctionDeclaration: s32 m()
     BlockSatement
