@@ -1,12 +1,19 @@
 Program
 StructDeclaration: Vector3
-    f32 x
-    f32 y
-    f32 z
+    Fields: {
+        f32 x
+        f32 y
+        f32 z
+    }
 
 StructDeclaration: Entity
-    f32 health
-    FunctionDeclaration: s32 Kill()
+    Fields: {
+        f32 health
+    }
+    FunctionDeclaration: s32 AddHealth
+        Arguments: (
+            f32 amount
+        )
         BlockSatement
             Return
                 Literal: 0
@@ -15,7 +22,9 @@ UnionDeclaration: StringData
     s32 i
     f32 f
 
-FunctionDeclaration: s32 m()
+FunctionDeclaration: s32 m
+    Arguments: (
+    )
     BlockSatement
         VariableDeclaration: s32 i =
             Literal: 3
@@ -24,7 +33,9 @@ FunctionDeclaration: s32 m()
         Return
             Literal: 0
 
-FunctionDeclaration: s32 main()
+FunctionDeclaration: s32 main
+    Arguments: (
+    )
     BlockSatement
         Assign: i =
             Literal: 8

@@ -34,7 +34,7 @@ sw2.Restart();
 
 IRGenerator.Emit(ast, globalScope, "Example.ll");
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"{programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
+Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
 Console.WriteLine($"LLVM took {sw2.ElapsedMilliseconds} ms");
 sw2.Stop();
 
@@ -50,5 +50,10 @@ public class Log
         Console.ResetColor();
         Console.Error.WriteLine(message);
         Environment.Exit(1);
+    }
+
+    public static void Info(string text)
+    {
+        Console.WriteLine(text);
     }
 }

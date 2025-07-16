@@ -23,8 +23,10 @@ static class AstPrinter
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}");
+        w.WriteLine($"{Indent(indent + tab)}Fields: {{");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
-            PrintTypeNamePair(typeNamePair, w, indent + tab);
+            PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
+        w.WriteLine($"{Indent(indent + tab)}}}");
 
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
@@ -46,10 +48,15 @@ static class AstPrinter
         w.WriteLine($"{Indent(indent)}{typeNamePair.Type} {typeNamePair.Name}");
     }
 
-    static void PrintFunction(FunctionDeclaration fn, TextWriter w, int indent)
+    static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {fn.ReturnType} {fn.Name}()");
-        PrintBlock(fn.Statements, w, indent + tab);
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.ReturnType} {functionDeclaration.Name}");
+        w.WriteLine($"{Indent(indent + tab)}Arguments: (");
+        foreach (TypeNamePair typeNamePair in functionDeclaration.Parameters)
+            PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
+        w.WriteLine($"{Indent(indent + tab)})");
+
+        PrintBlock(functionDeclaration.Statements, w, indent + tab);
     }
 
     static void PrintBlock(List<IStatement> block, TextWriter w, int indent)

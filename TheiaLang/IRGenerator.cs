@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace TheiaLang;
@@ -34,6 +35,7 @@ public static class IRGenerator
 
                 case StructDeclaration sd:
                     // for each method, emit it as a real LLVM function
+                    EnterScope(sd.Name);
                     foreach (FunctionDeclaration function in sd.Functions)
                     {
                         // create a synthetic FunctionDeclaration with a mangled name
@@ -41,6 +43,7 @@ public static class IRGenerator
                         function.Name = mangle;
                         EmitFunction(function, sb);
                     }
+                    ExitScope();
                     break;
             }
 
@@ -51,7 +54,7 @@ public static class IRGenerator
     {
         string fieldIr = string.Join(
             ", ",
-            sd.Fields.Select(f => TypeToIr(f.Type))
+            sd.Fields.Select(f => TypeToIR(f.Type))
         );
 
         // emit: %StructName = type { <field1>, <field2>, … }
@@ -61,6 +64,7 @@ public static class IRGenerator
     #region Functions
     static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
     {
+        EnterScope(fn.Scope!);
         allocas = new Dictionary<string, string>();
         varTypes = new Dictionary<string, string>();
 
@@ -81,9 +85,13 @@ public static class IRGenerator
 
         string paramList = "";
 
-        if (args.Count > 0)
-            paramList = string.Join(", ", args);
+        foreach (var p in fn.Parameters)
+        {
+            string llvmTy = TypeToIR(p.Type);
+            args.Add($"{llvmTy} %{p.Name}");
+        }
 
+        paramList = string.Join(", ", args);
         sb.AppendLine($"define {returnType} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
 
@@ -130,7 +138,7 @@ public static class IRGenerator
                 case ReturnStatement r:
                     {
                         sb.AppendLine(
-                          "call i32 @puts(i8* getelementptr inbounds " +
+                          "  call i32 @puts(i8* getelementptr inbounds " +
                           "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
 
                         (StringBuilder code, string val) = EmitExpression(r.Expr);
@@ -146,6 +154,7 @@ public static class IRGenerator
 
         sb.AppendLine("}");
         sb.AppendLine();
+        ExitScope();
     }
     #endregion
 
@@ -163,7 +172,7 @@ public static class IRGenerator
                     code.Append(code);
 
                     // 2) generate a fresh temp
-                    string tmp = $"tmp{tmpCounter++}";
+                    string tmp = NewTempVar();
 
                     // 3) pick instruction based on type
                     string type = InferExpressionType(un.Operand);
@@ -187,10 +196,36 @@ public static class IRGenerator
                     if (literalExpression.Value is bool b) return (code, b ? "1" : "0");
                     throw new Exception("Unknown literal");
                 }
-            case IdentifierExpression id:
+            case IdentifierExpression identifier:
                 {
+                    if (allocas.TryGetValue(identifier.Name, out string? ptr)
+                        && varTypes.TryGetValue(identifier.Name, out string? type))
+                    {
+                        string tmp = $"tmp{tmpCounter++}";
+                        code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
+                        return (code, $"%{tmp}");
+                    }
+
+                    if (currentScope!.Parent?.DeclaringNode is StructDeclaration sd)
+                    {
+                        int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
+                        if (index >= 0)
+                        {
+                            string irType = TypeToIR(sd.Fields[index].Type);
+                            string gep = NewTempVar();
+                            code.AppendLine(
+                                $"  {gep} = getelementptr %struct.{sd.Name}, %struct.{sd.Name}* %this, i32 0, i32 {index}");
+                            string tempIdentifier = NewTempVar();
+                            code.AppendLine($"  {tempIdentifier} = load {irType}, {irType}* {gep}");
+                            return (code, tempIdentifier);
+                        }
+                    }
+
+                    throw new Exception($"Undefined variable or field '{identifier.Name}'");
+
                     // load from local
                     // we assume naming "%<name>_val" for the loaded value
+                    /*
                     if (!allocas.TryGetValue(id.Name, out string? ptrName)
                          || !varTypes.TryGetValue(id.Name, out string? varTy))
                         throw new Exception($"Undefined variable '{id.Name}'");
@@ -199,6 +234,7 @@ public static class IRGenerator
                     string ty = InferExpressionType(expression);
                     code.AppendLine($"  %{tmp} = load {ty}, {ty}* %{id.Name}");
                     return (code, $"%{tmp}");
+                    */
                 }
             case BinaryExpression bin:
                 {
@@ -245,6 +281,8 @@ public static class IRGenerator
     #endregion
 
     #region  Helpers
+
+    static string NewTempVar() => $"tmp{tmpCounter++}";
     static string InferExpressionType(IExpression expr) => expr switch
     {
         LiteralExpression lit when lit.Value is int => "i32",
@@ -255,7 +293,7 @@ public static class IRGenerator
         _ => throw new Exception("Cannot infer type")
     };
 
-    static string TypeToIr(Type t) => t switch
+    static string TypeToIR(Type t) => t switch
     {
         Type.s32 => "i32",
         Type.f32 => "double",  // f64 in LLVM
@@ -270,10 +308,27 @@ public static class IRGenerator
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
-        if (!currentScope.Children.ContainsKey(scopeName))   // verify that we can enter that scope
+        if (!currentScope.Children.ContainsKey(scopeName))
+        {    // verify that we can enter that scope
+            foreach (string key in currentScope.Children.Keys)
+                Log.Info(key);
             Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope.FullName}'");
+        }
 
         currentScope = currentScope.Children[scopeName];
+    }
+
+    static void EnterScope(Scope scope)
+    {
+        if (currentScope == null)
+            throw new Exception("'currentScope' is null!");
+
+        if (!currentScope.Children.ContainsValue(scope))
+        {    // verify that we can enter that scope
+            Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
+        }
+
+        currentScope = scope;
     }
 
     static void ExitScope()

@@ -2,7 +2,7 @@ struct Vector3(float x, float y, float z);
 
 struct Entity(float health)
 {
-    int Kill()
+    int AddHealth(float amount)
     {
         return 0;
     }

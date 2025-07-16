@@ -5,9 +5,9 @@ declare i32 @puts(i8*, ...)
 %Vector3 = type { double, double, double }
 %Entity = type { double }
 
-define i32 @Entity.Kill(%Entity* %this) {
+define i32 @Entity.AddHealth(%Entity* %this, double %amount) {
 entry:
-call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
+  call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   ret i32 0
 }
 
@@ -19,7 +19,7 @@ entry:
   %health = alloca i32
   store i32 7, i32* %health
 
-call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
+  call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   ret i32 0
 }
 
@@ -82,7 +82,7 @@ entry:
   %tmp11 = fmul double %tmp10, 2.0
 
   store double %tmp11, double* %f
-call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
+  call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   %tmp12 = load i32, i32* %c
   ret i32 %tmp12
 }

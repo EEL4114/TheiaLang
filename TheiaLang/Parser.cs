@@ -73,14 +73,26 @@ public class Parser(List<Token> tokens)
 
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnType, name, parameters, body);
 
+        EnterScope(name, null);
         if (!Check(TokenType.Punctuation_ParenthesisR))
-            Console.WriteLine("We actually do have parameters, how unexpected!");
+        {
+            do
+            {
+                Token typeToken = ConsumeTypeKeyword();
+                Type fieldType = TokenTypeToType(typeToken.TokenType);
+                Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
+                TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
+                currentScope.Declare(identifierToken.Lexeme, parameter);
+                Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
+                parameters.Add(parameter);
+            } while (Match(TokenType.Punctuation_Comma));
+        }
+
         // we will not deal with this for now!!!
 
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after parameters");
 
         // initialise only with name, since we can't really mutate a Record later
-        EnterScope(name, null);
         functionDeclaration.Scope = currentScope;
         currentScope.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
