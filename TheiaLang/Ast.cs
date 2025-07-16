@@ -1,6 +1,7 @@
 namespace TheiaLang;
 
 public interface INode { }
+public interface IDeclaration : INode { string Name { get; } }
 public interface IStatement : INode { }
 public interface IExpression : INode { }
 
@@ -29,13 +30,13 @@ public enum Type
 }
 
 #region  Declarations
-public class FunctionDeclaration : INode
+public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public readonly Type ReturnType;              // "int", "float", "bool"
-    public string Name;                   // e.g. "main"
-    public readonly List<TypeNamePair> Parameters;     // empty for now
-    public readonly List<IStatement> Statements;     // the { … } body
+    public readonly Type ReturnType;                // "int", "float", "bool"
+    public string Name { get; set; }                // e.g. "main"
+    public readonly List<TypeNamePair> Parameters;  // empty for now
+    public readonly List<IStatement> Statements;    // the { … } body
     public FunctionDeclaration(Type returnType,
                                string name,
                                List<TypeNamePair> paramaters,
@@ -48,10 +49,10 @@ public class FunctionDeclaration : INode
     }
 }
 
-public class StructDeclaration : INode
+public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public readonly string Name;
+    public string Name { get; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
 
@@ -68,23 +69,24 @@ public class StructDeclaration : INode
 public record UnionDeclaration(
     string Name,
     List<TypeNamePair> Variants
-) : INode;
+) : IDeclaration;
 
 public record VariableDeclaration(
     Type Type,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
-) : IStatement;
+) : IDeclaration, IStatement;
+
+public sealed record TypeNamePair(
+    Type Type,
+    string Name
+) : IDeclaration;
 #endregion
 
 public sealed record ProgramNode(
     List<INode> Declarations
 );
 
-public sealed record TypeNamePair(
-    Type Type,
-    string Name
-) : INode;
 
 #region  Statements
 /// A “new” expression for any nominal type (struct, union, etc.)

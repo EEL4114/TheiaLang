@@ -1,16 +1,21 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace TheiaLang;
 
 public static class IRGenerator
 {
-    static Dictionary<string, string> allocas;
-    static Dictionary<string, string> varTypes;
+    static readonly Stack<Dictionary<string, string>> allocas = new();
+    static readonly Stack<Dictionary<string, string>> varTypes = new();
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
     {
+        allocas.Clear();
+        varTypes.Clear();
+
+        allocas.Push(new Dictionary<string, string>());
+        varTypes.Push(new Dictionary<string, string>());
+
         currentScope = globalScope;
         StringBuilder sb = new StringBuilder();
 
@@ -65,8 +70,6 @@ public static class IRGenerator
     static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
     {
         EnterScope(fn.Scope!);
-        allocas = new Dictionary<string, string>();
-        varTypes = new Dictionary<string, string>();
 
         string returnType = fn.ReturnType switch
         {
@@ -83,17 +86,31 @@ public static class IRGenerator
             args.Add($"{structPtrType} %this");
         }
 
+        // this is messy but works for now?
+
         string paramList = "";
-
-        foreach (var p in fn.Parameters)
+        foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = TypeToIR(p.Type);
-            args.Add($"{llvmTy} %{p.Name}");
+            var llvmTy = TypeToIR(parameter.Type);
+            args.Add($"{llvmTy} %{parameter.Name}");
         }
-
         paramList = string.Join(", ", args);
+
         sb.AppendLine($"define {returnType} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
+
+        foreach (TypeNamePair parameter in fn.Parameters)
+        {
+            var llvmTy = TypeToIR(parameter.Type);
+            string varName = $"%{NewTempVar()}";
+
+            sb.AppendLine($"  {varName} = alloca {llvmTy}");
+            sb.AppendLine($"  store {llvmTy} %{parameter.Name}, {llvmTy}* {varName}");
+
+            allocas.Peek()[parameter.Name] = varName;
+            varTypes.Peek()[parameter.Name] = llvmTy;
+            args.Add($"{llvmTy} %{parameter.Name}");
+        }
 
         foreach (IStatement statement in fn.Statements)
         {
@@ -108,10 +125,10 @@ public static class IRGenerator
                 _ => throw new Exception($"Bad variable type {variableDeclaration.Type}")
             };
 
-            varTypes[variableDeclaration.Name] = varType;
+            varTypes.Peek()[variableDeclaration.Name] = varType;
 
             sb.AppendLine($"  %{variableDeclaration.Name} = alloca {varType}");
-            allocas[variableDeclaration.Name] = variableDeclaration.Name;
+            allocas.Peek()[variableDeclaration.Name] = $"%{variableDeclaration.Name}";
 
             if (variableDeclaration.Init != null)
             {
@@ -125,13 +142,14 @@ public static class IRGenerator
         foreach (IStatement statement in fn.Statements)
             switch (statement)
             {
-                case AssignmentStatement a:
+                case AssignmentStatement assignment:
                     {
-                        (StringBuilder code, string val) = EmitExpression(a.Expression);
-                        sb.Append(code);
-                        string ty = InferExpressionType(a.Expression);
+                        if (!TryResolveSlot(assignment.TargetName, out var ptr, out var ty))
+                            throw new Exception($"Undefined name '{assignment.TargetName}'");
 
-                        sb.AppendLine($"  store {ty} {val}, {ty}* %{a.TargetName}");
+                        (StringBuilder code, string val) = EmitExpression(assignment.Expression);
+                        sb.AppendLine($"  store {ty} {val}, {ty}* {ptr}");
+                        sb.Append(code);
                     }
                     break;
 
@@ -198,8 +216,7 @@ public static class IRGenerator
                 }
             case IdentifierExpression identifier:
                 {
-                    if (allocas.TryGetValue(identifier.Name, out string? ptr)
-                        && varTypes.TryGetValue(identifier.Name, out string? type))
+                    if (TryResolveSlot(identifier.Name, out var ptr, out var type))
                     {
                         string tmp = $"tmp{tmpCounter++}";
                         code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
@@ -283,12 +300,43 @@ public static class IRGenerator
     #region  Helpers
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
+
+    static bool TryResolveSlot(string name, out string? ptr, out string type)
+    {
+        // copy the stacks into arrays so that index 0 is the top of the stack
+        var allocArr = allocas.ToArray();
+        var typeArr = varTypes.ToArray();
+        for (int i = 0; i < allocArr.Length; i++)
+        {
+            if (allocArr[i].TryGetValue(name, out ptr))
+            {
+                // assume varTypes frame has the same key
+                type = typeArr[i][name];
+                return true;
+            }
+        }
+        ptr = type = null!;
+        return false;
+    }
+
+    static bool TryResolveType(string name, out string? llvmType)
+    {
+        // _varTypesStack is a Stack<Dictionary<string,string>>
+        foreach (var frame in varTypes)
+        {
+            if (frame.TryGetValue(name, out llvmType))
+                return true;
+        }
+        llvmType = null!;
+        return false;
+    }
+
     static string InferExpressionType(IExpression expr) => expr switch
     {
         LiteralExpression lit when lit.Value is int => "i32",
         LiteralExpression lit when lit.Value is double => "double",
         LiteralExpression lit when lit.Value is bool => "i1",
-        IdentifierExpression id when varTypes.ContainsKey(id.Name) => varTypes[id.Name],
+        IdentifierExpression id when TryResolveType(id.Name, out string ty) => ty,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception("Cannot infer type")
     };
@@ -308,12 +356,8 @@ public static class IRGenerator
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
-        if (!currentScope.Children.ContainsKey(scopeName))
-        {    // verify that we can enter that scope
-            foreach (string key in currentScope.Children.Keys)
-                Log.Info(key);
+        if (!currentScope.Children.ContainsKey(scopeName))  // verify that we can enter that scope
             Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope.FullName}'");
-        }
 
         currentScope = currentScope.Children[scopeName];
     }
@@ -323,9 +367,13 @@ public static class IRGenerator
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
-        if (!currentScope.Children.ContainsValue(scope))
-        {    // verify that we can enter that scope
+        if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
             Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
+
+        if (scope.DeclaringNode is FunctionDeclaration)
+        {
+            allocas.Push(new Dictionary<string, string>());
+            varTypes.Push(new Dictionary<string, string>());
         }
 
         currentScope = scope;
@@ -338,6 +386,13 @@ public static class IRGenerator
 
         if (currentScope.Parent == null)
             Log.Error(9, $"Can't exit out of scope '{currentScope.FullName}'");
+
+        if (currentScope.DeclaringNode is FunctionDeclaration)
+        {
+            allocas.Pop();
+            varTypes.Pop();
+        }
+
         currentScope = currentScope.Parent;
     }
     #endregion

@@ -10,7 +10,7 @@ public class Scope : INode
     public INode? DeclaringNode;
     public Scope? Parent { get; }
     public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
-    public Dictionary<string, INode> Symbols { get; } = new Dictionary<string, INode>();
+    public Dictionary<string, IDeclaration> Symbols { get; } = new Dictionary<string, IDeclaration>();
 
     public Scope(string name, INode? declaringNode, Scope? parent)
     {
@@ -27,7 +27,7 @@ public class Scope : INode
     }
 
     // convenience for parser when you hit a declaration
-    public void Declare(string name, INode node)
+    public void Declare(string name, IDeclaration node)
     {
         if (Symbols.ContainsKey(name))
             Log.Error(6, $"Identifier '{name}' already declared in the scope '{FullName}'");
@@ -54,6 +54,8 @@ public class Parser(List<Token> tokens)
                 nodes.Add(ParseUnionDeclaration());
             else
                 nodes.Add(ParseFunctionDeclaration());
+
+        Stack<int> stack = new Stack<int>();
 
         return (new ProgramNode(nodes), globalScope);
     }
