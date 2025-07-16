@@ -20,6 +20,7 @@ public static class IRGenerator
         StringBuilder sb = new StringBuilder();
 
         sb.AppendLine("; ModuleID = 'theia_module'");
+        sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
         sb.AppendLine("declare i32 @puts(i8*, ...)");
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();

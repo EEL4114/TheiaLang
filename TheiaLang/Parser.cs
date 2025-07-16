@@ -85,7 +85,7 @@ public class Parser(List<Token> tokens)
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
                 currentScope.Declare(identifierToken.Lexeme, parameter);
-                Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
+                // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
         }

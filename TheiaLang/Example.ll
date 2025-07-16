@@ -1,4 +1,5 @@
 ; ModuleID = 'theia_module'
+target triple = "x86_64-pc-windows-msvc19.44.35211"
 declare i32 @puts(i8*, ...)
 @.theia_print_str = private constant[19 x i8] c"Hello from Theia!\0A\00"
 
