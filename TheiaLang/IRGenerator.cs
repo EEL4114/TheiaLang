@@ -169,24 +169,39 @@ public static class IRGenerator
                     break;
                 case CallStatement call:
                     {
-                        if (!currentScope.TryLookup(call.CalleeName, out IDeclaration callee))
+                        if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
                             throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
 
                         if (callee is not FunctionDeclaration fnDecl)
                             throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
 
+                        if (call.Arguments.Count != fnDecl.Parameters.Count)
+                            Log.Error(11,  // pick an unused code
+                                $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
+                                $"but got {call.Arguments.Count}");
                         string retTy = TypeToIR(fnDecl.ReturnType);
-
 
                         List<string> argumentList = new List<string>();
 
-                        foreach (IExpression argument in call.Arguments)
+                        for (int i = 0; i < call.Arguments.Count; i++)
                         {
+                            IExpression argument = call.Arguments[i];
+
                             (StringBuilder argCode, string argReg) = EmitExpression(argument);
                             sb.Append(argCode);
+
                             // infer the LLVM type of the argument
-                            var argTy = InferExpressionType(argument);
-                            argumentList.Add($"{argTy} {argReg}");
+                            string actualType = InferExpressionType(argument);
+                            Log.Info(actualType);
+                            string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
+                            Log.Info(expectedType);
+
+                            if (actualType != expectedType)
+                                Log.Error(12,
+                                    $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
+                                    $"expected {expectedType}, got {actualType}");
+
+                            argumentList.Add($"{expectedType} {argReg}");
                         }
 
                         sb.AppendLine(

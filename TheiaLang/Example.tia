@@ -11,17 +11,9 @@ struct Entity(float health)
 
 union StringData(int i, float f);
 
-int m(int j)
-{
-    int i = 3;
-    j = 4;
-    int health = 7;
-    return 0;
-}
-
 int main()
 {
-    m(7);
+    m(7.0);
 
     i = 8;
     int defaultInt;
@@ -50,3 +42,12 @@ int main()
     bool ok = c > 5;
     return c;
 }
+
+int m(float j)
+{
+    int i = 3;
+    j = 4;
+    int health = 7;
+    return 0;
+}
+
