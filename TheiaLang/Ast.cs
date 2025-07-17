@@ -27,17 +27,18 @@ public enum Type
     s32,
     f32,
     Bool,
+    Struct,
 }
 
 #region  Declarations
 public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public readonly Type ReturnType;                // "int", "float", "bool"
+    public readonly string ReturnType;                // "int", "float", "bool"
     public string Name { get; set; }                // e.g. "main"
     public readonly List<TypeNamePair> Parameters;  // empty for now
     public readonly List<IStatement> Statements;    // the { … } body
-    public FunctionDeclaration(Type returnType,
+    public FunctionDeclaration(string returnType,
                                string name,
                                List<TypeNamePair> paramaters,
                                List<IStatement> statements)
@@ -72,13 +73,13 @@ public record UnionDeclaration(
 ) : IDeclaration;
 
 public record VariableDeclaration(
-    Type Type,                  // "int", "float", "bool"
+    string Type,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
 ) : IDeclaration, IStatement;
 
 public sealed record TypeNamePair(
-    Type Type,
+    string Type,
     string Name
 ) : IDeclaration;
 #endregion
@@ -112,6 +113,11 @@ public sealed record ReturnStatement(
 #endregion
 
 #region  Expressions
+public sealed record InstantiationExpression(
+    string TypeName,
+    List<IExpression> Arguments
+) : IExpression;
+
 public sealed record UnaryExpression(
     UnaryOperator Op,
     IExpression Operand

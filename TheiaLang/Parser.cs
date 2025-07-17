@@ -75,7 +75,7 @@ public class Parser(List<Token> tokens)
     FunctionDeclaration ParseFunctionDeclaration()
     {
         Token returnTypeToken = ConsumeTypeKeyword();
-        Type returnType = TokenTypeToType(returnTypeToken.TokenType);
+        string returnType = TokenTypeToString(returnTypeToken.TokenType);
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -92,7 +92,7 @@ public class Parser(List<Token> tokens)
             do
             {
                 Token typeToken = ConsumeTypeKeyword();
-                Type fieldType = TokenTypeToType(typeToken.TokenType);
+                string fieldType = TokenTypeToString(typeToken.TokenType);
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
                 currentScope.Declare(identifierToken.Lexeme, parameter);
@@ -138,7 +138,7 @@ public class Parser(List<Token> tokens)
             do
             {
                 Token typeToken = ConsumeTypeKeyword();
-                Type fieldType = TokenTypeToType(typeToken.TokenType);
+                string fieldType = TokenTypeToString(typeToken.TokenType);
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
                 currentScope.Declare(identifierToken.Lexeme, parameter);
@@ -179,7 +179,7 @@ public class Parser(List<Token> tokens)
             do
             {
                 Token typeToken = ConsumeTypeKeyword();
-                Type type = TokenTypeToType(typeToken.TokenType);
+                string type = TokenTypeToString(typeToken.TokenType);
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
                 variants.Add(new TypeNamePair(type, identifierToken.Lexeme));
@@ -211,6 +211,22 @@ public class Parser(List<Token> tokens)
 
     IStatement ParseStatement()
     {
+        if (Peek().TokenType == TokenType.Identifier
+            && PeekNext().TokenType == TokenType.Identifier)
+        {
+            Token typeToken = Advance();
+            string typeName = typeToken.Lexeme;
+            string varName = Advance().Lexeme;
+
+            IExpression? init = null;
+            if (Match(TokenType.Operator_Equals))
+                init = ParseExpression();
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after var-decl");
+            VariableDeclaration variableDeclaration = new VariableDeclaration(typeName, varName, init);
+            currentScope.Declare(varName, variableDeclaration);
+            return variableDeclaration;
+        }
+
         if (Match(TokenType.Keyword_return))
         {
             IExpression expr = ParseExpression();
@@ -228,7 +244,7 @@ public class Parser(List<Token> tokens)
                 init = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
 
-            Type type = TokenTypeToType(typeToken.TokenType);
+            string type = TokenTypeToString(typeToken.TokenType);
 
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
             currentScope.Declare(nameToken.Lexeme, variableDeclaration);
@@ -332,6 +348,22 @@ public class Parser(List<Token> tokens)
 
     private IExpression ParsePrimary()
     {
+        if (Match(TokenType.Keyword_new))
+        {
+            Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
+            string typeName = typeToken.Lexeme;
+
+            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after type name");
+            List<IExpression> arguments = new List<IExpression>();
+            if (!Check(TokenType.Punctuation_ParenthesisR))
+                do
+                {
+                    arguments.Add(ParseExpression());
+                } while (Match(TokenType.Punctuation_Comma));
+            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
+            return new InstantiationExpression(typeName, arguments);
+        }
+
         if (Match(TokenType.Literal_s32) || Match(TokenType.Literal_f32) || Match(TokenType.Literal_bool))
         {
             object v;
@@ -381,14 +413,14 @@ public class Parser(List<Token> tokens)
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 
-    static Type TokenTypeToType(TokenType tokenType) => tokenType switch
+    static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_s32 => Type.s32,
-        TokenType.Keyword_s32 => Type.s32,
-        TokenType.Literal_f32 => Type.f32,
-        TokenType.Keyword_f32 => Type.f32,
-        TokenType.Literal_bool => Type.Bool,
-        TokenType.Keyword_bool => Type.Bool,
+        TokenType.Literal_s32 => "s32",
+        TokenType.Keyword_s32 => "s32",
+        TokenType.Literal_f32 => "f32",
+        TokenType.Keyword_f32 => "f32",
+        TokenType.Literal_bool => "bool",
+        TokenType.Keyword_bool => "bool",
         _ => throw new Exception($"Unsupported Type '{tokenType}'"),
     };
     #endregion
@@ -416,10 +448,10 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
-    static bool IsTypeKeyword(TokenType t)
-        => t == TokenType.Keyword_s32
-        || t == TokenType.Keyword_f32
-        || t == TokenType.Keyword_bool;
+    static bool IsTypeKeyword(TokenType tokenType)
+        => tokenType == TokenType.Keyword_s32
+        || tokenType == TokenType.Keyword_f32
+        || tokenType == TokenType.Keyword_bool;
 
     bool Check(TokenType type)
         => !IsAtEnd() && Peek().TokenType == type;

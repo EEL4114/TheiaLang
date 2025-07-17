@@ -22,6 +22,7 @@ do
 {
     token = lexer.NextToken();
     tokens.Add(token);
+    // Log.Info(token.ToString());
 } while (token.TokenType != TokenType.EOF);
 
 int lexerTime = (int)sw2.Elapsed.TotalMilliseconds;
@@ -91,7 +92,8 @@ PrintSegment(llvmChars, LLVM_COL);
 Console.WriteLine("]");
 
 
-public class Log
+public class
+Log
 {
     public static void Error(uint code, string message)
     {

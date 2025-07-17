@@ -72,13 +72,7 @@ public static class IRGenerator
     {
         EnterScope(fn.Scope!);
 
-        string returnType = fn.ReturnType switch
-        {
-            Type.s32 => "i32",
-            Type.f32 => "f32",
-            Type.Bool => "i1",
-            _ => throw new Exception($"Unsupported return type {fn.ReturnType}")
-        };
+        string returnType = TypeToIR(fn.ReturnType, $"Unsupported return type '{fn.ReturnType}'");
 
         List<string> args = new List<string>();
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
@@ -114,107 +108,125 @@ public static class IRGenerator
         }
 
         foreach (IStatement statement in fn.Statements)
-        {
-            if (statement is not VariableDeclaration variableDeclaration)
-                continue;
-
-            string varType = variableDeclaration.Type switch
-            {
-                Type.s32 => "i32",
-                Type.f32 => "double",
-                Type.Bool => "i1",
-                _ => throw new Exception($"Bad variable type {variableDeclaration.Type}")
-            };
-
-            varTypes.Peek()[variableDeclaration.Name] = varType;
-
-            sb.AppendLine($"  %{variableDeclaration.Name} = alloca {varType}");
-            allocas.Peek()[variableDeclaration.Name] = $"%{variableDeclaration.Name}";
-
-            if (variableDeclaration.Init != null)
-            {
-                (StringBuilder exprCode, string exprRes) = EmitExpression(variableDeclaration.Init);
-                sb.Append(exprCode);
-                sb.AppendLine($"  store {varType} {exprRes}, {varType}* %{variableDeclaration.Name}");
-                sb.AppendLine();
-            }
-        }
-
-        foreach (IStatement statement in fn.Statements)
-            switch (statement)
-            {
-                case AssignmentStatement assignment:
-                    {
-                        if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
-                            throw new Exception($"Undefined name '{assignment.TargetName}'");
-
-                        (StringBuilder code, string val) = EmitExpression(assignment.Expression);
-                        sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
-                        sb.Append(code);
-                    }
-                    break;
-
-                case ReturnStatement r:
-                    {
-                        sb.AppendLine(
-                          "  call i32 @puts(i8* getelementptr inbounds " +
-                          "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
-
-                        (StringBuilder code, string val) = EmitExpression(r.Expr);
-                        sb.Append(code);
-                        string ty = InferExpressionType(r.Expr);
-
-                        sb.AppendLine($"  ret {ty} {val}");
-                    }
-                    break;
-                case CallStatement call:
-                    {
-                        if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
-                            throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
-
-                        if (callee is not FunctionDeclaration fnDecl)
-                            throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
-
-                        if (call.Arguments.Count != fnDecl.Parameters.Count)
-                            Log.Error(11,  // pick an unused code
-                                $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
-                                $"but got {call.Arguments.Count}");
-                        string retTy = TypeToIR(fnDecl.ReturnType);
-
-                        List<string> argumentList = new List<string>();
-
-                        for (int i = 0; i < call.Arguments.Count; i++)
-                        {
-                            IExpression argument = call.Arguments[i];
-
-                            (StringBuilder argCode, string argReg) = EmitExpression(argument);
-                            sb.Append(argCode);
-
-                            // infer the LLVM type of the argument
-                            string actualType = InferExpressionType(argument);
-                            Log.Info(actualType);
-                            string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
-                            Log.Info(expectedType);
-
-                            if (actualType != expectedType)
-                                Log.Error(12,
-                                    $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
-                                    $"expected {expectedType}, got {actualType}");
-
-                            argumentList.Add($"{expectedType} {argReg}");
-                        }
-
-                        sb.AppendLine(
-                            $"  %{NewTempVar()} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
-                    }
-                    break;
-            }
+            EmitStatement(statement, sb);
 
         bool hasReturn = fn.Statements.Any(s => s is ReturnStatement);
 
         sb.AppendLine("}");
         sb.AppendLine();
         ExitScope();
+    }
+    #endregion
+
+    #region Statements
+    static void EmitStatement(IStatement statement, StringBuilder sb)
+    {
+        switch (statement)
+        {
+            case VariableDeclaration variableDeclaration:
+                {
+                    var irType = TypeToIR(variableDeclaration.Type,
+                                          $"Unknown type '{variableDeclaration.Type}' in variable declaration");
+
+                    var slot = $"%{variableDeclaration.Name}";
+                    sb.AppendLine($"  {slot} = alloca {irType}");
+                    allocas.Peek()[variableDeclaration.Name] = slot;
+                    varTypes.Peek()[variableDeclaration.Name] = irType;
+
+                    if (variableDeclaration.Init is InstantiationExpression inst)
+                    {
+                        for (int i = 0; i < inst.Arguments.Count; i++)
+                        {
+                            // evaluate the argument
+                            (StringBuilder argCode, string argReg) = EmitExpression(inst.Arguments[i]);
+                            sb.Append(argCode);
+
+                            // get the pointer to field `i` of our *variable* slot
+                            string gep = $"%{NewTempVar()}";
+                            sb.AppendLine(
+                              $"  {gep} = getelementptr {irType}, {irType}* {slot}, i32 0, i32 {i}");
+
+                            // store the argument into that field
+                            string? argTy = InferExpressionType(inst.Arguments[i]);
+                            sb.AppendLine(
+                              $"  store {argTy} {argReg}, {argTy}* {gep}");
+                        }
+                        sb.AppendLine();
+                    }
+                    else if (variableDeclaration.Init != null)
+                    {
+                        (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
+                        sb.Append(initCode);
+                        sb.AppendLine(
+                          $"  store {irType} {initReg}, {irType}* {slot}");
+                    }
+                }
+                break;
+            case AssignmentStatement assignment:
+                {
+                    if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
+                        throw new Exception($"Undefined Identifier '{assignment.TargetName}' in AssignmentStatement: \n" +
+                        $"{assignment.TargetName} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
+
+                    (StringBuilder code, string val) = EmitExpression(assignment.Expression);
+                    sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
+                    sb.Append(code);
+                }
+                break;
+
+            case ReturnStatement @return:
+                {
+                    sb.AppendLine(
+                      "  call i32 @puts(i8* getelementptr inbounds " +
+                      "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
+
+                    (StringBuilder code, string val) = EmitExpression(@return.Expr);
+                    sb.Append(code);
+                    string? ty = InferExpressionType(@return.Expr);
+
+                    sb.AppendLine($"  ret {ty} {val}");
+                }
+                break;
+            case CallStatement call:
+                {
+                    if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
+                        throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
+
+                    if (callee is not FunctionDeclaration fnDecl)
+                        throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
+
+                    if (call.Arguments.Count != fnDecl.Parameters.Count)
+                        Log.Error(11,  // pick an unused code
+                            $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
+                            $"but got {call.Arguments.Count}");
+                    string retTy = TypeToIR(fnDecl.ReturnType);
+
+                    List<string> argumentList = new List<string>();
+
+                    for (int i = 0; i < call.Arguments.Count; i++)
+                    {
+                        IExpression argument = call.Arguments[i];
+
+                        (StringBuilder argCode, string argReg) = EmitExpression(argument);
+                        sb.Append(argCode);
+
+                        // infer the LLVM type of the argument
+                        string? actualType = InferExpressionType(argument);
+                        string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
+
+                        if (actualType != expectedType)
+                            Log.Error(12,
+                                $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
+                                $"expected {expectedType}, got {actualType}");
+
+                        argumentList.Add($"{expectedType} {argReg}");
+                    }
+
+                    sb.AppendLine(
+                        $"  %{NewTempVar()} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
+                }
+                break;
+        }
     }
     #endregion
 
@@ -235,7 +247,7 @@ public static class IRGenerator
                     string tmp = NewTempVar();
 
                     // 3) pick instruction based on type
-                    string type = InferExpressionType(un.Operand);
+                    string? type = InferExpressionType(un.Operand);
                     string instr = type switch
                     {
                         "i32" => "sub",   // integer: 0 - x
@@ -302,7 +314,7 @@ public static class IRGenerator
                     code.Append(cl);
                     code.Append(cr);
 
-                    string ty = InferExpressionType(bin.Left);
+                    string? ty = InferExpressionType(bin.Left);
                     string tmp = $"tmp{tmpCounter++}";
                     string op;
 
@@ -332,9 +344,30 @@ public static class IRGenerator
 
                     return (code, $"%{tmp}");
                 }
+            case InstantiationExpression instantiation:
+                {
+                    string irType = TypeToIR(instantiation.TypeName,
+                                          $"Unknown type '{instantiation.TypeName}' in instantiation");
+                    string ptrName = $"%{NewTempVar()}";
+                    code.AppendLine($"  {ptrName} = alloca {irType}");
+
+                    for (int i = 0; i < instantiation.Arguments.Count; i++)
+                    {
+                        (StringBuilder argCode, string argReg) = EmitExpression(instantiation.Arguments[i]);
+                        code.Append(argCode);
+
+                        string gep = $"%{NewTempVar()}";
+                        code.AppendLine(
+                            $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
+
+                        var argTy = InferExpressionType(instantiation.Arguments[i]);
+                        code.AppendLine($"  store {argTy} {argReg}, {argTy}* {gep}");
+                    }
+                    return (code, ptrName);
+                }
 
             default:
-                throw new Exception($"Expr not supported: {expression.GetType().Name}");
+                throw new Exception($"Unsupported expression: {expression.GetType().Name}");
         }
     }
     #endregion
@@ -373,24 +406,30 @@ public static class IRGenerator
         return false;
     }
 
-    static string InferExpressionType(IExpression expr) => expr switch
+    static string? InferExpressionType(IExpression expr) => expr switch
     {
         LiteralExpression lit when lit.Value is int => "i32",
         LiteralExpression lit when lit.Value is double => "double",
         LiteralExpression lit when lit.Value is bool => "i1",
-        IdentifierExpression id when TryResolveType(id.Name, out string ty) => ty,
+        IdentifierExpression id when TryResolveType(id.Name, out string? type) => type,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception("Cannot infer type")
     };
 
-    static string TypeToIR(Type t) => t switch
+    static string TypeToIR(string t, string errorMessage = "") => t switch
     {
-        Type.s32 => "i32",
-        Type.f32 => "double",  // f64 in LLVM
-        Type.Bool => "i1",
-        // once you have string support:
-        // Type.String => "%String",
-        _ => throw new NotSupportedException($"No IR for type {t}")
+        "s32" => "i32",
+        "f32" => "double",  // f64 in LLVM
+        "bool" => "i1",
+
+        _ when currentScope!.TryLookup(t, out var decl)
+            && decl is StructDeclaration
+        => $"%{t}",
+
+
+        _ => errorMessage == null ?
+            throw new NotSupportedException($"No IR for type {t}")
+            : throw new Exception(errorMessage)
     };
 
     static void EnterScope(string scopeName)

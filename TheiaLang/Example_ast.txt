@@ -9,6 +9,7 @@ StructDeclaration: Vector3
 StructDeclaration: Entity
     Fields: {
         f32 health
+        f32 speed
     }
     FunctionDeclaration: s32 AddHealth
         Arguments: (
@@ -30,24 +31,31 @@ FunctionDeclaration: s32 main
     BlockSatement
         Call: m
             Arguments: (
-                Literal: 7.0
+                Literal: 7
             )
+
+        VariableDeclaration: Entity entity =
+            Instantiation: Entity
+                Arguments: (
+                    Literal: 70.0
+                    Literal: 1.5
+                )
 
         Assign: i =
             Literal: 8
         VariableDeclaration: s32 defaultInt
         VariableDeclaration: f32 defaultFloat
-        VariableDeclaration: Bool defaultBool
+        VariableDeclaration: bool defaultBool
         VariableDeclaration: s32 default_s32
         VariableDeclaration: f32 default_f32
-        VariableDeclaration: Bool default_bool
+        VariableDeclaration: bool default_bool
         VariableDeclaration: s32 i =
             <unknown expression UnaryExpression>
         VariableDeclaration: f32 j =
             <unknown expression UnaryExpression>
-        VariableDeclaration: Bool fg =
+        VariableDeclaration: bool fg =
             Literal: false
-        VariableDeclaration: Bool ffg =
+        VariableDeclaration: bool ffg =
             Literal: true
         VariableDeclaration: s32 a =
             Literal: 5
@@ -69,7 +77,7 @@ FunctionDeclaration: s32 main
             BinaryExpression: Subtract
                 Identifier: f
                 Identifier: g
-        VariableDeclaration: Bool ok =
+        VariableDeclaration: bool ok =
             BinaryExpression: Greater
                 Identifier: c
                 Literal: 5
@@ -78,7 +86,7 @@ FunctionDeclaration: s32 main
 
 FunctionDeclaration: s32 m
     Arguments: (
-        f32 j
+        s32 j
     )
     BlockSatement
         VariableDeclaration: s32 i =

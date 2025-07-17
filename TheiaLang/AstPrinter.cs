@@ -122,6 +122,17 @@ static class AstPrinter
                 PrintExpression(bin.Right, w, indent + tab);
                 break;
 
+
+            case InstantiationExpression isnt:
+                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
+                w.WriteLine($"{Indent(indent + tab)}Arguments: (");
+                foreach (IExpression arument in isnt.Arguments)
+                    PrintExpression(arument, w, indent + tab * 2);
+
+                w.WriteLine($"{Indent(indent + tab)})");
+                w.WriteLine();
+                break;
+
             default:
                 w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>");
                 break;
