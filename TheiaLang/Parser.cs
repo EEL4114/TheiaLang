@@ -33,6 +33,17 @@ public class Scope : INode
             Log.Error(6, $"Identifier '{name}' already declared in the scope '{FullName}'");
         Symbols[name] = node;
     }
+
+    public bool TryLookup(string name, out IDeclaration? declaration)
+    {
+        for (var s = this; s != null; s = s.Parent)
+        {
+            if (s.Symbols.TryGetValue(name, out declaration))
+                return true;
+        }
+        declaration = null!;
+        return false;
+    }
 }
 
 public class Parser(List<Token> tokens)
@@ -225,13 +236,35 @@ public class Parser(List<Token> tokens)
         }
 
         // assignment: identifier '=' expr ';'
-        if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Operator_Equals)
+        if (Peek().TokenType == TokenType.Identifier
+            && PeekNext().TokenType == TokenType.Operator_Equals)
         {
             Token nameTok = Advance();
             Advance(); // consume '='
             IExpression expr = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
             return new AssignmentStatement(nameTok.Lexeme, expr);
+        }
+
+        // call or instantiation
+        if (Peek().TokenType == TokenType.Identifier
+            && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+        {
+            Token nameToken = Advance();
+            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
+
+            List<IExpression> arguments = new List<IExpression>();
+            if (!Check(TokenType.Punctuation_ParenthesisR))
+            {
+                do
+                {
+                    arguments.Add(ParseExpression());
+                } while (Match(TokenType.Punctuation_Comma));
+            }
+
+            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
+            return new CallStatement(nameToken.Lexeme, arguments);
         }
 
         Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");

@@ -87,9 +87,19 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}Return");
                 PrintExpression(r.Expr, w, indent + tab);
                 break;
+            case CallStatement call:
+                w.WriteLine($"{Indent(indent)}Call: {call.CalleeName}");
+                w.WriteLine($"{Indent(indent + tab)}Arguments: (");
+
+                foreach (IExpression arument in call.Arguments)
+                    PrintExpression(arument, w, indent + tab * 2);
+
+                w.WriteLine($"{Indent(indent + tab)})");
+                w.WriteLine();
+                break;
 
             default:
-                w.WriteLine($"{Indent(indent)}<unknown statement {stmt.GetType().Name}>");
+                w.WriteLine($"{Indent(indent)}<unknown statement '{stmt.GetType().Name}'>");
                 break;
         }
     }

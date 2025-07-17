@@ -26,10 +26,13 @@ UnionDeclaration: StringData
 
 FunctionDeclaration: s32 m
     Arguments: (
+        s32 j
     )
     BlockSatement
         VariableDeclaration: s32 i =
             Literal: 3
+        Assign: j =
+            Literal: 4
         VariableDeclaration: s32 health =
             Literal: 7
         Return
@@ -39,6 +42,11 @@ FunctionDeclaration: s32 main
     Arguments: (
     )
     BlockSatement
+        Call: m
+            Arguments: (
+                Literal: 7
+            )
+
         Assign: i =
             Literal: 8
         VariableDeclaration: s32 defaultInt

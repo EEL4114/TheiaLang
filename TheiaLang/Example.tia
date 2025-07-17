@@ -11,15 +11,18 @@ struct Entity(float health)
 
 union StringData(int i, float f);
 
-int m()
+int m(int j)
 {
     int i = 3;
+    j = 4;
     int health = 7;
     return 0;
 }
 
 int main()
 {
+    m(7);
+
     i = 8;
     int defaultInt;
     float defaultFloat;

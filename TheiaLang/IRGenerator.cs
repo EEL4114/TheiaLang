@@ -145,11 +145,11 @@ public static class IRGenerator
             {
                 case AssignmentStatement assignment:
                     {
-                        if (!TryResolveSlot(assignment.TargetName, out var ptr, out var ty))
+                        if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
                             throw new Exception($"Undefined name '{assignment.TargetName}'");
 
                         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
-                        sb.AppendLine($"  store {ty} {val}, {ty}* {ptr}");
+                        sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
                         sb.Append(code);
                     }
                     break;
@@ -165,6 +165,32 @@ public static class IRGenerator
                         string ty = InferExpressionType(r.Expr);
 
                         sb.AppendLine($"  ret {ty} {val}");
+                    }
+                    break;
+                case CallStatement call:
+                    {
+                        if (!currentScope.TryLookup(call.CalleeName, out IDeclaration callee))
+                            throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
+
+                        if (callee is not FunctionDeclaration fnDecl)
+                            throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
+
+                        string retTy = TypeToIR(fnDecl.ReturnType);
+
+
+                        List<string> argumentList = new List<string>();
+
+                        foreach (IExpression argument in call.Arguments)
+                        {
+                            (StringBuilder argCode, string argReg) = EmitExpression(argument);
+                            sb.Append(argCode);
+                            // infer the LLVM type of the argument
+                            var argTy = InferExpressionType(argument);
+                            argumentList.Add($"{argTy} {argReg}");
+                        }
+
+                        sb.AppendLine(
+                            $"  %{NewTempVar()} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
                     }
                     break;
             }

@@ -90,15 +90,16 @@ public sealed record ProgramNode(
 
 #region  Statements
 /// A “new” expression for any nominal type (struct, union, etc.)
-public sealed record CallExpression(
+public sealed record CallStatement(
     string CalleeName,                // both functions and types
-    List<CallArgument> Arguments      // positional & named args
-) : IExpression;
+    List<IExpression> Arguments      // positional & named args
+) : IStatement;
 
+/*
 public sealed record CallArgument(
     string? Name,                     // null for positional, or the parameter/field name
     IExpression Value
-) : INode;
+) : INode;*/
 
 public sealed record AssignmentStatement(
     string TargetName,
