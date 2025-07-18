@@ -124,70 +124,79 @@ public static class IRGenerator
         switch (statement)
         {
             case VariableDeclaration variableDeclaration:
-                {
-                    var irType = TypeToIR(variableDeclaration.Type,
-                                          $"Unknown type '{variableDeclaration.Type}' in variable declaration");
-
-                    var slot = $"%{variableDeclaration.Name}";
-                    sb.AppendLine($"  {slot} = alloca {irType}");
-                    allocas.Peek()[variableDeclaration.Name] = slot;
-                    varTypes.Peek()[variableDeclaration.Name] = irType;
-
-                    if (variableDeclaration.Init is InstantiationExpression inst)
-                    {
-                        for (int i = 0; i < inst.Arguments.Count; i++)
-                        {
-                            // evaluate the argument
-                            (StringBuilder argCode, string argReg) = EmitExpression(inst.Arguments[i]);
-                            sb.Append(argCode);
-
-                            // get the pointer to field `i` of our *variable* slot
-                            string gep = $"%{NewTempVar()}";
-                            sb.AppendLine(
-                              $"  {gep} = getelementptr {irType}, {irType}* {slot}, i32 0, i32 {i}");
-
-                            // store the argument into that field
-                            string? argTy = InferExpressionType(inst.Arguments[i]);
-                            sb.AppendLine(
-                              $"  store {argTy} {argReg}, {argTy}* {gep}");
-                        }
-                        sb.AppendLine();
-                    }
-                    else if (variableDeclaration.Init != null)
-                    {
-                        (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
-                        sb.Append(initCode);
-                        sb.AppendLine(
-                          $"  store {irType} {initReg}, {irType}* {slot}");
-                    }
-                }
+                EmitVariableDeclaration(variableDeclaration, sb);
                 break;
             case AssignmentStatement assignment:
-                {
-                    if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
-                        throw new Exception($"Undefined Identifier '{assignment.TargetName}' in AssignmentStatement: \n" +
-                        $"{assignment.TargetName} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
-
-                    (StringBuilder code, string val) = EmitExpression(assignment.Expression);
-                    sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
-                    sb.Append(code);
-                }
+                EmitAssignmentStatement(assignment, sb);
                 break;
 
-            case ReturnStatement @return:
-                {
-                    sb.AppendLine(
-                      "  call i32 @puts(i8* getelementptr inbounds " +
-                      "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
-
-                    (StringBuilder code, string val) = EmitExpression(@return.Expr);
-                    sb.Append(code);
-                    string? ty = InferExpressionType(@return.Expr);
-
-                    sb.AppendLine($"  ret {ty} {val}");
-                }
+            case ReturnStatement returnStatement:
+                EmitReturnStatement(returnStatement, sb);
                 break;
         }
+    }
+
+    static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
+    {
+        var irType = TypeToIR(variableDeclaration.Type,
+                      $"Unknown type '{variableDeclaration.Type}' in variable declaration");
+
+        var slot = $"%{variableDeclaration.Name}";
+        sb.AppendLine($"  {slot} = alloca {irType}");
+        allocas.Peek()[variableDeclaration.Name] = slot;
+        varTypes.Peek()[variableDeclaration.Name] = irType;
+
+        if (variableDeclaration.Init is InstantiationExpression inst)
+        {
+            for (int i = 0; i < inst.Arguments.Count; i++)
+            {
+                // evaluate the argument
+                (StringBuilder argCode, string argReg) = EmitExpression(inst.Arguments[i]);
+                sb.Append(argCode);
+
+                // get the pointer to field `i` of our *variable* slot
+                string gep = $"%{NewTempVar()}";
+                sb.AppendLine(
+                  $"  {gep} = getelementptr {irType}, {irType}* {slot}, i32 0, i32 {i}");
+
+                // store the argument into that field
+                string? argTy = InferExpressionType(inst.Arguments[i]);
+                sb.AppendLine(
+                  $"  store {argTy} {argReg}, {argTy}* {gep}");
+            }
+            sb.AppendLine();
+        }
+        else if (variableDeclaration.Init != null)
+        {
+            (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
+            sb.Append(initCode);
+            sb.AppendLine(
+              $"  store {irType} {initReg}, {irType}* {slot}");
+        }
+    }
+
+    static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
+    {
+        if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
+            throw new Exception($"Undefined Identifier '{assignment.TargetName}' in AssignmentStatement: \n" +
+            $"{assignment.TargetName} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
+
+        (StringBuilder code, string val) = EmitExpression(assignment.Expression);
+        sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
+        sb.Append(code);
+    }
+
+    static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
+    {
+        sb.AppendLine(
+            "  call i32 @puts(i8* getelementptr inbounds " +
+            "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
+
+        (StringBuilder code, string val) = EmitExpression(returnStatement.Expr);
+        sb.Append(code);
+        string? ty = InferExpressionType(returnStatement.Expr);
+
+        sb.AppendLine($"  ret {ty} {val}");
     }
     #endregion
 
@@ -362,7 +371,6 @@ public static class IRGenerator
             $"  {tmp} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
     }
-
 
     #endregion
 
