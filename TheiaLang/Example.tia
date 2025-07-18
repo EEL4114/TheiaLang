@@ -2,10 +2,9 @@ struct Vector3(float x, float y, float z);
 
 struct Entity(float health, float speed)
 {
-    int AddHealth(float amount)
+    bool IsAlive()
     {
-        amount = 0.0;
-        return 0;
+        return true;
     }
 }
 
@@ -20,7 +19,7 @@ int main()
 
     Entity entity = new Entity(70.0, 1.5);
 
-    t = entity.health;
+    float v = entity.health;
 
     int defaultInt;
     float defaultFloat;

@@ -6,33 +6,34 @@ declare i32 @puts(i8*, ...)
 %Vector3 = type { double, double, double }
 %Entity = type { double, double }
 
-define i32 @Entity.AddHealth(%Entity* %this, double %amount) {
+define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp0 = alloca double
-  store double %amount, double* %tmp0
-  store double 0.0, double* %tmp0
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
-  ret i32 0
+  ret i1 1
 }
 
 define i32 @main() {
 entry:
   %t = alloca i32
-  %tmp1 = call i32 @m(i32 8)
-  store i32 %tmp1, i32* %t
+  %tmp0 = call i32 @m(i32 8)
+  store i32 %tmp0, i32* %t
   %u = alloca i32
-  %tmp2 = call i32 @m(i32 8)
-  %tmp3 = add i32 1, %tmp2
+  %tmp1 = call i32 @m(i32 8)
+  %tmp2 = add i32 1, %tmp1
 
-  %tmp4 = add i32 %tmp3, 9
+  %tmp3 = add i32 %tmp2, 9
 
-  store i32 %tmp4, i32* %u
+  store i32 %tmp3, i32* %u
   %entity = alloca %Entity
-  %tmp5 = getelementptr %Entity, %Entity* %entity, i32 0, i32 0
-  store double 70.0, double* %tmp5
-  %tmp6 = getelementptr %Entity, %Entity* %entity, i32 0, i32 1
-  store double 1.5, double* %tmp6
+  %tmp4 = getelementptr %Entity, %Entity* %entity, i32 0, i32 0
+  store double 70.0, double* %tmp4
+  %tmp5 = getelementptr %Entity, %Entity* %entity, i32 0, i32 1
+  store double 1.5, double* %tmp5
 
+  %v = alloca double
+  %tmp6 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
+  %tmp7 = load double, double* %tmp6
+  store double %tmp7, double* %v
   %defaultInt = alloca i32
   %defaultFloat = alloca double
   %defaultBool = alloca i1
@@ -40,11 +41,11 @@ entry:
   %default_f32 = alloca double
   %default_bool = alloca i1
   %i = alloca i32
-  %tmp7 = sub i32 0, 1
-  store i32 %tmp7, i32* %i
+  %tmp8 = sub i32 0, 1
+  store i32 %tmp8, i32* %i
   %j = alloca double
-  %tmp8 = fsub double 0.0, 1.0
-  store double %tmp8, double* %j
+  %tmp9 = fsub double 0.0, 1.0
+  store double %tmp9, double* %j
   %fg = alloca i1
   store i1 0, i1* %fg
   %ffg = alloca i1
@@ -54,42 +55,42 @@ entry:
   %b = alloca i32
   store i32 10, i32* %b
   %c = alloca i32
-  %tmp9 = load i32, i32* %a
-  %tmp10 = load i32, i32* %b
-  %tmp11 = add i32 %tmp9, %tmp10
+  %tmp10 = load i32, i32* %a
+  %tmp11 = load i32, i32* %b
+  %tmp12 = add i32 %tmp10, %tmp11
 
-  store i32 %tmp11, i32* %c
+  store i32 %tmp12, i32* %c
   %f = alloca double
   store double 2.5, double* %f
-  store double %tmp13, double* %f
-  %tmp12 = load double, double* %f
-  %tmp13 = fmul double %tmp12, 2.0
+  store double %tmp14, double* %f
+  %tmp13 = load double, double* %f
+  %tmp14 = fmul double %tmp13, 2.0
 
   %g = alloca double
   store double 3.0, double* %g
   %h = alloca double
-  %tmp14 = load double, double* %f
-  %tmp15 = load double, double* %g
-  %tmp16 = fsub double %tmp14, %tmp15
+  %tmp15 = load double, double* %f
+  %tmp16 = load double, double* %g
+  %tmp17 = fsub double %tmp15, %tmp16
 
-  store double %tmp16, double* %h
+  store double %tmp17, double* %h
   %ok = alloca i1
-  %tmp17 = load i32, i32* %c
-  %tmp18 = icmp sgt i32 %tmp17, 5
+  %tmp18 = load i32, i32* %c
+  %tmp19 = icmp sgt i32 %tmp18, 5
 
-  store i1 %tmp18, i1* %ok
+  store i1 %tmp19, i1* %ok
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
-  %tmp19 = load i32, i32* %c
-  ret i32 %tmp19
+  %tmp20 = load i32, i32* %c
+  ret i32 %tmp20
 }
 
 define i32 @m(i32 %j) {
 entry:
-  %tmp20 = alloca i32
-  store i32 %j, i32* %tmp20
+  %tmp21 = alloca i32
+  store i32 %j, i32* %tmp21
   %i = alloca i32
   store i32 3, i32* %i
-  store i32 4, i32* %tmp20
+  store i32 4, i32* %tmp21
   %health = alloca i32
   store i32 7, i32* %health
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))

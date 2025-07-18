@@ -213,6 +213,7 @@ public static class IRGenerator
             BinaryExpression binaryExpression => EmitBinaryExpression(binaryExpression, code),
             InstantiationExpression instantiation => EmitInstantiationExpression(instantiation, code),
             CallExpression call => EmitCallExpression(call, code),
+            MemberAccessExpression memberAccess => EmitMemberAccessExpression(memberAccess, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
@@ -372,6 +373,50 @@ public static class IRGenerator
         return (code, tmp);
     }
 
+    static (StringBuilder code, string name) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
+    {
+        if (!currentScope!.TryLookup(memberAccess.Target.Name, out IDeclaration? targetDecl))
+            throw new Exception($"Undefined identifier '{memberAccess.Target.Name}' in {currentScope.FullName}");
+
+        if (targetDecl is not VariableDeclaration vd)
+            throw new Exception($"Identifier '{memberAccess.Target.Name}' is not a variable");
+
+
+        if (!currentScope!.TryLookup(vd.Type, out IDeclaration? typeDecl))
+            throw new Exception($"Undefined Type '{vd.Type}' in {currentScope.FullName}");
+
+        if (typeDecl is not StructDeclaration sd)
+            throw new Exception($"Type '{vd.Type}' is not a struct");
+
+
+        if (!currentScope.GetParentOf(sd.Scope!, out Scope? structScope))
+            throw new Exception($"Scope '{sd.Scope!.FullName}' could not be accessed from {currentScope.FullName}");
+
+        TypeNamePair? memberField = null;
+        int memberIndex = 0;
+        for (int i = 0; i < sd.Fields.Count; i++)
+            if (sd.Fields[i].Name == memberAccess.Member.Name)
+            {
+                memberField = sd.Fields[i];
+                memberIndex = i;
+            }
+
+        if (memberField == null)
+            throw new Exception($"Field '{memberAccess.Member.Name} could not be found in {memberAccess.Target.Name}'");
+
+        string gep = $"%{NewTempVar()}";
+
+        string targetType = $"%{sd.Name}";
+        string memberType = TypeToIR(memberField.Type);
+
+        code.AppendLine(
+            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {allocas.Peek()[memberAccess.Target.Name]}, i32 0, i32 {memberIndex}");
+
+        string tmp = $"%{NewTempVar()}";
+        code.AppendLine($"  {tmp} = load {memberType}, {memberType}* {gep}");
+        return (code, tmp);
+    }
+
     #endregion
 
     #region  Helpers
@@ -415,7 +460,7 @@ public static class IRGenerator
         LiteralExpression lit when lit.Value is bool => "i1",
         IdentifierExpression id when TryResolveType(id.Name, out string? type) => type,
         BinaryExpression bin => InferExpressionType(bin.Left),
-        _ => throw new Exception("Cannot infer type")
+        _ => throw new Exception($"Cannot infer type for Expression {expr}")
     };
 
     static string TypeToIR(string t, string errorMessage = "") => t switch
@@ -427,7 +472,6 @@ public static class IRGenerator
         _ when currentScope!.TryLookup(t, out IDeclaration? decl)
             && decl is StructDeclaration
         => $"%{t}",
-
 
         _ => errorMessage == null ?
             throw new NotSupportedException($"No IR for type {t}")

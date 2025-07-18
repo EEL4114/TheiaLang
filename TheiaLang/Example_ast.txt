@@ -11,16 +11,12 @@ StructDeclaration: Entity
         f32 health
         f32 speed
     }
-    FunctionDeclaration: s32 AddHealth
+    FunctionDeclaration: bool IsAlive
         Arguments: (
-            f32 amount
         )
         BlockSatement
-            Assign: amount =
-                Literal: 0.0
-
             Return
-                Literal: 0
+                Literal: true
 
 UnionDeclaration: StringData
     s32 i
@@ -59,7 +55,7 @@ FunctionDeclaration: s32 main
                     Literal: 1.5
                 )
 
-        Assign: t =
+        VariableDeclaration: f32 v =
             MemberAccess: Target: 'entity'
                 Member: 'health'
 

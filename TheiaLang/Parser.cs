@@ -44,6 +44,16 @@ public class Scope : INode
         declaration = null!;
         return false;
     }
+
+    public bool GetParentOf(Scope scope, out Scope? parent)
+    {
+        if (Children.ContainsValue(scope))
+        {
+            parent = this;
+            return true;
+        }
+        return Parent.GetParentOf(scope, out parent);
+    }
 }
 
 public class Parser(List<Token> tokens)
