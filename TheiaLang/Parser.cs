@@ -36,7 +36,7 @@ public class Scope : INode
 
     public bool TryLookup(string name, out IDeclaration? declaration)
     {
-        for (var s = this; s != null; s = s.Parent)
+        for (Scope? s = this; s != null; s = s.Parent)
         {
             if (s.Symbols.TryGetValue(name, out declaration))
                 return true;
@@ -169,11 +169,11 @@ public class Parser(List<Token> tokens)
 
     UnionDeclaration ParseUnionDeclaration()
     {
-        var nameTok = Consume(TokenType.Identifier, "Expected union name");
-        var name = nameTok.Lexeme;
+        Token nameTok = Consume(TokenType.Identifier, "Expected union name");
+        string name = nameTok.Lexeme;
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after union name");
-        var variants = new List<TypeNamePair>();
+        List<TypeNamePair> variants = new List<TypeNamePair>();
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
@@ -255,24 +255,45 @@ public class Parser(List<Token> tokens)
         if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Operator_Equals)
         {
-            Token nameTok = Advance();
-            Advance(); // consume '='
-            IExpression expr = ParseExpression();
-            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
-            return new AssignmentStatement(nameTok.Lexeme, expr);
+            return ParseAssignment();
+        }
+
+        int ret = pos;
+        try
+        {
+            IExpression? lhs = ParseExpression();
+            if (lhs.Assignable && PeekNext().TokenType == TokenType.Operator_Equals)
+                return ParseAssignment();
+            else
+                pos = ret;
+        }
+        catch
+        {
+            pos = ret;
         }
 
         if (Peek().TokenType == TokenType.Identifier
-         && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+             && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
             IExpression expression = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
             return new ExpressionStatement(expression);
         }
 
-        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
+        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line + 1}:{Peek().Column}");
         Environment.Exit(1);
         return null;
+    }
+
+    AssignmentStatement ParseAssignment()
+    {
+        Token nameToken = Advance();
+        IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme);
+
+        Advance(); // consume '='
+        IExpression expr = ParseExpression();
+        Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
+        return new AssignmentStatement(identifier, expr);
     }
     #endregion
 
@@ -374,15 +395,22 @@ public class Parser(List<Token> tokens)
 
             List<IExpression> arguments = new List<IExpression>();
             if (!Check(TokenType.Punctuation_ParenthesisR))
-            {
                 do
                 {
                     arguments.Add(ParseExpression());
                 } while (Match(TokenType.Punctuation_Comma));
-            }
 
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
             return new CallExpression(nameToken.Lexeme, arguments);
+        }
+
+        if (Peek().TokenType == TokenType.Identifier
+            && PeekNext().TokenType == TokenType.Punctuation_Dot)
+        {
+            IdentifierExpression target = new IdentifierExpression(Advance().Lexeme);
+            Consume(TokenType.Punctuation_Dot, "Expected '.' after member access target");
+            IdentifierExpression member = new IdentifierExpression(Advance().Lexeme);
+            return new MemberAccessExpression(target, member);
         }
 
         if (Match(TokenType.Identifier))
@@ -400,7 +428,7 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression");
+        throw new Exception($"Unexpected token {Peek().TokenType} in expression");
         Environment.Exit(1);
         return null;
     }
@@ -441,7 +469,7 @@ public class Parser(List<Token> tokens)
     Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
-        Log.Error(3, $"{message} at {Peek().Line}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
+        Log.Error(3, $"{message} at {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         Environment.Exit(1);
         return null;
     }

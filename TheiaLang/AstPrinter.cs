@@ -76,13 +76,14 @@ static class AstPrinter
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init is not null)
                     PrintExpression(vd.Init, w, indent + tab);
+                w.WriteLine();
                 break;
 
             case AssignmentStatement a:
-                w.WriteLine($"{Indent(indent)}Assign: {a.TargetName} =");
+                w.WriteLine($"{Indent(indent)}Assign: {a.Target.Name} =");
                 PrintExpression(a.Expression, w, indent + tab);
+                w.WriteLine();
                 break;
-
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return");
                 PrintExpression(r.Expr, w, indent + tab);
@@ -90,6 +91,7 @@ static class AstPrinter
             case ExpressionStatement e:
                 w.WriteLine($"{Indent(indent)}Expression:");
                 PrintExpression(e.Expression, w, indent + tab);
+                w.WriteLine();
                 break;
 
             default:
@@ -123,10 +125,16 @@ static class AstPrinter
                     PrintExpression(arument, w, indent + tab * 2);
 
                 w.WriteLine($"{Indent(indent + tab)})");
-                w.WriteLine();
                 break;
-
-
+            case UnaryExpression u:
+                w.WriteLine($"{Indent(indent)}UnaryExpression: {u.Op}");
+                w.WriteLine($"{Indent(indent + tab)}Operand:");
+                PrintExpression(u.Operand, w, indent + tab * 2);
+                break;
+            case MemberAccessExpression m:
+                w.WriteLine($"{Indent(indent)}MemberAccess: Target: '{m.Target.Name}'");
+                w.WriteLine($"{Indent(indent + tab)}Member: '{m.Member.Name}'");
+                break;
             case InstantiationExpression isnt:
                 w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments: (");
@@ -134,7 +142,6 @@ static class AstPrinter
                     PrintExpression(arument, w, indent + tab * 2);
 
                 w.WriteLine($"{Indent(indent + tab)})");
-                w.WriteLine();
                 break;
 
             default:

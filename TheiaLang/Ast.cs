@@ -3,7 +3,7 @@ namespace TheiaLang;
 public interface INode { }
 public interface IDeclaration : INode { string Name { get; } }
 public interface IStatement : INode { }
-public interface IExpression : INode { }
+public interface IExpression : INode { bool Assignable { get; } }
 
 public enum UnaryOperator
 {
@@ -102,7 +102,7 @@ public sealed record ExpressionStatement(
 ) : IStatement;
 
 public sealed record AssignmentStatement(
-    string TargetName,
+    IdentifierExpression Target,
     IExpression Expression
 ) : IStatement;
 
@@ -113,32 +113,46 @@ public sealed record ReturnStatement(
 
 #region  Expressions
 
+public sealed record MemberAccessExpression(
+    IdentifierExpression Target,
+    IdentifierExpression Member
+) : IExpression
+{ public bool Assignable => true; }
+
 public sealed record CallExpression(
     string CalleeName,                // both functions and types
     List<IExpression> Arguments      // positional & named args
-) : IExpression;
+) : IExpression
+{ public bool Assignable => false; }
+
 public sealed record InstantiationExpression(
     string TypeName,
     List<IExpression> Arguments
-) : IExpression;
+) : IExpression
+{ public bool Assignable => false; }
 
 public sealed record UnaryExpression(
     UnaryOperator Op,
     IExpression Operand
-) : IExpression, INode;
+) : IExpression
+{ public bool Assignable => false; }
 
 public sealed record BinaryExpression(
     IExpression Left,
     BinaryOperator Op,    // "+", "*", ">", etc.
     IExpression Right
-) : IExpression;
+) : IExpression
+{ public bool Assignable => false; }
 
 public sealed record LiteralExpression(
     object Value,       // boxed int, double, bool
     string Lexeme
-) : IExpression;
+) : IExpression
+{ public bool Assignable => false; }
 
 public sealed record IdentifierExpression(
     string Name
-) : IExpression;
+) : IExpression
+{ public bool Assignable => true; }
+
 #endregion

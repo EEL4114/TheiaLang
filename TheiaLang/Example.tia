@@ -20,6 +20,8 @@ int main()
 
     Entity entity = new Entity(70.0, 1.5);
 
+    t = entity.health;
+
     int defaultInt;
     float defaultFloat;
     bool defaultBool;

@@ -86,7 +86,7 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            var llvmTy = TypeToIR(parameter.Type);
+            string llvmTy = TypeToIR(parameter.Type);
             args.Add($"{llvmTy} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
@@ -96,7 +96,7 @@ public static class IRGenerator
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            var llvmTy = TypeToIR(parameter.Type);
+            string llvmTy = TypeToIR(parameter.Type);
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {llvmTy}");
@@ -138,10 +138,10 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        var irType = TypeToIR(variableDeclaration.Type,
+        string irType = TypeToIR(variableDeclaration.Type,
                       $"Unknown type '{variableDeclaration.Type}' in variable declaration");
 
-        var slot = $"%{variableDeclaration.Name}";
+        string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {irType}");
         allocas.Peek()[variableDeclaration.Name] = slot;
         varTypes.Peek()[variableDeclaration.Name] = irType;
@@ -177,9 +177,9 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        if (!TryResolveSlot(assignment.TargetName, out string? ptr, out string? type))
-            throw new Exception($"Undefined Identifier '{assignment.TargetName}' in AssignmentStatement: \n" +
-            $"{assignment.TargetName} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
+        if (!TryResolveSlot(assignment.Target.Name, out string? ptr, out string? type))
+            throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
+            $"{assignment.Target} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
@@ -246,7 +246,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
-        if (TryResolveSlot(identifier.Name, out var ptr, out var type))
+        if (TryResolveSlot(identifier.Name, out string? ptr, out string? type))
         {
             string tmp = $"tmp{tmpCounter++}";
             code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
@@ -325,7 +325,7 @@ public static class IRGenerator
             code.AppendLine(
                 $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
 
-            var argTy = InferExpressionType(instantiation.Arguments[i]);
+            string? argTy = InferExpressionType(instantiation.Arguments[i]);
             code.AppendLine($"  store {argTy} {argReg}, {argTy}* {gep}");
         }
         return (code, ptrName);
@@ -381,8 +381,8 @@ public static class IRGenerator
     static bool TryResolveSlot(string name, out string? ptr, out string type)
     {
         // copy the stacks into arrays so that index 0 is the top of the stack
-        var allocArr = allocas.ToArray();
-        var typeArr = varTypes.ToArray();
+        Dictionary<string, string>[] allocArr = allocas.ToArray();
+        Dictionary<string, string>[] typeArr = varTypes.ToArray();
         for (int i = 0; i < allocArr.Length; i++)
         {
             if (allocArr[i].TryGetValue(name, out ptr))
@@ -399,7 +399,7 @@ public static class IRGenerator
     static bool TryResolveType(string name, out string? llvmType)
     {
         // _varTypesStack is a Stack<Dictionary<string,string>>
-        foreach (var frame in varTypes)
+        foreach (Dictionary<string, string> frame in varTypes)
         {
             if (frame.TryGetValue(name, out llvmType))
                 return true;
@@ -424,7 +424,7 @@ public static class IRGenerator
         "f32" => "double",  // f64 in LLVM
         "bool" => "i1",
 
-        _ when currentScope!.TryLookup(t, out var decl)
+        _ when currentScope!.TryLookup(t, out IDeclaration? decl)
             && decl is StructDeclaration
         => $"%{t}",
 
