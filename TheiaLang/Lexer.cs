@@ -81,7 +81,7 @@ class Lexer(string sourceCode)
             return ReadIdentifierOrKeyword(c);
 
         Log.Error(0, $"Unexpected character '{c}' at {line + 1}:{col}");
-        return null;
+        return null!;
     }
 
     Token ReadNumber(char first)

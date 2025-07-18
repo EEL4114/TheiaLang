@@ -5,16 +5,24 @@ namespace TheiaLang;
 public static class IRGenerator
 {
     static readonly Stack<Dictionary<string, string>> allocas = new();
-    static readonly Stack<Dictionary<string, string>> varTypes = new();
+    static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
     static Scope? currentScope;
+
+    record TypeInfo
+    (
+        string LLVMType,               // e.g. "%Entity"
+        List<string>? FieldNames,       // ["x","y","health",…]
+        List<string>? FieldTypes        // ["i32","i32","i32",…]
+    );
+
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
     {
         allocas.Clear();
         varTypes.Clear();
 
         allocas.Push(new Dictionary<string, string>());
-        varTypes.Push(new Dictionary<string, string>());
+        varTypes.Push(new Dictionary<string, TypeInfo>());
 
         currentScope = globalScope;
         StringBuilder sb = new StringBuilder();
@@ -63,8 +71,22 @@ public static class IRGenerator
             sd.Fields.Select(f => TypeToIR(f.Type))
         );
 
+        string llvmName = $"%{sd.Name}";
+        IEnumerable<string> fieldIRs = sd.Fields.Select(f => TypeToIR(f.Type, $"Unknown '{f.Type}'"));
+
+
         // emit: %StructName = type { <field1>, <field2>, … }
-        sb.AppendLine($"%{sd.Name} = type {{ {fieldIr} }}");
+        sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
+
+        var ti = new TypeInfo
+        (
+            llvmName,
+            sd.Fields.Select(f => f.Name).ToList(),
+            fieldIRs.ToList()
+        );
+
+        varTypes.Peek()[sd.Name] = ti;
+
     }
 
     #region Functions
@@ -103,7 +125,7 @@ public static class IRGenerator
             sb.AppendLine($"  store {llvmTy} %{parameter.Name}, {llvmTy}* {varName}");
 
             allocas.Peek()[parameter.Name] = varName;
-            varTypes.Peek()[parameter.Name] = llvmTy;
+            varTypes.Peek()[parameter.Name] = new TypeInfo(llvmTy, null, null);
             args.Add($"{llvmTy} %{parameter.Name}");
         }
 
@@ -143,8 +165,9 @@ public static class IRGenerator
 
         string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {irType}");
+
         allocas.Peek()[variableDeclaration.Name] = slot;
-        varTypes.Peek()[variableDeclaration.Name] = irType;
+        varTypes.Peek()[variableDeclaration.Name] = new TypeInfo(irType, null, null);
 
         if (variableDeclaration.Init is InstantiationExpression inst)
         {
@@ -177,9 +200,11 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        if (!TryResolveSlot(assignment.Target.Name, out string? ptr, out string? type))
+        if (!TryResolveSlot(assignment.Target.Name, out string? ptr, out TypeInfo? typeInfo))
             throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
             $"{assignment.Target} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
+
+        string type = typeInfo.LLVMType;
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
@@ -247,8 +272,10 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
-        if (TryResolveSlot(identifier.Name, out string? ptr, out string? type))
+        if (TryResolveSlot(identifier.Name, out string? ptr, out TypeInfo? typeInfo))
         {
+            string type = typeInfo.LLVMType;
+
             string tmp = $"tmp{tmpCounter++}";
             code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
             return (code, $"%{tmp}");
@@ -334,17 +361,17 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitCallExpression(CallExpression call, StringBuilder code)
     {
-        if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
+        if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? symbolInfo))
             throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
 
-        if (callee is not FunctionDeclaration fnDecl)
+        if (symbolInfo.Kind != SymbolKind.Function)
             throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
 
-        if (call.Arguments.Count != fnDecl.Parameters.Count)
+        if (call.Arguments.Count != symbolInfo.Parameters!.Count)
             Log.Error(11,  // pick an unused code
-                $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
+                $"Function '{call.CalleeName}' expects {symbolInfo.Parameters.Count} arguments, " +
                 $"but got {call.Arguments.Count}");
-        string retTy = TypeToIR(fnDecl.ReturnType);
+        string retTy = TypeToIR(symbolInfo.Type.TypeName);
 
         List<string> argumentList = new List<string>();
 
@@ -357,11 +384,11 @@ public static class IRGenerator
 
             // infer the LLVM type of the argument
             string? actualType = InferExpressionType(argument);
-            string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
+            string expectedType = TypeToIR(symbolInfo.Parameters[i].Type);
 
             if (actualType != expectedType)
                 Log.Error(12,
-                    $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
+                    $"Type mismatch in call to '{call.CalleeName}': parameter '{symbolInfo.Parameters[i].Name}' " +
                     $"expected {expectedType}, got {actualType}");
 
             argumentList.Add($"{expectedType} {argReg}");
@@ -369,48 +396,40 @@ public static class IRGenerator
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine(
-            $"  {tmp} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
+            $"  {tmp} = call {retTy} @{symbolInfo.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
     }
 
     static (StringBuilder code, string name) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
-        if (!currentScope!.TryLookup(memberAccess.Target.Name, out IDeclaration? targetDecl))
-            throw new Exception($"Undefined identifier '{memberAccess.Target.Name}' in {currentScope.FullName}");
+        string targetName = memberAccess.Target.Name;
+        string memberName = memberAccess.Member.Name;
 
-        if (targetDecl is not VariableDeclaration vd)
-            throw new Exception($"Identifier '{memberAccess.Target.Name}' is not a variable");
+        if (!TryResolveSlot(targetName, out var ptr, out TypeInfo? structInfo))
+            throw new Exception($"Undefined variable '{targetName}'");
+
+        Log.Info($"{structInfo.LLVMType} : {structInfo.FieldNames}");
+
+        if (!currentScope!.TryLookup(targetName, out SymbolInfo symbolInfo))
+            throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
+
+        if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
+            throw new Exception($"Variable {targetName} does not define any fields");
+
+        Log.Info($"{varTypes}");
+        int memberIndex = varTypes.Peek()[targetName].FieldNames!.IndexOf(memberName);
+        if (memberIndex < 0)
+            throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
 
-        if (!currentScope!.TryLookup(vd.Type, out IDeclaration? typeDecl))
-            throw new Exception($"Undefined Type '{vd.Type}' in {currentScope.FullName}");
-
-        if (typeDecl is not StructDeclaration sd)
-            throw new Exception($"Type '{vd.Type}' is not a struct");
-
-
-        if (!currentScope.GetParentOf(sd.Scope!, out Scope? structScope))
-            throw new Exception($"Scope '{sd.Scope!.FullName}' could not be accessed from {currentScope.FullName}");
-
-        TypeNamePair? memberField = null;
-        int memberIndex = 0;
-        for (int i = 0; i < sd.Fields.Count; i++)
-            if (sd.Fields[i].Name == memberAccess.Member.Name)
-            {
-                memberField = sd.Fields[i];
-                memberIndex = i;
-            }
-
-        if (memberField == null)
-            throw new Exception($"Field '{memberAccess.Member.Name} could not be found in {memberAccess.Target.Name}'");
+        string targetType = varTypes.Peek()[targetName].LLVMType;
+        string memberType = varTypes.Peek()[targetName].FieldTypes![memberIndex];
 
         string gep = $"%{NewTempVar()}";
 
-        string targetType = $"%{sd.Name}";
-        string memberType = TypeToIR(memberField.Type);
 
         code.AppendLine(
-            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {allocas.Peek()[memberAccess.Target.Name]}, i32 0, i32 {memberIndex}");
+            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {ptr}, i32 0, i32 {memberIndex}");
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine($"  {tmp} = load {memberType}, {memberType}* {gep}");
@@ -423,28 +442,29 @@ public static class IRGenerator
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
 
-    static bool TryResolveSlot(string name, out string? ptr, out string type)
+    static bool TryResolveSlot(string name, out string? ptr, out TypeInfo typeInfo)
     {
         // copy the stacks into arrays so that index 0 is the top of the stack
         Dictionary<string, string>[] allocArr = allocas.ToArray();
-        Dictionary<string, string>[] typeArr = varTypes.ToArray();
+        Dictionary<string, TypeInfo>[] typeArr = varTypes.ToArray();
         for (int i = 0; i < allocArr.Length; i++)
         {
             if (allocArr[i].TryGetValue(name, out ptr))
             {
                 // assume varTypes frame has the same key
-                type = typeArr[i][name];
+                typeInfo = typeArr[i][name];
                 return true;
             }
         }
-        ptr = type = null!;
+        ptr = null!;
+        typeInfo = null!;
         return false;
     }
 
-    static bool TryResolveType(string name, out string? llvmType)
+    static bool TryResolveType(string name, out TypeInfo? llvmType)
     {
         // _varTypesStack is a Stack<Dictionary<string,string>>
-        foreach (Dictionary<string, string> frame in varTypes)
+        foreach (Dictionary<string, TypeInfo> frame in varTypes)
         {
             if (frame.TryGetValue(name, out llvmType))
                 return true;
@@ -458,7 +478,7 @@ public static class IRGenerator
         LiteralExpression lit when lit.Value is int => "i32",
         LiteralExpression lit when lit.Value is double => "double",
         LiteralExpression lit when lit.Value is bool => "i1",
-        IdentifierExpression id when TryResolveType(id.Name, out string? type) => type,
+        IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type?.LLVMType,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception($"Cannot infer type for Expression {expr}")
     };
@@ -469,8 +489,8 @@ public static class IRGenerator
         "f32" => "double",  // f64 in LLVM
         "bool" => "i1",
 
-        _ when currentScope!.TryLookup(t, out IDeclaration? decl)
-            && decl is StructDeclaration
+        _ when currentScope!.TryLookup(t, out SymbolInfo? symbolInfo)
+            && symbolInfo.Kind == SymbolKind.Type
         => $"%{t}",
 
         _ => errorMessage == null ?
@@ -500,7 +520,7 @@ public static class IRGenerator
         if (scope.DeclaringNode is FunctionDeclaration)
         {
             allocas.Push(new Dictionary<string, string>());
-            varTypes.Push(new Dictionary<string, string>());
+            varTypes.Push(new Dictionary<string, TypeInfo>());
         }
 
         currentScope = scope;

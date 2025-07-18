@@ -1,5 +1,7 @@
 struct Vector3(float x, float y, float z);
 
+union StringData(int i, float f);
+
 struct Entity(float health, float speed)
 {
     bool IsAlive()
@@ -7,8 +9,6 @@ struct Entity(float health, float speed)
         return true;
     }
 }
-
-union StringData(int i, float f);
 
 int main()
 {
@@ -19,7 +19,6 @@ int main()
 
     Entity entity = new Entity(70.0, 1.5);
 
-    float v = entity.health;
 
     int defaultInt;
     float defaultFloat;

@@ -1,4 +1,31 @@
+using System.Net.Http.Headers;
+
 namespace TheiaLang;
+
+public enum SymbolKind
+{
+    Variable,
+    Function,
+    Type
+}
+
+public class SymbolInfo(string name,
+                        TypeInfo type,
+                        SymbolKind symbolKind,
+                        List<TypeNamePair>? parameters)
+{
+    public string Name { get; init; } = name;
+    public TypeInfo Type { get; init; } = type;
+    public SymbolKind Kind { get; init; } = symbolKind;
+    public List<TypeNamePair>? Parameters { get; init; } = parameters;
+}
+
+public class TypeInfo(string type,
+                      List<TypeNamePair>? fields)
+{
+    public string TypeName { get; init; } = type;
+    public List<TypeNamePair>? Fields { get; init; } = fields;
+}
 
 public class Scope : INode
 {
@@ -10,7 +37,7 @@ public class Scope : INode
     public INode? DeclaringNode;
     public Scope? Parent { get; }
     public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
-    public Dictionary<string, IDeclaration> Symbols { get; } = new Dictionary<string, IDeclaration>();
+    public Dictionary<string, SymbolInfo> Symbols { get; } = new Dictionary<string, SymbolInfo>();
 
     public Scope(string name, INode? declaringNode, Scope? parent)
     {
@@ -27,22 +54,27 @@ public class Scope : INode
     }
 
     // convenience for parser when you hit a declaration
-    public void Declare(string name, IDeclaration node)
+    public void Declare(string name, SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(name))
             Log.Error(6, $"Identifier '{name}' already declared in the scope '{FullName}'");
-        Symbols[name] = node;
+        Symbols[name] = symbolInfo;
     }
 
-    public bool TryLookup(string name, out IDeclaration? declaration)
+    public bool TryLookup(string name, out SymbolInfo? symbolInfo)
     {
-        for (Scope? s = this; s != null; s = s.Parent)
+        if (Symbols.TryGetValue(name, out symbolInfo))
+            return true;
+        else
         {
-            if (s.Symbols.TryGetValue(name, out declaration))
-                return true;
+            if (Parent == null)
+            {
+                symbolInfo = null!;
+                return false;
+            }
+            else
+                return Parent.TryLookup(name, out symbolInfo);
         }
-        declaration = null!;
-        return false;
     }
 
     public bool GetParentOf(Scope scope, out Scope? parent)
@@ -52,20 +84,38 @@ public class Scope : INode
             parent = this;
             return true;
         }
-        return Parent.GetParentOf(scope, out parent);
+        return Parent!.GetParentOf(scope, out parent);
+    }
+
+    public TypeInfo ResolveType(string typeName)
+    {
+        if (!TryLookup(typeName, out SymbolInfo? symbolInfo))
+            throw new Exception($"Unknown type '{typeName}' in scope '{FullName}'");
+
+        if (symbolInfo!.Kind != SymbolKind.Type)
+            throw new Exception($"'{typeName}' in scope '{FullName}' is not a type");
+
+        return symbolInfo.Type;
     }
 }
 
 public class Parser(List<Token> tokens)
 {
     int pos = 0;
-    Scope globalScope;
-    Scope currentScope;
+    Scope? globalScope;
+    Scope? currentScope;
 
-    public (ProgramNode, Scope) ParseProgram()
+    public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
         globalScope = new Scope("", null, null);
         currentScope = globalScope;   // global scope
+
+        DeclareBuiltin("int");
+        DeclareBuiltin("s32");
+        DeclareBuiltin("float");
+        DeclareBuiltin("f32");
+        DeclareBuiltin("bool");
+        DeclareBuiltin("void");
 
         List<INode> nodes = new List<INode>();
         while (!IsAtEnd())
@@ -76,9 +126,7 @@ public class Parser(List<Token> tokens)
             else
                 nodes.Add(ParseFunctionDeclaration());
 
-        Stack<int> stack = new Stack<int>();
-
-        return (new ProgramNode(nodes), globalScope);
+        return (new ProgramNode(ProgramName, nodes), globalScope);
     }
 
     #region Declarations
@@ -103,9 +151,19 @@ public class Parser(List<Token> tokens)
             {
                 Token typeToken = ConsumeTypeKeyword();
                 string fieldType = TokenTypeToString(typeToken.TokenType);
+
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
-                currentScope.Declare(identifierToken.Lexeme, parameter);
+
+                TypeInfo typeInfo = typeInfo = currentScope!.ResolveType(fieldType);
+
+                currentScope!.Declare(identifierToken.Lexeme, new SymbolInfo(
+                    identifierToken.Lexeme,
+                    typeInfo,
+                    SymbolKind.Variable,
+                    null
+                ));
+
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
@@ -117,12 +175,21 @@ public class Parser(List<Token> tokens)
 
         // initialise only with name, since we can't really mutate a Record later
         functionDeclaration.Scope = currentScope;
-        currentScope.DeclaringNode = functionDeclaration;
+        currentScope!.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
 
         // fill out AST reference
         ExitScope();
-        currentScope.Declare(name, functionDeclaration);
+
+        TypeInfo returnTypeInfo = currentScope.ResolveType(functionDeclaration.ReturnType);
+
+        currentScope.Declare(name,
+                                new SymbolInfo(
+                                functionDeclaration.Name,
+                                returnTypeInfo,
+                                SymbolKind.Function,
+                                functionDeclaration.Parameters
+                                ));
 
         return functionDeclaration;
     }
@@ -141,7 +208,7 @@ public class Parser(List<Token> tokens)
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
         EnterScope(name);
         structDeclaration.Scope = currentScope;
-        currentScope.DeclaringNode = structDeclaration;
+        currentScope!.DeclaringNode = structDeclaration;
 
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
@@ -151,7 +218,16 @@ public class Parser(List<Token> tokens)
                 string fieldType = TokenTypeToString(typeToken.TokenType);
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
-                currentScope.Declare(identifierToken.Lexeme, parameter);
+
+                TypeInfo typeInfo = currentScope.ResolveType(typeToken.Lexeme);
+
+                currentScope.Declare(identifierToken.Lexeme,
+                                     new SymbolInfo(
+                                        identifierToken.Lexeme,
+                                        typeInfo,
+                                        SymbolKind.Variable,
+                                        null
+                                     ));
                 fields.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
         }
@@ -172,7 +248,14 @@ public class Parser(List<Token> tokens)
         }
 
         ExitScope();
-        currentScope.Declare(name, structDeclaration);
+        SymbolInfo symbolInfo = new SymbolInfo(
+            name,
+            new TypeInfo(
+                name,
+                fields),
+            SymbolKind.Type,
+            fields);
+        currentScope.Declare(name, symbolInfo);
 
         return structDeclaration;
     }
@@ -199,8 +282,16 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after variants");
         Consume(TokenType.Punctuation_Semicolon, "Expected ';' after union declaration");
 
-        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants);
-        currentScope.Declare(name, unionDeclaration);
+        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, name);
+        currentScope!.Declare(name, new SymbolInfo(
+            name,
+            new TypeInfo(
+                name,
+                variants
+            ),
+            SymbolKind.Type,
+            variants
+        ));
 
         return unionDeclaration;
     }
@@ -231,9 +322,17 @@ public class Parser(List<Token> tokens)
             IExpression? init = null;
             if (Match(TokenType.Operator_Equals))
                 init = ParseExpression();
-            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after var-decl");
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration(typeName, varName, init);
-            currentScope.Declare(varName, variableDeclaration);
+
+            TypeInfo typeInfo = currentScope!.ResolveType(typeName);
+
+            currentScope!.Declare(varName, new SymbolInfo(
+                varName,
+                typeInfo,
+                SymbolKind.Variable,
+                null
+            ));
             return variableDeclaration;
         }
 
@@ -257,7 +356,15 @@ public class Parser(List<Token> tokens)
             string type = TokenTypeToString(typeToken.TokenType);
 
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
-            currentScope.Declare(nameToken.Lexeme, variableDeclaration);
+
+            TypeInfo typeInfo = currentScope!.ResolveType(type);
+
+            currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
+                nameToken.Lexeme,
+                typeInfo,
+                SymbolKind.Variable,
+                null
+            ));
             return variableDeclaration;
         }
 
@@ -438,9 +545,8 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        throw new Exception($"Unexpected token {Peek().TokenType} in expression");
-        Environment.Exit(1);
-        return null;
+        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression");
+        return null!;
     }
     #endregion
 
@@ -489,7 +595,7 @@ public class Parser(List<Token> tokens)
         Token t = Peek();
         if (IsTypeKeyword(t.TokenType)) return Advance();
         Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {t.Line}:{t.Column}");
-        return null;
+        return null!;
     }
 
     static bool IsTypeKeyword(TokenType tokenType)
@@ -522,9 +628,23 @@ public class Parser(List<Token> tokens)
 
     void ExitScope()
     {
-        if (currentScope.Parent == null)
+        if (currentScope!.Parent == null)
             throw new InvalidOperationException("Attempted to exit global scope");
         currentScope = currentScope.Parent;
+    }
+
+    void DeclareBuiltin(string typeName)
+    {
+        globalScope!.Declare(typeName,
+                    new SymbolInfo(
+                        typeName,
+                        new TypeInfo(
+                            typeName,
+                            null
+                        ),
+                        SymbolKind.Type,
+                        null
+                    ));
     }
     #endregion
 }

@@ -34,7 +34,7 @@ Console.ResetColor();
 sw2.Restart();
 
 Parser parser = new Parser(tokens);
-(ProgramNode ast, Scope globalScope) = parser.ParseProgram();
+(ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
 int parserTime = (int)sw2.Elapsed.TotalMilliseconds;
 
 Console.Write($"Parser took ");

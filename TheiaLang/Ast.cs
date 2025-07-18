@@ -1,7 +1,11 @@
 namespace TheiaLang;
 
 public interface INode { }
-public interface IDeclaration : INode { string Name { get; } }
+public interface IDeclaration : INode
+{
+    string Name { get; }
+    string ReturnType { get; }
+}
 public interface IStatement : INode { }
 public interface IExpression : INode { bool Assignable { get; } }
 
@@ -34,7 +38,7 @@ public enum Type
 public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public readonly string ReturnType;                // "int", "float", "bool"
+    public string ReturnType { get; }                // "int", "float", "bool"
     public string Name { get; set; }                // e.g. "main"
     public readonly List<TypeNamePair> Parameters;  // empty for now
     public readonly List<IStatement> Statements;    // the { … } body
@@ -54,6 +58,7 @@ public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
     public string Name { get; }
+    public string ReturnType { get; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
 
@@ -64,27 +69,40 @@ public class StructDeclaration : IDeclaration
         Name = name;
         Fields = fields;
         Functions = functions;
+
+        ReturnType = name;
     }
 }
 
 public record UnionDeclaration(
     string Name,
-    List<TypeNamePair> Variants
-) : IDeclaration;
+    List<TypeNamePair> Variants,
+    string returnType
+) : IDeclaration
+{
+    public string ReturnType { get; } = returnType;
+}
 
 public record VariableDeclaration(
     string Type,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
-) : IDeclaration, IStatement;
+) : IDeclaration, IStatement
+{
+    public string ReturnType => Type;
+}
 
 public sealed record TypeNamePair(
     string Type,
     string Name
-) : IDeclaration;
+) : IDeclaration
+{
+    public string ReturnType => Type;
+}
 #endregion
 
 public sealed record ProgramNode(
+    string Name,
     List<INode> Declarations
 );
 

@@ -8,7 +8,10 @@ static class AstPrinter
 
     static void PrintProgram(ProgramNode p, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}Program");
+        w.WriteLine($"Program: {p.Name}");
+        w.WriteLine($"Generated at {DateTime.Now}");
+        w.WriteLine();
+
         foreach (INode node in p.Declarations)
         {
             if (node is FunctionDeclaration function)
