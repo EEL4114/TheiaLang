@@ -17,7 +17,9 @@ entry:
 
 define i32 @main() {
 entry:
-  %tmp1 = call i32 @m(i32 7)
+  %t = alloca i32
+  %tmp1 = call i32 @m(i32 8)
+  store i32 %tmp1, i32* %t
   %entity = alloca %Entity
   %tmp2 = getelementptr %Entity, %Entity* %entity, i32 0, i32 0
   store double 70.0, double* %tmp2

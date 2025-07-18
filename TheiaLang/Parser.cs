@@ -262,25 +262,12 @@ public class Parser(List<Token> tokens)
             return new AssignmentStatement(nameTok.Lexeme, expr);
         }
 
-        // call or instantiation
         if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+         && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
-            Token nameToken = Advance();
-            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
-
-            List<IExpression> arguments = new List<IExpression>();
-            if (!Check(TokenType.Punctuation_ParenthesisR))
-            {
-                do
-                {
-                    arguments.Add(ParseExpression());
-                } while (Match(TokenType.Punctuation_Comma));
-            }
-
-            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
+            IExpression expression = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
-            return new CallStatement(nameToken.Lexeme, arguments);
+            return new ExpressionStatement(expression);
         }
 
         Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line}:{Peek().Column}");
@@ -290,9 +277,9 @@ public class Parser(List<Token> tokens)
     #endregion
 
     #region  Expressions
-    private IExpression ParseExpression() => ParseComparison();
+    IExpression ParseExpression() => ParseComparison();
 
-    private IExpression ParseComparison()
+    IExpression ParseComparison()
     {
         IExpression expr = ParseAdditive();
         while (Match(TokenType.Operator_Greater) || Match(TokenType.Operator_Less))
@@ -307,7 +294,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    private IExpression ParseAdditive()
+    IExpression ParseAdditive()
     {
         IExpression expr = ParseMultiplicative();
         while (Match(TokenType.Operator_Plus) || Match(TokenType.Operator_Minus))
@@ -321,7 +308,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    private IExpression ParseMultiplicative()
+    IExpression ParseMultiplicative()
     {
         IExpression expr = ParseUnary();
         while (Match(TokenType.Operator_Mult) || Match(TokenType.Operator_Div))
@@ -335,7 +322,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    private IExpression ParseUnary()
+    IExpression ParseUnary()
     {
         if (Match(TokenType.Operator_Minus))
         {
@@ -346,7 +333,7 @@ public class Parser(List<Token> tokens)
         return ParsePrimary();
     }
 
-    private IExpression ParsePrimary()
+    IExpression ParsePrimary()
     {
         if (Match(TokenType.Keyword_new))
         {
@@ -377,6 +364,25 @@ public class Parser(List<Token> tokens)
             };
 
             return new LiteralExpression(v, Previous().Lexeme);
+        }
+
+        if (Peek().TokenType == TokenType.Identifier
+            && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+        {
+            Token nameToken = Advance();
+            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
+
+            List<IExpression> arguments = new List<IExpression>();
+            if (!Check(TokenType.Punctuation_ParenthesisR))
+            {
+                do
+                {
+                    arguments.Add(ParseExpression());
+                } while (Match(TokenType.Punctuation_Comma));
+            }
+
+            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
+            return new CallExpression(nameToken.Lexeme, arguments);
         }
 
         if (Match(TokenType.Identifier))

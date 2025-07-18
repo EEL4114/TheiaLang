@@ -15,9 +15,10 @@ int main()
 {
     m(7);
 
+    int t = m(8);
+
     Entity entity = new Entity(70.0, 1.5);
 
-    i = 8;
     int defaultInt;
     float defaultFloat;
     bool defaultBool;

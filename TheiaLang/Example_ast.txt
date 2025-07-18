@@ -29,10 +29,12 @@ FunctionDeclaration: s32 main
     Arguments: (
     )
     BlockSatement
-        Call: m
-            Arguments: (
-                Literal: 7
-            )
+        <unknown statement 'ExpressionStatement'>
+        VariableDeclaration: s32 t =
+            Call: m
+                Arguments: (
+                    Literal: 8
+                )
 
         VariableDeclaration: Entity entity =
             Instantiation: Entity
@@ -41,8 +43,6 @@ FunctionDeclaration: s32 main
                     Literal: 1.5
                 )
 
-        Assign: i =
-            Literal: 8
         VariableDeclaration: s32 defaultInt
         VariableDeclaration: f32 defaultFloat
         VariableDeclaration: bool defaultBool

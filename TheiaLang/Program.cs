@@ -35,7 +35,6 @@ sw2.Restart();
 
 Parser parser = new Parser(tokens);
 (ProgramNode ast, Scope globalScope) = parser.ParseProgram();
-
 int parserTime = (int)sw2.Elapsed.TotalMilliseconds;
 
 Console.Write($"Parser took ");
@@ -90,7 +89,6 @@ PrintSegment(parserChars, PARSER_COL);
 PrintSegment(IRgenChars, IRGEN_COL);
 PrintSegment(llvmChars, LLVM_COL);
 Console.WriteLine("]");
-
 
 public class
 Log
