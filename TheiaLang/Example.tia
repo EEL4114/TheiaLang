@@ -16,6 +16,7 @@ int main()
     m(7);
 
     int t = m(8);
+    int u = 1 + m(8) + 9;
 
     Entity entity = new Entity(70.0, 1.5);
 

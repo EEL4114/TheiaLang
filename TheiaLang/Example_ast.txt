@@ -29,13 +29,28 @@ FunctionDeclaration: s32 main
     Arguments: (
     )
     BlockSatement
-        <unknown statement 'ExpressionStatement'>
+        Expression:
+            Call: m
+                Arguments: (
+                    Literal: 7
+                )
+
         VariableDeclaration: s32 t =
             Call: m
                 Arguments: (
                     Literal: 8
                 )
 
+        VariableDeclaration: s32 u =
+            BinaryExpression: Add
+                BinaryExpression: Add
+                    Literal: 1
+                    Call: m
+                        Arguments: (
+                            Literal: 8
+                        )
+
+                Literal: 9
         VariableDeclaration: Entity entity =
             Instantiation: Entity
                 Arguments: (

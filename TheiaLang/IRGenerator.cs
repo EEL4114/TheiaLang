@@ -196,181 +196,174 @@ public static class IRGenerator
     static (StringBuilder, string) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();
-        switch (expression)
+        return expression switch
         {
-            case UnaryExpression un:
-                {
-                    // 1) emit operand
-                    (StringBuilder cl, string val) = EmitExpression(un.Operand);
-                    code.Append(code);
-
-                    // 2) generate a fresh temp
-                    string tmp = NewTempVar();
-
-                    // 3) pick instruction based on type
-                    string? type = InferExpressionType(un.Operand);
-                    string instr = type switch
-                    {
-                        "i32" => "sub",   // integer: 0 - x
-                        "double" => "fsub",  // float:   0.0 - x
-                        _ => throw new NotSupportedException($"Unary - on {type}")
-                    };
-
-                    // 4) emit it
-                    //    for integers, use literal zero; for double use 0.0
-                    string zero = type == "i32" ? "0" : "0.0";
-                    code.AppendLine($"  %{tmp} = {instr} {type} {zero}, {val}");
-                    return (code, $"%{tmp}");
-                }
-            case LiteralExpression literalExpression:
-                {
-                    if (literalExpression.Value is int i) return (code, literalExpression.Lexeme);
-                    if (literalExpression.Value is double d) return (code, literalExpression.Lexeme);
-                    if (literalExpression.Value is bool b) return (code, b ? "1" : "0");
-                    throw new Exception("Unknown literal");
-                }
-            case IdentifierExpression identifier:
-                {
-                    if (TryResolveSlot(identifier.Name, out var ptr, out var type))
-                    {
-                        string tmp = $"tmp{tmpCounter++}";
-                        code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
-                        return (code, $"%{tmp}");
-                    }
-
-                    if (currentScope!.Parent?.DeclaringNode is StructDeclaration sd)
-                    {
-                        int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
-                        if (index >= 0)
-                        {
-                            string irType = TypeToIR(sd.Fields[index].Type);
-                            string gep = NewTempVar();
-                            code.AppendLine(
-                                $"  {gep} = getelementptr %struct.{sd.Name}, %struct.{sd.Name}* %this, i32 0, i32 {index}");
-                            string tempIdentifier = NewTempVar();
-                            code.AppendLine($"  {tempIdentifier} = load {irType}, {irType}* {gep}");
-                            return (code, tempIdentifier);
-                        }
-                    }
-
-                    throw new Exception($"Undefined variable or field '{identifier.Name}'");
-
-                    // load from local
-                    // we assume naming "%<name>_val" for the loaded value
-                    /*
-                    if (!allocas.TryGetValue(id.Name, out string? ptrName)
-                         || !varTypes.TryGetValue(id.Name, out string? varTy))
-                        throw new Exception($"Undefined variable '{id.Name}'");
-
-                    string tmp = $"tmp{tmpCounter++}";   // unique per reference
-                    string ty = InferExpressionType(expression);
-                    code.AppendLine($"  %{tmp} = load {ty}, {ty}* %{id.Name}");
-                    return (code, $"%{tmp}");
-                    */
-                }
-            case BinaryExpression bin:
-                {
-                    (StringBuilder cl, string vl) = EmitExpression(bin.Left);
-                    (StringBuilder cr, string vr) = EmitExpression(bin.Right);
-                    code.Append(cl);
-                    code.Append(cr);
-
-                    string? ty = InferExpressionType(bin.Left);
-                    string tmp = $"tmp{tmpCounter++}";
-                    string op;
-
-                    if (ty == "i32") op = bin.Op switch
-                    {
-                        BinaryOperator.Add => "add",
-                        BinaryOperator.Subtract => "sub",
-                        BinaryOperator.Multiply => "mul",
-                        BinaryOperator.Greater => "icmp sgt",
-                        BinaryOperator.Less => "icmp slt",
-                        _ => throw new Exception($"Op {bin.Op}")
-                    };
-                    else if (ty == "double") op = bin.Op switch
-                    {
-                        BinaryOperator.Add => "fadd",
-                        BinaryOperator.Subtract => "fsub",
-                        BinaryOperator.Multiply => "fmul",
-                        BinaryOperator.Greater => "fcmp ogt",
-                        BinaryOperator.Less => "fcmp olt",
-                        _ => throw new Exception($"Op {bin.Op}")
-                    };
-
-                    else throw new Exception($"Unsupported ty {ty}");
-
-                    code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
-                    code.AppendLine();
-
-                    return (code, $"%{tmp}");
-                }
-            case InstantiationExpression instantiation:
-                {
-                    string irType = TypeToIR(instantiation.TypeName,
-                                          $"Unknown type '{instantiation.TypeName}' in instantiation");
-                    string ptrName = $"%{NewTempVar()}";
-                    code.AppendLine($"  {ptrName} = alloca {irType}");
-
-                    for (int i = 0; i < instantiation.Arguments.Count; i++)
-                    {
-                        (StringBuilder argCode, string argReg) = EmitExpression(instantiation.Arguments[i]);
-                        code.Append(argCode);
-
-                        string gep = $"%{NewTempVar()}";
-                        code.AppendLine(
-                            $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
-
-                        var argTy = InferExpressionType(instantiation.Arguments[i]);
-                        code.AppendLine($"  store {argTy} {argReg}, {argTy}* {gep}");
-                    }
-                    return (code, ptrName);
-                }
-            case CallExpression call:
-                {
-                    if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
-                        throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
-
-                    if (callee is not FunctionDeclaration fnDecl)
-                        throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
-
-                    if (call.Arguments.Count != fnDecl.Parameters.Count)
-                        Log.Error(11,  // pick an unused code
-                            $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
-                            $"but got {call.Arguments.Count}");
-                    string retTy = TypeToIR(fnDecl.ReturnType);
-
-                    List<string> argumentList = new List<string>();
-
-                    for (int i = 0; i < call.Arguments.Count; i++)
-                    {
-                        IExpression argument = call.Arguments[i];
-
-                        (StringBuilder argCode, string argReg) = EmitExpression(argument);
-                        code.Append(argCode);
-
-                        // infer the LLVM type of the argument
-                        string? actualType = InferExpressionType(argument);
-                        string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
-
-                        if (actualType != expectedType)
-                            Log.Error(12,
-                                $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
-                                $"expected {expectedType}, got {actualType}");
-
-                        argumentList.Add($"{expectedType} {argReg}");
-                    }
-
-                    string tmp = $"%{NewTempVar()}";
-                    code.AppendLine(
-                        $"  {tmp} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
-                    return (code, tmp);
-                }
-
-            default:
-                throw new Exception($"Unsupported expression: {expression.GetType().Name}");
-        }
+            UnaryExpression unaryExpression => EmitUnaryExpression(unaryExpression, code),
+            LiteralExpression literal => EmitLiteralExpression(literal, code),
+            IdentifierExpression identifier => EmitIdentifierExpression(identifier, code),
+            BinaryExpression binaryExpression => EmitBinaryExpression(binaryExpression, code),
+            InstantiationExpression instantiation => EmitInstantiationExpression(instantiation, code),
+            CallExpression call => EmitCallExpression(call, code),
+            _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
+        };
     }
+    static (StringBuilder code, string name) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
+    {
+        (StringBuilder cl, string val) = EmitExpression(unaryExpression.Operand);
+        code.Append(code);
+
+        string tmp = NewTempVar();
+
+        string? type = InferExpressionType(unaryExpression.Operand);
+        string instr = type switch
+        {
+            "i32" => "sub",
+            "double" => "fsub",
+            _ => throw new NotSupportedException($"Unary - on {type}")
+        };
+
+        string zero = type == "i32" ? "0" : "0.0";
+        code.AppendLine($"  %{tmp} = {instr} {type} {zero}, {val}");
+        return (code, $"%{tmp}");
+    }
+
+    static (StringBuilder code, string name) EmitLiteralExpression(LiteralExpression literalExpression, StringBuilder code)
+    {
+        if (literalExpression.Value is int i) return (code, literalExpression.Lexeme);
+        if (literalExpression.Value is double d) return (code, literalExpression.Lexeme);
+        if (literalExpression.Value is bool b) return (code, b ? "1" : "0");
+        throw new Exception("Unknown literal");
+    }
+
+    static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
+    {
+        if (TryResolveSlot(identifier.Name, out var ptr, out var type))
+        {
+            string tmp = $"tmp{tmpCounter++}";
+            code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
+            return (code, $"%{tmp}");
+        }
+
+        if (currentScope!.Parent?.DeclaringNode is StructDeclaration sd)
+        {
+            int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
+            if (index >= 0)
+            {
+                string irType = TypeToIR(sd.Fields[index].Type);
+                string gep = NewTempVar();
+                code.AppendLine(
+                    $"  {gep} = getelementptr %struct.{sd.Name}, %struct.{sd.Name}* %this, i32 0, i32 {index}");
+                string tempIdentifier = NewTempVar();
+                code.AppendLine($"  {tempIdentifier} = load {irType}, {irType}* {gep}");
+                return (code, tempIdentifier);
+            }
+        }
+
+        throw new Exception($"Undefined variable or field '{identifier.Name}'");
+    }
+
+    static (StringBuilder code, string name) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
+    {
+        (StringBuilder cl, string vl) = EmitExpression(binaryExpression.Left);
+        (StringBuilder cr, string vr) = EmitExpression(binaryExpression.Right);
+        code.Append(cl);
+        code.Append(cr);
+
+        string? ty = InferExpressionType(binaryExpression.Left);
+        string tmp = $"tmp{tmpCounter++}";
+        string op;
+
+        if (ty == "i32") op = binaryExpression.Op switch
+        {
+            BinaryOperator.Add => "add",
+            BinaryOperator.Subtract => "sub",
+            BinaryOperator.Multiply => "mul",
+            BinaryOperator.Greater => "icmp sgt",
+            BinaryOperator.Less => "icmp slt",
+            _ => throw new Exception($"Op {binaryExpression.Op}")
+        };
+        else if (ty == "double") op = binaryExpression.Op switch
+        {
+            BinaryOperator.Add => "fadd",
+            BinaryOperator.Subtract => "fsub",
+            BinaryOperator.Multiply => "fmul",
+            BinaryOperator.Greater => "fcmp ogt",
+            BinaryOperator.Less => "fcmp olt",
+            _ => throw new Exception($"Op {binaryExpression.Op}")
+        };
+
+        else throw new Exception($"Unsupported ty {ty}");
+
+        code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
+        code.AppendLine();
+
+        return (code, $"%{tmp}");
+    }
+
+    static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
+    {
+        string irType = TypeToIR(instantiation.TypeName,
+                              $"Unknown type '{instantiation.TypeName}' in instantiation");
+        string ptrName = $"%{NewTempVar()}";
+        code.AppendLine($"  {ptrName} = alloca {irType}");
+
+        for (int i = 0; i < instantiation.Arguments.Count; i++)
+        {
+            (StringBuilder argCode, string argReg) = EmitExpression(instantiation.Arguments[i]);
+            code.Append(argCode);
+
+            string gep = $"%{NewTempVar()}";
+            code.AppendLine(
+                $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
+
+            var argTy = InferExpressionType(instantiation.Arguments[i]);
+            code.AppendLine($"  store {argTy} {argReg}, {argTy}* {gep}");
+        }
+        return (code, ptrName);
+    }
+
+    static (StringBuilder code, string name) EmitCallExpression(CallExpression call, StringBuilder code)
+    {
+        if (!currentScope!.TryLookup(call.CalleeName, out IDeclaration? callee))
+            throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
+
+        if (callee is not FunctionDeclaration fnDecl)
+            throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
+
+        if (call.Arguments.Count != fnDecl.Parameters.Count)
+            Log.Error(11,  // pick an unused code
+                $"Function '{call.CalleeName}' expects {fnDecl.Parameters.Count} arguments, " +
+                $"but got {call.Arguments.Count}");
+        string retTy = TypeToIR(fnDecl.ReturnType);
+
+        List<string> argumentList = new List<string>();
+
+        for (int i = 0; i < call.Arguments.Count; i++)
+        {
+            IExpression argument = call.Arguments[i];
+
+            (StringBuilder argCode, string argReg) = EmitExpression(argument);
+            code.Append(argCode);
+
+            // infer the LLVM type of the argument
+            string? actualType = InferExpressionType(argument);
+            string expectedType = TypeToIR(fnDecl.Parameters[i].Type);
+
+            if (actualType != expectedType)
+                Log.Error(12,
+                    $"Type mismatch in call to '{call.CalleeName}': parameter '{fnDecl.Parameters[i].Name}' " +
+                    $"expected {expectedType}, got {actualType}");
+
+            argumentList.Add($"{expectedType} {argReg}");
+        }
+
+        string tmp = $"%{NewTempVar()}";
+        code.AppendLine(
+            $"  {tmp} = call {retTy} @{fnDecl.Name}({string.Join(", ", argumentList)})");
+        return (code, tmp);
+    }
+
+
     #endregion
 
     #region  Helpers

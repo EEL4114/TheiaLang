@@ -87,6 +87,10 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}Return");
                 PrintExpression(r.Expr, w, indent + tab);
                 break;
+            case ExpressionStatement e:
+                w.WriteLine($"{Indent(indent)}Expression:");
+                PrintExpression(e.Expression, w, indent + tab);
+                break;
 
             default:
                 w.WriteLine($"{Indent(indent)}<unknown statement '{stmt.GetType().Name}'>");
