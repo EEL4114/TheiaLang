@@ -1,5 +1,4 @@
-using System.Net.Http.Headers;
-using System.Security.AccessControl;
+using System.ComponentModel;
 
 namespace TheiaLang;
 
@@ -115,11 +114,9 @@ public class Parser(List<Token> tokens)
         globalScope = new Scope("", null, null);
         currentScope = globalScope;   // global scope
 
-        DeclareBuiltin("int");
-        DeclareBuiltin("s32");
+        DeclareBuiltin("i1");
+        DeclareBuiltin("i32");
         DeclareBuiltin("float");
-        DeclareBuiltin("f32");
-        DeclareBuiltin("bool");
         DeclareBuiltin("void");
 
         List<INode> nodes = new List<INode>();
@@ -226,7 +223,7 @@ public class Parser(List<Token> tokens)
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                TypeInfo typeInfo = currentScope.ResolveType(typeToken.Lexeme);
+                TypeInfo typeInfo = currentScope.ResolveType(fieldType);
 
                 currentScope.Declare(identifierToken.Lexeme,
                                      new SymbolInfo(
@@ -258,12 +255,12 @@ public class Parser(List<Token> tokens)
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
             new TypeInfo(
-                name,
+                "%" + name,
                 fields),
             SymbolKind.Type,
             fields);
 
-        currentScope.Declare(name, symbolInfo);
+        currentScope.Declare("%" + name, symbolInfo);
 
         return structDeclaration;
     }
@@ -324,16 +321,16 @@ public class Parser(List<Token> tokens)
             && PeekNext().TokenType == TokenType.Identifier)
         {
             Token typeToken = Advance();
-            string typeName = typeToken.Lexeme;
+            string type = "%" + typeToken.Lexeme;     // composite type
             string varName = Advance().Lexeme;
 
             IExpression? init = null;
             if (Match(TokenType.Operator_Equals))
                 init = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
-            VariableDeclaration variableDeclaration = new VariableDeclaration(typeName, varName, init);
+            VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
-            TypeInfo typeInfo = currentScope!.ResolveType(typeName);
+            TypeInfo typeInfo = currentScope!.ResolveType(type);
 
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
@@ -484,7 +481,7 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Keyword_new))
         {
             Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
-            string typeName = typeToken.Lexeme;
+            string type = "%" + typeToken.Lexeme;   // composite type
 
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after type name");
             List<IExpression> arguments = new List<IExpression>();
@@ -494,7 +491,7 @@ public class Parser(List<Token> tokens)
                     arguments.Add(ParseExpression());
                 } while (Match(TokenType.Punctuation_Comma));
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-            return new InstantiationExpression(typeName, arguments);
+            return new InstantiationExpression(type, arguments);
         }
 
         if (Match(TokenType.Literal_s32) || Match(TokenType.Literal_f32) || Match(TokenType.Literal_bool))
@@ -573,12 +570,12 @@ public class Parser(List<Token> tokens)
 
     static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_s32 => "s32",
-        TokenType.Keyword_s32 => "s32",
-        TokenType.Literal_f32 => "f32",
-        TokenType.Keyword_f32 => "f32",
-        TokenType.Literal_bool => "bool",
-        TokenType.Keyword_bool => "bool",
+        TokenType.Literal_s32 => "i32",
+        TokenType.Keyword_s32 => "i32",
+        TokenType.Literal_f32 => "float",
+        TokenType.Keyword_f32 => "float",
+        TokenType.Literal_bool => "i1",
+        TokenType.Keyword_bool => "i1",
         _ => throw new Exception($"Unsupported Type '{tokenType}'"),
     };
     #endregion

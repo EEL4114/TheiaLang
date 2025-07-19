@@ -163,7 +163,7 @@ public sealed record BinaryExpression(
 { public bool Assignable => false; }
 
 public sealed record LiteralExpression(
-    object Value,       // boxed int, double, bool
+    object Value,       // boxed int, float, bool
     string Lexeme
 ) : IExpression
 { public bool Assignable => false; }

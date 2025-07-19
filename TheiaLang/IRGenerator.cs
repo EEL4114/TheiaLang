@@ -68,25 +68,23 @@ public static class IRGenerator
     {
         string fieldIr = string.Join(
             ", ",
-            sd.Fields.Select(f => TypeToIR(f.TypeName))
+            sd.Fields.Select(f => f.TypeName)
         );
 
         string llvmName = $"%{sd.Name}";
-        IEnumerable<string> fieldIRs = sd.Fields.Select(f => TypeToIR(f.TypeName, $"Unknown '{f.TypeName}'"));
-
+        IEnumerable<string> fieldIRs = sd.Fields.Select(f => f.TypeName);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
 
-        var ti = new TypeInfo
+        TypeInfo ti = new TypeInfo
         (
             llvmName,
             sd.Fields.Select(f => f.Name).ToList(),
             fieldIRs.ToList()
         );
 
-        varTypes.Peek()[sd.Name] = ti;
-
+        varTypes.Peek()[llvmName] = ti;
     }
 
     #region Functions
@@ -94,7 +92,7 @@ public static class IRGenerator
     {
         EnterScope(fn.Scope!);
 
-        string returnType = TypeToIR(fn.ReturnType, $"Unsupported return type '{fn.ReturnType}'");
+        string returnType = fn.ReturnType;
 
         List<string> args = new List<string>();
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
@@ -108,7 +106,7 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = TypeToIR(parameter.TypeName);
+            string llvmTy = parameter.TypeName;
             args.Add($"{llvmTy} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
@@ -118,7 +116,7 @@ public static class IRGenerator
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = TypeToIR(parameter.TypeName);
+            string llvmTy = parameter.TypeName;
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {llvmTy}");
@@ -160,8 +158,7 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        string irType = TypeToIR(variableDeclaration.Type,
-                      $"Unknown type '{variableDeclaration.Type}' in variable declaration");
+        string irType = variableDeclaration.Type;
 
         string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {irType}");
@@ -207,8 +204,8 @@ public static class IRGenerator
         string type = typeInfo.TypeName;
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
-        sb.AppendLine($"  store {type} {val}, {type}* {alloc.ptr}");
         sb.Append(code);
+        sb.AppendLine($"  store {type} {val}, {type}* {alloc.ptr}");
     }
 
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
@@ -253,7 +250,7 @@ public static class IRGenerator
         string instr = type switch
         {
             "i32" => "sub",
-            "double" => "fsub",
+            "float" => "fsub",
             _ => throw new NotSupportedException($"Unary - on {type}")
         };
 
@@ -286,7 +283,7 @@ public static class IRGenerator
             int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
             if (index >= 0)
             {
-                string irType = TypeToIR(sd.Fields[index].TypeName);
+                string irType = sd.Fields[index].TypeName;
                 string gep = NewTempVar();
                 code.AppendLine(
                     $"  {gep} = getelementptr %struct.{sd.Name}, %struct.{sd.Name}* %this, i32 0, i32 {index}");
@@ -319,7 +316,7 @@ public static class IRGenerator
             BinaryOperator.Less => "icmp slt",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
-        else if (ty == "double") op = binaryExpression.Op switch
+        else if (ty == "float") op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "fadd",
             BinaryOperator.Subtract => "fsub",
@@ -329,7 +326,7 @@ public static class IRGenerator
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
 
-        else throw new Exception($"Unsupported ty {ty}");
+        else throw new Exception($"Unsupported type '{ty}'");
 
         code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
         code.AppendLine();
@@ -339,8 +336,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
-        string irType = TypeToIR(instantiation.TypeName,
-                              $"Unknown type '{instantiation.TypeName}' in instantiation");
+        string irType = instantiation.TypeName;
         string ptrName = $"%{NewTempVar()}";
         code.AppendLine($"  {ptrName} = alloca {irType}");
 
@@ -371,7 +367,7 @@ public static class IRGenerator
             Log.Error(11,  // pick an unused code
                 $"Function '{call.CalleeName}' expects {symbolInfo.Parameters.Count} arguments, " +
                 $"but got {call.Arguments.Count}");
-        string retTy = TypeToIR(symbolInfo.Type.TypeName);
+        string retTy = symbolInfo.Type.TypeName;
 
         List<string> argumentList = new List<string>();
 
@@ -384,7 +380,7 @@ public static class IRGenerator
 
             // infer the LLVM type of the argument
             string? actualType = InferExpressionType(argument);
-            string expectedType = TypeToIR(symbolInfo.Parameters[i].TypeName);
+            string expectedType = symbolInfo.Parameters[i].TypeName;
 
             if (actualType != expectedType)
                 Log.Error(12,
@@ -405,7 +401,7 @@ public static class IRGenerator
         string targetName = memberAccess.Target.Name;
         string memberName = memberAccess.Member.Name;
 
-        if (!TryResolveSlot(targetName, out var alloc, out TypeInfo? structInfo))
+        if (!TryResolveSlot(targetName, out (string ptr, string? ssa) alloc, out TypeInfo? structInfo))
             throw new Exception($"Undefined variable '{targetName}'");
 
         if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
@@ -415,8 +411,7 @@ public static class IRGenerator
             throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
 
         // the scope the target *defines*
-        Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName];
-
+        Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
 
         if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
             throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
@@ -429,7 +424,7 @@ public static class IRGenerator
             throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
         string targetType = varTypes.Peek()[targetName].TypeName;   // alredy LLVM type
-        string memberType = TypeToIR(targetInfo.Parameters[memberIndex].TypeName);
+        string memberType = targetInfo.Parameters[memberIndex].TypeName;
 
         string gep = $"%{NewTempVar()}";
 
@@ -481,26 +476,11 @@ public static class IRGenerator
     static string? InferExpressionType(IExpression expr) => expr switch
     {
         LiteralExpression lit when lit.Value is int => "i32",
-        LiteralExpression lit when lit.Value is double => "double",
+        LiteralExpression lit when lit.Value is double => "float",
         LiteralExpression lit when lit.Value is bool => "i1",
         IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type?.TypeName,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception($"Cannot infer type for Expression {expr}")
-    };
-
-    static string TypeToIR(string t, string errorMessage = "") => t switch
-    {
-        "s32" => "i32",
-        "f32" => "double",  // f64 in LLVM
-        "bool" => "i1",
-
-        _ when currentScope!.TryLookup(t, out SymbolInfo? symbolInfo, out _)
-            && symbolInfo!.Kind == SymbolKind.Type
-        => $"%{t}",
-
-        _ => errorMessage == null ?
-            throw new NotSupportedException($"No IR for type {t}")
-            : throw new Exception($"No IR for type {t} {errorMessage}")
     };
 
     static void EnterScope(string scopeName)

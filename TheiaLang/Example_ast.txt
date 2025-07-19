@@ -1,30 +1,30 @@
 Program: Example
-Generated at 19.07.2025 14:45:55
+Generated at 19.07.2025 16:01:21
 
 StructDeclaration: Vector3
     Fields: {
-        f32 x
-        f32 y
-        f32 z
+        float x
+        float y
+        float z
     }
 
 UnionDeclaration: StringData
-    s32 i
-    f32 f
+    i32 i
+    float f
 
 StructDeclaration: Entity
     Fields: {
-        f32 health
-        f32 speed
+        float health
+        float speed
     }
-    FunctionDeclaration: bool IsAlive
+    FunctionDeclaration: i1 IsAlive
         Arguments: (
         )
         BlockSatement
             Return
                 Literal: true
 
-FunctionDeclaration: s32 main
+FunctionDeclaration: i32 main
     Arguments: (
     )
     BlockSatement
@@ -34,13 +34,13 @@ FunctionDeclaration: s32 main
                     Literal: 7
                 )
 
-        VariableDeclaration: s32 t =
+        VariableDeclaration: i32 t =
             Call: m
                 Arguments: (
                     Literal: 8
                 )
 
-        VariableDeclaration: s32 u =
+        VariableDeclaration: i32 u =
             BinaryExpression: Add
                 BinaryExpression: Add
                     Literal: 1
@@ -50,63 +50,63 @@ FunctionDeclaration: s32 main
                         )
                 Literal: 9
 
-        VariableDeclaration: Entity entity =
-            Instantiation: Entity
+        VariableDeclaration: %Entity entity =
+            Instantiation: %Entity
                 Arguments: (
                     Literal: 70.0
                     Literal: 1.5
                 )
 
-        VariableDeclaration: f32 health =
+        VariableDeclaration: float health =
             MemberAccess: Target: 'entity'
                 Member: 'health'
 
-        VariableDeclaration: f32 moreHealth =
+        VariableDeclaration: float moreHealth =
             BinaryExpression: Add
                 Literal: 1.0
                 MemberAccess: Target: 'entity'
                     Member: 'health'
 
-        VariableDeclaration: s32 defaultInt
+        VariableDeclaration: i32 defaultInt
 
-        VariableDeclaration: f32 defaultFloat
+        VariableDeclaration: float defaultFloat
 
-        VariableDeclaration: bool defaultBool
+        VariableDeclaration: i1 defaultBool
 
-        VariableDeclaration: s32 default_s32
+        VariableDeclaration: i32 default_s32
 
-        VariableDeclaration: f32 default_f32
+        VariableDeclaration: float default_f32
 
-        VariableDeclaration: bool default_bool
+        VariableDeclaration: i1 default_bool
 
-        VariableDeclaration: s32 i =
+        VariableDeclaration: i32 i =
             UnaryExpression: Negate
                 Operand:
                     Literal: 1
 
-        VariableDeclaration: f32 j =
+        VariableDeclaration: float j =
             UnaryExpression: Negate
                 Operand:
                     Literal: 1.0
 
-        VariableDeclaration: bool fg =
+        VariableDeclaration: i1 fg =
             Literal: false
 
-        VariableDeclaration: bool ffg =
+        VariableDeclaration: i1 ffg =
             Literal: true
 
-        VariableDeclaration: s32 a =
+        VariableDeclaration: i32 a =
             Literal: 5
 
-        VariableDeclaration: s32 b =
+        VariableDeclaration: i32 b =
             Literal: 10
 
-        VariableDeclaration: s32 c =
+        VariableDeclaration: i32 c =
             BinaryExpression: Add
                 Identifier: a
                 Identifier: b
 
-        VariableDeclaration: s32 d =
+        VariableDeclaration: i32 d =
             Literal: 4
 
         Assign: d =
@@ -119,7 +119,7 @@ FunctionDeclaration: s32 main
                 Identifier: d
                 Literal: 42
 
-        VariableDeclaration: f32 f =
+        VariableDeclaration: float f =
             Literal: 2.5
 
         Assign: f =
@@ -127,15 +127,15 @@ FunctionDeclaration: s32 main
                 Identifier: f
                 Literal: 2.0
 
-        VariableDeclaration: f32 g =
+        VariableDeclaration: float g =
             Literal: 3.0
 
-        VariableDeclaration: f32 h =
+        VariableDeclaration: float h =
             BinaryExpression: Subtract
                 Identifier: f
                 Identifier: g
 
-        VariableDeclaration: bool ok =
+        VariableDeclaration: i1 ok =
             BinaryExpression: Greater
                 Identifier: c
                 Literal: 5
@@ -143,18 +143,18 @@ FunctionDeclaration: s32 main
         Return
             Identifier: c
 
-FunctionDeclaration: s32 m
+FunctionDeclaration: i32 m
     Arguments: (
-        s32 j
+        i32 j
     )
     BlockSatement
-        VariableDeclaration: s32 i =
+        VariableDeclaration: i32 i =
             Literal: 3
 
         Assign: j =
             Literal: 4
 
-        VariableDeclaration: s32 health =
+        VariableDeclaration: i32 health =
             Literal: 7
 
         Return
