@@ -93,11 +93,11 @@ public record VariableDeclaration(
 }
 
 public sealed record TypeNamePair(
-    string Type,
+    string TypeName,
     string Name
 ) : IDeclaration
 {
-    public string ReturnType => Type;
+    public string ReturnType => TypeName;
 }
 #endregion
 

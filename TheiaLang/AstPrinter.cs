@@ -48,7 +48,7 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{typeNamePair.Type} {typeNamePair.Name}");
+        w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
     }
 
     static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)

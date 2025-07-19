@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Security.AccessControl;
 
 namespace TheiaLang;
 
@@ -61,19 +62,23 @@ public class Scope : INode
         Symbols[name] = symbolInfo;
     }
 
-    public bool TryLookup(string name, out SymbolInfo? symbolInfo)
+    public bool TryLookup(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
         if (Symbols.TryGetValue(name, out symbolInfo))
+        {
+            symbolScope = this;
             return true;
+        }
         else
         {
             if (Parent == null)
             {
-                symbolInfo = null!;
+                symbolInfo = null;
+                symbolScope = null;
                 return false;
             }
             else
-                return Parent.TryLookup(name, out symbolInfo);
+                return Parent.TryLookup(name, out symbolInfo, out symbolScope);
         }
     }
 
@@ -89,7 +94,7 @@ public class Scope : INode
 
     public TypeInfo ResolveType(string typeName)
     {
-        if (!TryLookup(typeName, out SymbolInfo? symbolInfo))
+        if (!TryLookup(typeName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Unknown type '{typeName}' in scope '{FullName}'");
 
         if (symbolInfo!.Kind != SymbolKind.Type)
@@ -206,7 +211,9 @@ public class Parser(List<Token> tokens)
         List<FunctionDeclaration> methods = new List<FunctionDeclaration>();
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
+
         EnterScope(name);
+
         structDeclaration.Scope = currentScope;
         currentScope!.DeclaringNode = structDeclaration;
 
@@ -255,6 +262,7 @@ public class Parser(List<Token> tokens)
                 fields),
             SymbolKind.Type,
             fields);
+
         currentScope.Declare(name, symbolInfo);
 
         return structDeclaration;
