@@ -4,7 +4,7 @@ namespace TheiaLang;
 
 public static class IRGenerator
 {
-    static readonly Stack<Dictionary<string, string>> allocas = new();
+    static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
     static Scope? currentScope;
@@ -21,7 +21,7 @@ public static class IRGenerator
         allocas.Clear();
         varTypes.Clear();
 
-        allocas.Push(new Dictionary<string, string>());
+        allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
         varTypes.Push(new Dictionary<string, TypeInfo>());
 
         currentScope = globalScope;
@@ -124,7 +124,7 @@ public static class IRGenerator
             sb.AppendLine($"  {varName} = alloca {llvmTy}");
             sb.AppendLine($"  store {llvmTy} %{parameter.Name}, {llvmTy}* {varName}");
 
-            allocas.Peek()[parameter.Name] = varName;
+            allocas.Peek()[parameter.Name] = (varName, null);
             varTypes.Peek()[parameter.Name] = new TypeInfo(llvmTy, null, null);
             args.Add($"{llvmTy} %{parameter.Name}");
         }
@@ -166,7 +166,7 @@ public static class IRGenerator
         string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {irType}");
 
-        allocas.Peek()[variableDeclaration.Name] = slot;
+        allocas.Peek()[variableDeclaration.Name] = (slot, null);
         varTypes.Peek()[variableDeclaration.Name] = new TypeInfo(irType, null, null);
 
         if (variableDeclaration.Init is InstantiationExpression inst)
@@ -200,14 +200,14 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        if (!TryResolveSlot(assignment.Target.Name, out string? ptr, out TypeInfo? typeInfo))
+        if (!TryResolveSlot(assignment.Target.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
             throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
             $"{assignment.Target} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
 
         string type = typeInfo.TypeName;
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
-        sb.AppendLine($"  store {type} {val}, {type}* {ptr}");
+        sb.AppendLine($"  store {type} {val}, {type}* {alloc.ptr}");
         sb.Append(code);
     }
 
@@ -272,7 +272,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
-        if (TryResolveSlot(identifier.Name, out string? ptr, out TypeInfo? typeInfo))
+        if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) _, out TypeInfo? typeInfo))
         {
             string type = typeInfo.TypeName;
 
@@ -364,7 +364,7 @@ public static class IRGenerator
         if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
 
-        if (symbolInfo.Kind != SymbolKind.Function)
+        if (symbolInfo!.Kind != SymbolKind.Function)
             throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
 
         if (call.Arguments.Count != symbolInfo.Parameters!.Count)
@@ -405,17 +405,17 @@ public static class IRGenerator
         string targetName = memberAccess.Target.Name;
         string memberName = memberAccess.Member.Name;
 
-        if (!TryResolveSlot(targetName, out var ptr, out TypeInfo? structInfo))
+        if (!TryResolveSlot(targetName, out var alloc, out TypeInfo? structInfo))
             throw new Exception($"Undefined variable '{targetName}'");
 
         if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
             throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
 
-        if (!currentScope!.TryLookup(targetVarInfo.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
+        if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
             throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
 
         // the scope the target *defines*
-        Scope targetScope = definitionScope.Children[targetVarInfo.Type.TypeName];
+        Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName];
 
 
         if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
@@ -424,7 +424,7 @@ public static class IRGenerator
         if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
             throw new Exception($"Variable {targetName} does not define any fields");
 
-        int memberIndex = targetInfo.Parameters.FindIndex(x => x.Name == memberName);
+        int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Name == memberName);
         if (memberIndex < 0)
             throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
@@ -434,7 +434,7 @@ public static class IRGenerator
         string gep = $"%{NewTempVar()}";
 
         code.AppendLine(
-            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {ptr}, i32 0, i32 {memberIndex}");
+            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine($"  {tmp} = load {memberType}, {memberType}* {gep}");
@@ -447,21 +447,21 @@ public static class IRGenerator
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
 
-    static bool TryResolveSlot(string name, out string? ptr, out TypeInfo typeInfo)
+    static bool TryResolveSlot(string name, out (string ptr, string? ssa) alloc, out TypeInfo typeInfo)
     {
         // copy the stacks into arrays so that index 0 is the top of the stack
-        Dictionary<string, string>[] allocArr = allocas.ToArray();
+        Dictionary<string, (string ptr, string? ssa)>[] allocArr = allocas.ToArray();
         Dictionary<string, TypeInfo>[] typeArr = varTypes.ToArray();
         for (int i = 0; i < allocArr.Length; i++)
         {
-            if (allocArr[i].TryGetValue(name, out ptr))
+            if (allocArr[i].TryGetValue(name, out alloc))
             {
                 // assume varTypes frame has the same key
                 typeInfo = typeArr[i][name];
                 return true;
             }
         }
-        ptr = null!;
+        alloc = (null, null)!;
         typeInfo = null!;
         return false;
     }
@@ -495,7 +495,7 @@ public static class IRGenerator
         "bool" => "i1",
 
         _ when currentScope!.TryLookup(t, out SymbolInfo? symbolInfo, out _)
-            && symbolInfo.Kind == SymbolKind.Type
+            && symbolInfo!.Kind == SymbolKind.Type
         => $"%{t}",
 
         _ => errorMessage == null ?
@@ -524,7 +524,7 @@ public static class IRGenerator
 
         if (scope.DeclaringNode is FunctionDeclaration)
         {
-            allocas.Push(new Dictionary<string, string>());
+            allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
             varTypes.Push(new Dictionary<string, TypeInfo>());
         }
 

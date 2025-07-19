@@ -1,5 +1,5 @@
 Program: Example
-Generated at 19.07.2025 03:28:39
+Generated at 19.07.2025 14:45:55
 
 StructDeclaration: Vector3
     Fields: {
@@ -57,9 +57,15 @@ FunctionDeclaration: s32 main
                     Literal: 1.5
                 )
 
-        VariableDeclaration: f32 v =
+        VariableDeclaration: f32 health =
             MemberAccess: Target: 'entity'
                 Member: 'health'
+
+        VariableDeclaration: f32 moreHealth =
+            BinaryExpression: Add
+                Literal: 1.0
+                MemberAccess: Target: 'entity'
+                    Member: 'health'
 
         VariableDeclaration: s32 defaultInt
 
@@ -99,6 +105,19 @@ FunctionDeclaration: s32 main
             BinaryExpression: Add
                 Identifier: a
                 Identifier: b
+
+        VariableDeclaration: s32 d =
+            Literal: 4
+
+        Assign: d =
+            BinaryExpression: Add
+                Identifier: a
+                Identifier: c
+
+        Assign: d =
+            BinaryExpression: Add
+                Identifier: d
+                Literal: 42
 
         VariableDeclaration: f32 f =
             Literal: 2.5

@@ -30,10 +30,16 @@ entry:
   %tmp5 = getelementptr %Entity, %Entity* %entity, i32 0, i32 1
   store double 1.5, double* %tmp5
 
-  %v = alloca double
+  %health = alloca double
   %tmp6 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
   %tmp7 = load double, double* %tmp6
-  store double %tmp7, double* %v
+  store double %tmp7, double* %health
+  %moreHealth = alloca double
+  %tmp8 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
+  %tmp9 = load double, double* %tmp8
+  %tmp10 = fadd double 1.0, %tmp9
+
+  store double %tmp10, double* %moreHealth
   %defaultInt = alloca i32
   %defaultFloat = alloca double
   %defaultBool = alloca i1
@@ -41,11 +47,11 @@ entry:
   %default_f32 = alloca double
   %default_bool = alloca i1
   %i = alloca i32
-  %tmp8 = sub i32 0, 1
-  store i32 %tmp8, i32* %i
+  %tmp11 = sub i32 0, 1
+  store i32 %tmp11, i32* %i
   %j = alloca double
-  %tmp9 = fsub double 0.0, 1.0
-  store double %tmp9, double* %j
+  %tmp12 = fsub double 0.0, 1.0
+  store double %tmp12, double* %j
   %fg = alloca i1
   store i1 0, i1* %fg
   %ffg = alloca i1
@@ -55,42 +61,53 @@ entry:
   %b = alloca i32
   store i32 10, i32* %b
   %c = alloca i32
-  %tmp10 = load i32, i32* %a
-  %tmp11 = load i32, i32* %b
-  %tmp12 = add i32 %tmp10, %tmp11
+  %tmp13 = load i32, i32* %a
+  %tmp14 = load i32, i32* %b
+  %tmp15 = add i32 %tmp13, %tmp14
 
-  store i32 %tmp12, i32* %c
+  store i32 %tmp15, i32* %c
+  %d = alloca i32
+  store i32 4, i32* %d
+  store i32 %tmp18, i32* %d
+  %tmp16 = load i32, i32* %a
+  %tmp17 = load i32, i32* %c
+  %tmp18 = add i32 %tmp16, %tmp17
+
+  store i32 %tmp20, i32* %d
+  %tmp19 = load i32, i32* %d
+  %tmp20 = add i32 %tmp19, 42
+
   %f = alloca double
   store double 2.5, double* %f
-  store double %tmp14, double* %f
-  %tmp13 = load double, double* %f
-  %tmp14 = fmul double %tmp13, 2.0
+  store double %tmp22, double* %f
+  %tmp21 = load double, double* %f
+  %tmp22 = fmul double %tmp21, 2.0
 
   %g = alloca double
   store double 3.0, double* %g
   %h = alloca double
-  %tmp15 = load double, double* %f
-  %tmp16 = load double, double* %g
-  %tmp17 = fsub double %tmp15, %tmp16
+  %tmp23 = load double, double* %f
+  %tmp24 = load double, double* %g
+  %tmp25 = fsub double %tmp23, %tmp24
 
-  store double %tmp17, double* %h
+  store double %tmp25, double* %h
   %ok = alloca i1
-  %tmp18 = load i32, i32* %c
-  %tmp19 = icmp sgt i32 %tmp18, 5
+  %tmp26 = load i32, i32* %c
+  %tmp27 = icmp sgt i32 %tmp26, 5
 
-  store i1 %tmp19, i1* %ok
+  store i1 %tmp27, i1* %ok
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
-  %tmp20 = load i32, i32* %c
-  ret i32 %tmp20
+  %tmp28 = load i32, i32* %c
+  ret i32 %tmp28
 }
 
 define i32 @m(i32 %j) {
 entry:
-  %tmp21 = alloca i32
-  store i32 %j, i32* %tmp21
+  %tmp29 = alloca i32
+  store i32 %j, i32* %tmp29
   %i = alloca i32
   store i32 3, i32* %i
-  store i32 4, i32* %tmp21
+  store i32 4, i32* %tmp29
   %health = alloca i32
   store i32 7, i32* %health
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
