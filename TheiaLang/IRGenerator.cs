@@ -408,8 +408,6 @@ public static class IRGenerator
         if (!TryResolveSlot(targetName, out var ptr, out TypeInfo? structInfo))
             throw new Exception($"Undefined variable '{targetName}'");
 
-        Log.Info($"{structInfo.TypeName} : {structInfo.FieldNames}");
-
         if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
             throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
 
