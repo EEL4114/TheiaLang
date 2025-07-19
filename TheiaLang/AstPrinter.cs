@@ -48,7 +48,7 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
+        w.WriteLine($"{Indent(indent)}{typeNamePair.LLVMType} {typeNamePair.Name}");
     }
 
     static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)
@@ -75,7 +75,7 @@ static class AstPrinter
         switch (stmt)
         {
             case VariableDeclaration vd:
-                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.Type} {vd.Name}" +
+                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.LLVMType} {vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init is not null)
                     PrintExpression(vd.Init, w, indent + tab);
@@ -139,7 +139,7 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + tab)}Member: '{m.Member.Name}'");
                 break;
             case InstantiationExpression isnt:
-                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
+                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.LLVMType}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments: (");
                 foreach (IExpression arument in isnt.Arguments)
                     PrintExpression(arument, w, indent + tab * 2);

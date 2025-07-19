@@ -4,6 +4,7 @@ namespace TheiaLang;
 
 public static class IRGenerator
 {
+    // we won't deal with SSA optimisation for now but once we have control blocks we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
@@ -68,11 +69,11 @@ public static class IRGenerator
     {
         string fieldIr = string.Join(
             ", ",
-            sd.Fields.Select(f => f.TypeName)
+            sd.Fields.Select(f => f.LLVMType)
         );
 
         string llvmName = $"%{sd.Name}";
-        IEnumerable<string> fieldIRs = sd.Fields.Select(f => f.TypeName);
+        IEnumerable<string> fieldIRs = sd.Fields.Select(f => f.LLVMType);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
@@ -106,7 +107,7 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = parameter.TypeName;
+            string llvmTy = parameter.LLVMType;
             args.Add($"{llvmTy} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
@@ -116,7 +117,7 @@ public static class IRGenerator
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = parameter.TypeName;
+            string llvmTy = parameter.LLVMType;
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {llvmTy}");
@@ -158,7 +159,7 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        string irType = variableDeclaration.Type;
+        string irType = variableDeclaration.LLVMType;
 
         string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {irType}");
@@ -283,11 +284,11 @@ public static class IRGenerator
             int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
             if (index >= 0)
             {
-                string irType = sd.Fields[index].TypeName;
-                string gep = NewTempVar();
+                string irType = sd.Fields[index].LLVMType;
+                string gep = $"%{NewTempVar()}";
                 code.AppendLine(
-                    $"  {gep} = getelementptr %struct.{sd.Name}, %struct.{sd.Name}* %this, i32 0, i32 {index}");
-                string tempIdentifier = NewTempVar();
+                    $"  {gep} = getelementptr %{sd.ReturnType}, %{sd.ReturnType}* %this, i32 0, i32 {index}");
+                string tempIdentifier = $"%{NewTempVar()}";
                 code.AppendLine($"  {tempIdentifier} = load {irType}, {irType}* {gep}");
                 return (code, tempIdentifier);
             }
@@ -336,7 +337,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
-        string irType = instantiation.TypeName;
+        string irType = instantiation.LLVMType;
         string ptrName = $"%{NewTempVar()}";
         code.AppendLine($"  {ptrName} = alloca {irType}");
 
@@ -380,7 +381,7 @@ public static class IRGenerator
 
             // infer the LLVM type of the argument
             string? actualType = InferExpressionType(argument);
-            string expectedType = symbolInfo.Parameters[i].TypeName;
+            string expectedType = symbolInfo.Parameters[i].LLVMType;
 
             if (actualType != expectedType)
                 Log.Error(12,
@@ -424,7 +425,7 @@ public static class IRGenerator
             throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
         string targetType = varTypes.Peek()[targetName].TypeName;   // alredy LLVM type
-        string memberType = targetInfo.Parameters[memberIndex].TypeName;
+        string memberType = targetInfo.Parameters[memberIndex].LLVMType;
 
         string gep = $"%{NewTempVar()}";
 
@@ -463,12 +464,31 @@ public static class IRGenerator
 
     static bool TryResolveType(string name, out TypeInfo? llvmType)
     {
-        // _varTypesStack is a Stack<Dictionary<string,string>>
         foreach (Dictionary<string, TypeInfo> frame in varTypes)
         {
             if (frame.TryGetValue(name, out llvmType))
                 return true;
         }
+
+        if (currentScope!.DeclaringNode is FunctionDeclaration fn
+            && currentScope.Parent?.DeclaringNode is StructDeclaration sd)
+        {
+            int fieldIndex = sd.Fields.FindIndex(f => f.Name == name);
+            if (fieldIndex >= 0)
+            {
+                string fieldType = sd.Fields[fieldIndex].LLVMType;
+
+                // TODO: composite support
+                llvmType = new TypeInfo(
+                fieldType,
+                null,
+                null);
+
+                return true;
+            }
+        }
+
+
         llvmType = null!;
         return false;
     }
@@ -478,6 +498,7 @@ public static class IRGenerator
         LiteralExpression lit when lit.Value is int => "i32",
         LiteralExpression lit when lit.Value is double => "float",
         LiteralExpression lit when lit.Value is bool => "i1",
+        // composite types
         IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type?.TypeName,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception($"Cannot infer type for Expression {expr}")

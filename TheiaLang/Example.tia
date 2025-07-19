@@ -6,7 +6,8 @@ struct Entity(float health, float speed)
 {
     bool IsAlive()
     {
-        return true;
+        bool alive = health > 0.0; 
+        return alive;
     }
 }
 

@@ -1,5 +1,5 @@
 Program: Example
-Generated at 19.07.2025 16:19:12
+Generated at 19.07.2025 18:59:13
 
 StructDeclaration: Vector3
     Fields: {
@@ -21,8 +21,13 @@ StructDeclaration: Entity
         Arguments: (
         )
         BlockSatement
+            VariableDeclaration: i1 alive =
+                BinaryExpression: Greater
+                    Identifier: health
+                    Literal: 0.0
+
             Return
-                Literal: true
+                Identifier: alive
 
 FunctionDeclaration: i32 main
     Arguments: (
