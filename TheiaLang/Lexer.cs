@@ -6,13 +6,24 @@ public enum TokenType
 {
     Identifier,
 
-    Literal_bool,
-    Literal_s32,
-    Literal_f32,
+    Literal_Boolean,
+    Literal_integer,
+    Literal_floatingPoint,
 
     Keyword_bool,
+
+    Keyword_s8,
+    Keyword_s16,
     Keyword_s32,
+    Keyword_s64,
+    Keyword_s128,
+    Keyword_s256,
+
+    Keyword_f16,
     Keyword_f32,
+    Keyword_f64,
+    Keyword_f128,
+
     Keyword_struct,
     Keyword_union,
 
@@ -99,10 +110,10 @@ class Lexer(string sourceCode)
             while (!IsAtEnd() && char.IsDigit(Peek()))
                 sb.Append(Advance());
 
-            return new Token(TokenType.Literal_f32, sb.ToString(), line, startCol);
+            return new Token(TokenType.Literal_floatingPoint, sb.ToString(), line, startCol);
         }
 
-        return new Token(TokenType.Literal_s32, sb.ToString(), line, startCol);
+        return new Token(TokenType.Literal_integer, sb.ToString(), line, startCol);
     }
 
     Token ReadIdentifierOrKeyword(char first)
@@ -115,14 +126,30 @@ class Lexer(string sourceCode)
         string lexeme = sb.ToString();
         return lexeme switch
         {
-            "int" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "s32" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "float" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
-            "f32" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
             "bool" => new Token(TokenType.Keyword_bool, lexeme, line, startCol),
+
+            "s8" => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
+            "sbyte" => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
+            "s16" => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
+            "short" => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
+            "s32" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "int" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "s64" => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
+            "long" => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
+            "s128" => new Token(TokenType.Keyword_s128, lexeme, line, startCol),
+            "s256" => new Token(TokenType.Keyword_s256, lexeme, line, startCol),
+
+            "f16" => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
+            "half" => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
+            "f32" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "float" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "f64" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
+            "double" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
+            "f128" => new Token(TokenType.Keyword_f128, lexeme, line, startCol),
+
             "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
-            "true" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
-            "false" => new Token(TokenType.Literal_bool, lexeme, line, startCol),
+            "true" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
+            "false" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
             "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
             "union" => new Token(TokenType.Keyword_union, lexeme, line, startCol),
             "new" => new Token(TokenType.Keyword_new, lexeme, line, startCol),

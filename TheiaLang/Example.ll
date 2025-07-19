@@ -46,6 +46,7 @@ entry:
   %default_s32 = alloca i32
   %default_f32 = alloca float
   %default_bool = alloca i1
+  %quad = alloca fp128
   %i = alloca i32
   %tmp11 = sub i32 0, 1
   store i32 %tmp11, i32* %i

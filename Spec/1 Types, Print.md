@@ -105,7 +105,6 @@ All binary floating point formats specified by IEEE 754 are available:
 |  `f32`   | `single` |  `float`  |    4     | 1.18×10^−38    | 3.40×10^38    |
 |  `f64`   | `double` |    ---    |    8     | 2.23×10^−30    | 1.80×10^308   |
 |  `f128`  |   ---    |    ---    |    16    | 3.36×10^−4932  | 1.19×10^4932  |
-|  `f256`  |   ---    |    ---    |    32    | 2.48×10^−78913 | 1.61×10^78913 |
 
 Default: `0`.\
 Default type for implicitly typed variables: `f32`.

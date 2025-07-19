@@ -1,5 +1,5 @@
 Program: Example
-Generated at 19.07.2025 16:01:21
+Generated at 19.07.2025 16:19:12
 
 StructDeclaration: Vector3
     Fields: {
@@ -78,6 +78,8 @@ FunctionDeclaration: i32 main
         VariableDeclaration: float default_f32
 
         VariableDeclaration: i1 default_bool
+
+        VariableDeclaration: fp128 quad
 
         VariableDeclaration: i32 i =
             UnaryExpression: Negate

@@ -115,8 +115,16 @@ public class Parser(List<Token> tokens)
         currentScope = globalScope;   // global scope
 
         DeclareBuiltin("i1");
+        DeclareBuiltin("i8");
+        DeclareBuiltin("i16");
         DeclareBuiltin("i32");
+        DeclareBuiltin("i64");
+        DeclareBuiltin("i128");
+        DeclareBuiltin("i256");
+        DeclareBuiltin("half");
         DeclareBuiltin("float");
+        DeclareBuiltin("double");
+        DeclareBuiltin("fp128");
         DeclareBuiltin("void");
 
         List<INode> nodes = new List<INode>();
@@ -494,7 +502,7 @@ public class Parser(List<Token> tokens)
             return new InstantiationExpression(type, arguments);
         }
 
-        if (Match(TokenType.Literal_s32) || Match(TokenType.Literal_f32) || Match(TokenType.Literal_bool))
+        if (Match(TokenType.Literal_integer) || Match(TokenType.Literal_floatingPoint) || Match(TokenType.Literal_Boolean))
         {
             object v;
 
@@ -570,12 +578,24 @@ public class Parser(List<Token> tokens)
 
     static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_s32 => "i32",
-        TokenType.Keyword_s32 => "i32",
-        TokenType.Literal_f32 => "float",
-        TokenType.Keyword_f32 => "float",
-        TokenType.Literal_bool => "i1",
+        TokenType.Literal_integer => "i32",
+        TokenType.Literal_floatingPoint => "float",
+        TokenType.Literal_Boolean => "i1",
+
         TokenType.Keyword_bool => "i1",
+
+        TokenType.Keyword_s8 => "i8",
+        TokenType.Keyword_s16 => "i16",
+        TokenType.Keyword_s32 => "i32",
+        TokenType.Keyword_s64 => "i64",
+        TokenType.Keyword_s128 => "i128",
+        TokenType.Keyword_s256 => "i256",
+
+        TokenType.Keyword_f16 => "half",
+        TokenType.Keyword_f32 => "float",
+        TokenType.Keyword_f64 => "double",
+        TokenType.Keyword_f128 => "fp128",
+
         _ => throw new Exception($"Unsupported Type '{tokenType}'"),
     };
     #endregion
@@ -604,9 +624,17 @@ public class Parser(List<Token> tokens)
     }
 
     static bool IsTypeKeyword(TokenType tokenType)
-        => tokenType == TokenType.Keyword_s32
+        => tokenType == TokenType.Keyword_bool
+        || tokenType == TokenType.Keyword_s8
+        || tokenType == TokenType.Keyword_s16
+        || tokenType == TokenType.Keyword_s32
+        || tokenType == TokenType.Keyword_s64
+        || tokenType == TokenType.Keyword_s128
+        || tokenType == TokenType.Keyword_s256
+        || tokenType == TokenType.Keyword_f16
         || tokenType == TokenType.Keyword_f32
-        || tokenType == TokenType.Keyword_bool;
+        || tokenType == TokenType.Keyword_f64
+        || tokenType == TokenType.Keyword_f128;
 
     bool Check(TokenType type)
         => !IsAtEnd() && Peek().TokenType == type;
