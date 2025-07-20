@@ -1,5 +1,5 @@
 Program: Example
-Generated at 20.07.2025 03:39:47
+Generated at 21.07.2025 00:48:40
 
 StructDeclaration: Vector3
     Fields: {
@@ -17,7 +17,7 @@ StructDeclaration: Entity
         f32 health
         f32 speed
     }
-    FunctionDeclaration: bool IsAlive
+    FunctionDeclaration:  IsAlive
         Arguments: (
         )
         BlockSatement
@@ -29,7 +29,7 @@ StructDeclaration: Entity
             Return
                 Identifier: alive
 
-FunctionDeclaration: s32 main
+FunctionDeclaration:  main
     Arguments: (
     )
     BlockSatement
@@ -150,7 +150,7 @@ FunctionDeclaration: s32 main
         Return
             Identifier: c
 
-FunctionDeclaration: s32 m
+FunctionDeclaration:  m
     Arguments: (
         s32 j
     )

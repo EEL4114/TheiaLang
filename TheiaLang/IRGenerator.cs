@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace TheiaLang;
@@ -25,6 +24,7 @@ public static class IRGenerator
     };
 
     public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
+    public static int BuiltinTypeIndex(string type) => BuiltinTypes.IndexOf(type);
 
     // we won't deal with SSA optimisation for now but once we have control blocks we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
@@ -85,7 +85,7 @@ public static class IRGenerator
         List<string> fieldLLVMTypes = new List<string>();
         foreach (TypeNamePair field in sd.Fields)
         {
-            TryResolveType(field.Type, out TypeInfo? fieldTypeInfo);
+            TryResolveType(field.TypeName, out TypeInfo? fieldTypeInfo);
             fieldLLVMTypes.Add(TypeToLLVM(fieldTypeInfo!)!);
         }
 
@@ -96,7 +96,7 @@ public static class IRGenerator
 
         string llvmName = $"%{sd.Name}";
 
-        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.Type);
+        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.TypeName);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
@@ -116,7 +116,7 @@ public static class IRGenerator
     {
         EnterScope(fn.Scope!);
 
-        TryResolveType(fn.ReturnType, out TypeInfo? returnType);
+        TryResolveType(fn.TypeName, out TypeInfo? returnType);
         string returnTypeLLVM = TypeToLLVM(returnType!)!;
 
         List<string> args = new List<string>();
@@ -131,7 +131,7 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            TryResolveType(parameter.Type, out TypeInfo? parameterInfo);
+            TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
             string parameterLLVMType = TypeToLLVM(parameterInfo!)!;
             args.Add($"{parameterLLVMType} %{parameter.Name}");
         }
@@ -142,7 +142,7 @@ public static class IRGenerator
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            TryResolveType(parameter.Type, out TypeInfo? parameterInfo);
+            TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
             string LLVMType = TypeToLLVM(parameterInfo!)!;
             string varName = $"%{NewTempVar()}";
 
@@ -184,7 +184,7 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        TryResolveType(variableDeclaration.Type, out TypeInfo? typeInfo);
+        TryResolveType(variableDeclaration.TypeName, out TypeInfo? typeInfo);
         string LLVMType = TypeToLLVM(typeInfo!)!;
 
         string slot = $"%{variableDeclaration.Name}";
@@ -317,12 +317,12 @@ public static class IRGenerator
             int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
             if (index >= 0)
             {
-                TryResolveType(sd.Fields[index].Type, out TypeInfo? fieldInfo);
+                TryResolveType(sd.Fields[index].TypeName, out TypeInfo? fieldInfo);
                 string LLVMType = TypeToLLVM(fieldInfo!)!;
 
                 string gep = $"%{NewTempVar()}";
                 code.AppendLine(
-                    $"  {gep} = getelementptr %{sd.ReturnType}, %{sd.ReturnType}* %this, i32 0, i32 {index}");
+                    $"  {gep} = getelementptr %{sd.ResolvedType.TypeName}, %{sd.ResolvedType.TypeName}* %this, i32 0, i32 {index}");
                 string tempIdentifier = $"%{NewTempVar()}";
                 code.AppendLine($"  {tempIdentifier} = load {LLVMType}, {LLVMType}* {gep}");
                 return (code, tempIdentifier);
@@ -423,7 +423,7 @@ public static class IRGenerator
             TypeInfo? actualType = InferExpressionType(argument);
             string actualLLVMType = TypeToLLVM(actualType!)!;
 
-            TryResolveType(calleeInfo.Parameters[i].Type, out TypeInfo? argumentInfo);
+            TryResolveType(calleeInfo.Parameters[i].TypeName, out TypeInfo? argumentInfo);
             string expectedLLVMType = TypeToLLVM(argumentInfo!)!;
 
             if (actualType!.TypeName != argumentInfo!.TypeName)
@@ -525,7 +525,7 @@ public static class IRGenerator
             int fieldIndex = sd.Fields.FindIndex(f => f.Name == name);
             if (fieldIndex >= 0)
             {
-                string fieldType = sd.Fields[fieldIndex].Type;
+                string fieldType = sd.Fields[fieldIndex].TypeName;
 
                 // TODO: composite support
                 type = new TypeInfo(

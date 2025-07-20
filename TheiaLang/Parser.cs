@@ -182,7 +182,7 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        TypeInfo returnTypeInfo = currentScope.ResolveType(functionDeclaration.ReturnType);
+        TypeInfo returnTypeInfo = currentScope.ResolveType(functionDeclaration.TypeName);
 
         currentScope.Declare(name,
                                 new SymbolInfo(
@@ -235,7 +235,7 @@ public class Parser(List<Token> tokens)
                                      ));
                 fields.Add(parameter);
                 fieldNames.Add(parameter.Name);
-                fieldTypes.Add(parameter.Type);
+                fieldTypes.Add(parameter.TypeName);
             } while (Match(TokenType.Punctuation_Comma));
         }
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after struct fields");
@@ -296,16 +296,17 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after variants");
         Consume(TokenType.Punctuation_Semicolon, "Expected ';' after union declaration");
 
-        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, name);
-        currentScope!.Declare(name, new SymbolInfo(
-            name,
-            new TypeInfo(
+        TypeInfo unionInfo = new TypeInfo(
                 name,
                 fieldNames,
-                fieldTypes
-            ),
-            SymbolKind.Type,
-            variants
+                fieldTypes);
+
+        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo);
+        currentScope!.Declare(name, new SymbolInfo(
+                              name,
+                              unionInfo,
+                              SymbolKind.Type,
+                              variants
         ));
 
         return unionDeclaration;
@@ -422,6 +423,8 @@ public class Parser(List<Token> tokens)
     AssignmentStatement ParseAssignment()
     {
         Token nameToken = Advance();
+
+        currentScope!.TryLookup(nameToken.Lexeme, out SymbolInfo? identifierInfo, out Scope? _);
         IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme);
 
         Advance(); // consume '='
@@ -436,7 +439,7 @@ public class Parser(List<Token> tokens)
 
     IExpression ParseComparison()
     {
-        IExpression expr = ParseAdditive();
+        IExpression left = ParseAdditive();
         while (Match(TokenType.Operator_Greater) || Match(TokenType.Operator_Less))
         {
             Token op = Previous();
@@ -444,9 +447,9 @@ public class Parser(List<Token> tokens)
             BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
             IExpression right = ParseAdditive();
-            expr = new BinaryExpression(expr, binaryOperatorType, right);
+            left = new BinaryExpression(left, binaryOperatorType, right);
         }
-        return expr;
+        return left;
     }
 
     IExpression ParseAdditive()
@@ -458,6 +461,7 @@ public class Parser(List<Token> tokens)
             BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
             IExpression right = ParseMultiplicative();
+
             expr = new BinaryExpression(expr, binaryOperatorType, right);
         }
         return expr;
@@ -602,6 +606,97 @@ public class Parser(List<Token> tokens)
 
         _ => throw new Exception($"Unsupported Type '{tokenType}'"),
     };
+    #endregion
+
+    #region Interoperability
+    static bool[,] ScalarTypeInterop = new bool[11, 11]
+    {
+        //              bool    s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s16   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s32   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s64   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s128  */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s256  */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false },
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false },
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   false },
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true  },
+    };
+
+    static string[,] ImplicitPromotion = new string[11, 11]
+    {
+        // A   \    B    bool   s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
+        /*bool  */  {   "bool", "",     "",     "",     "",     "",     "",     "",     "",     "",     ""     },
+        /*s8    */  {   "",     "s8",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
+        /*s16   */  {   "",    "s16",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
+        /*s32   */  {   "",    "s32",   "s32",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
+        /*s64   */  {   "",    "s64",   "s64",  "s64",  "s64",  "s128", "s256", "",     "",     "",     ""     },
+        /*s128  */  {   "",    "s128",  "s128", "s128", "s128", "s128", "s256", "",     "",     "",     ""     },
+        /*s256  */  {   "",    "s256",  "s256", "s256", "s256", "s256", "s256", "",     "",     "",     ""     },
+        /*f16   */  {   "",    "",      "",     "",     "",     "",     "",     "f16",  "",     "",     ""     },
+        /*f32   */  {   "",    "",      "",     "",     "",     "",     "",     "",     "f32",  "",     ""     },
+        /*f64   */  {   "",    "",      "",     "",     "",     "",     "",     "",     "",     "f64",  ""     },
+        /*f128  */  {   "",    "",      "",     "",     "",     "",     "",     "",     "",     "",     "f128" },
+    };
+
+    static bool[,] LoslessTypeInterop = new bool[11, 11]
+    {
+        //from  \  to   bool    s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s16   */  {   false,  false,  true,   true,   true,   true,   true,   false,  false,  false,  false },
+        /*s32   */  {   false,  false,  false,  true,   true,   true,   true,   false,  false,  false,  false },
+        /*s64   */  {   false,  false,  false,  false,  true,   true,   true,   false,  false,  false,  false },
+        /*s128  */  {   false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false },
+        /*s256  */  {   false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  false },
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false },
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false },
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   false },
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true  },
+    };
+
+    bool CanTypesInteropScalar(string typeA, string typeB)  // a + b; a * b;
+    {
+        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
+        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
+
+        if (indexA < 0 || indexB < 0)   // scalar math only allowed for built in types
+            return false;
+
+        return ScalarTypeInterop[indexA, indexB];
+    }
+
+    bool CanImplicitlyCast(string typeA, string typeB)  // a + b; a * b;
+    {
+        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
+        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
+
+        if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
+            return typeA == typeB;
+
+        return LoslessTypeInterop[indexA, indexB];
+    }
+
+    string? GetImplicitPromotionType(string typeA, string typeB)
+    {
+        int i = IRGenerator.BuiltinTypeIndex(typeA);
+        int j = IRGenerator.BuiltinTypeIndex(typeB);
+
+        string? result = null;
+
+        if (i >= 0 && j >= 0)     // only promote built-in types
+            result = ImplicitPromotion[i, j];
+
+        if (string.IsNullOrEmpty(result))
+            result = null;
+
+        if (result == null)
+            Log.Error(13, $"Cannot implicitly convert between {typeA} and {typeB}");
+
+        return result;
+    }
     #endregion
 
     #region Helpers

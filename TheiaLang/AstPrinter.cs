@@ -48,12 +48,12 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{typeNamePair.Type} {typeNamePair.Name}");
+        w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
     }
 
     static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.ReturnType} {functionDeclaration.Name}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.ResolvedType} {functionDeclaration.Name}");
         w.WriteLine($"{Indent(indent + tab)}Arguments: (");
         foreach (TypeNamePair typeNamePair in functionDeclaration.Parameters)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
@@ -75,7 +75,7 @@ static class AstPrinter
         switch (stmt)
         {
             case VariableDeclaration vd:
-                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.Type} {vd.Name}" +
+                w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.TypeName} {vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init is not null)
                     PrintExpression(vd.Init, w, indent + tab);
