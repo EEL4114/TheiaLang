@@ -397,10 +397,7 @@ public class Parser(List<Token> tokens)
             // Log.Info($"{lhs != null}\n{lhs}\n{Peek()}");
 
             if (lhs.Assignable && Peek().TokenType == TokenType.Operator_Equals)
-            {
-                Log.Info("AA");
                 return ParseAssignment();
-            }
             else
                 pos = ret;
         }
