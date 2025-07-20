@@ -84,20 +84,20 @@ public record UnionDeclaration(
 }
 
 public record VariableDeclaration(
-    string LLVMType,                  // "int", "float", "bool"
+    string Type,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
 ) : IDeclaration, IStatement
 {
-    public string ReturnType => LLVMType;
+    public string ReturnType => Type;
 }
 
 public sealed record TypeNamePair(
-    string LLVMType,
+    string Type,
     string Name
 ) : IDeclaration
 {
-    public string ReturnType => LLVMType;
+    public string ReturnType => Type;
 }
 #endregion
 
@@ -144,7 +144,7 @@ public sealed record CallExpression(
 { public bool Assignable => false; }
 
 public sealed record InstantiationExpression(
-    string LLVMType,
+    string Type,
     List<IExpression> Arguments
 ) : IExpression
 { public bool Assignable => false; }

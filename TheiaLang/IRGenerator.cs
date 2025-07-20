@@ -1,21 +1,36 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace TheiaLang;
 
 public static class IRGenerator
 {
+    public static readonly List<string> BuiltinTypes = new List<string>
+    {
+        "bool",
+
+        "s8",
+        "s16",
+        "s32",
+        "s64",
+        "s128",
+        "s256",
+
+        "f16",
+        "f32",
+        "f64",
+        "f128",
+
+        // "void",
+    };
+
+    public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
+
     // we won't deal with SSA optimisation for now but once we have control blocks we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
     static Scope? currentScope;
-
-    record TypeInfo
-    (
-        string TypeName,                // e.g. "%Entity"
-        List<string>? FieldNames,       // ["x","y","health",…]
-        List<string>? FieldTypes        // ["i32","i32","i32",…]
-    );
 
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
     {
@@ -67,25 +82,33 @@ public static class IRGenerator
 
     static void EmitStructType(StructDeclaration sd, StringBuilder sb)
     {
+        List<string> fieldLLVMTypes = new List<string>();
+        foreach (TypeNamePair field in sd.Fields)
+        {
+            TryResolveType(field.Type, out TypeInfo? fieldTypeInfo);
+            fieldLLVMTypes.Add(TypeToLLVM(fieldTypeInfo!)!);
+        }
+
         string fieldIr = string.Join(
             ", ",
-            sd.Fields.Select(f => f.LLVMType)
+            fieldLLVMTypes
         );
 
         string llvmName = $"%{sd.Name}";
-        IEnumerable<string> fieldIRs = sd.Fields.Select(f => f.LLVMType);
+
+        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.Type);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
 
         TypeInfo ti = new TypeInfo
         (
-            llvmName,
+            sd.Name,
             sd.Fields.Select(f => f.Name).ToList(),
-            fieldIRs.ToList()
+            fieldTypes.ToList()
         );
 
-        varTypes.Peek()[llvmName] = ti;
+        varTypes.Peek()[sd.Name] = ti;
     }
 
     #region Functions
@@ -93,7 +116,8 @@ public static class IRGenerator
     {
         EnterScope(fn.Scope!);
 
-        string returnType = fn.ReturnType;
+        TryResolveType(fn.ReturnType, out TypeInfo? returnType);
+        string returnTypeLLVM = TypeToLLVM(returnType!)!;
 
         List<string> args = new List<string>();
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
@@ -107,25 +131,26 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = parameter.LLVMType;
-            args.Add($"{llvmTy} %{parameter.Name}");
+            TryResolveType(parameter.Type, out TypeInfo? parameterInfo);
+            string parameterLLVMType = TypeToLLVM(parameterInfo!)!;
+            args.Add($"{parameterLLVMType} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
 
-        sb.AppendLine($"define {returnType} @{fn.Name}({paramList}) {{");
+        sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
-            string llvmTy = parameter.LLVMType;
+            TryResolveType(parameter.Type, out TypeInfo? parameterInfo);
+            string LLVMType = TypeToLLVM(parameterInfo!)!;
             string varName = $"%{NewTempVar()}";
 
-            sb.AppendLine($"  {varName} = alloca {llvmTy}");
-            sb.AppendLine($"  store {llvmTy} %{parameter.Name}, {llvmTy}* {varName}");
+            sb.AppendLine($"  {varName} = alloca {LLVMType}");
+            sb.AppendLine($"  store {LLVMType} %{parameter.Name}, {LLVMType}* {varName}");
 
             allocas.Peek()[parameter.Name] = (varName, null);
-            varTypes.Peek()[parameter.Name] = new TypeInfo(llvmTy, null, null);
-            args.Add($"{llvmTy} %{parameter.Name}");
+            varTypes.Peek()[parameter.Name] = parameterInfo!;
         }
 
         foreach (IStatement statement in fn.Statements)
@@ -159,13 +184,14 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        string irType = variableDeclaration.LLVMType;
+        TryResolveType(variableDeclaration.Type, out TypeInfo? typeInfo);
+        string LLVMType = TypeToLLVM(typeInfo!)!;
 
         string slot = $"%{variableDeclaration.Name}";
-        sb.AppendLine($"  {slot} = alloca {irType}");
+        sb.AppendLine($"  {slot} = alloca {LLVMType}");
 
         allocas.Peek()[variableDeclaration.Name] = (slot, null);
-        varTypes.Peek()[variableDeclaration.Name] = new TypeInfo(irType, null, null);
+        varTypes.Peek()[variableDeclaration.Name] = typeInfo!;
 
         if (variableDeclaration.Init is InstantiationExpression inst)
         {
@@ -178,12 +204,14 @@ public static class IRGenerator
                 // get the pointer to field `i` of our *variable* slot
                 string gep = $"%{NewTempVar()}";
                 sb.AppendLine(
-                  $"  {gep} = getelementptr {irType}, {irType}* {slot}, i32 0, i32 {i}");
+                  $"  {gep} = getelementptr {LLVMType}, {LLVMType}* {slot}, i32 0, i32 {i}");
 
                 // store the argument into that field
-                string? argTy = InferExpressionType(inst.Arguments[i]);
+                TypeInfo? argumentType = InferExpressionType(inst.Arguments[i]);
+                string LLVMTypeArg = TypeToLLVM(argumentType!)!;
+
                 sb.AppendLine(
-                  $"  store {argTy} {argReg}, {argTy}* {gep}");
+                  $"  store {LLVMTypeArg} {argReg}, {LLVMTypeArg}* {gep}");
             }
             sb.AppendLine();
         }
@@ -192,7 +220,7 @@ public static class IRGenerator
             (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
             sb.Append(initCode);
             sb.AppendLine(
-              $"  store {irType} {initReg}, {irType}* {slot}");
+              $"  store {LLVMType} {initReg}, {LLVMType}* {slot}");
         }
     }
 
@@ -202,11 +230,11 @@ public static class IRGenerator
             throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
             $"{assignment.Target} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
 
-        string type = typeInfo.TypeName;
+        string LLVMType = TypeToLLVM(typeInfo)!;
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
-        sb.AppendLine($"  store {type} {val}, {type}* {alloc.ptr}");
+        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {alloc.ptr}");
     }
 
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
@@ -217,14 +245,15 @@ public static class IRGenerator
 
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expr);
         sb.Append(code);
-        string? ty = InferExpressionType(returnStatement.Expr);
+        TypeInfo? typeInfo = InferExpressionType(returnStatement.Expr);
+        string LLVMType = TypeToLLVM(typeInfo!)!;
 
-        sb.AppendLine($"  ret {ty} {val}");
+        sb.AppendLine($"  ret {LLVMType} {val}");
     }
     #endregion
 
-    #region Expressions
 
+    #region Expressions
     static (StringBuilder, string) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();
@@ -247,16 +276,20 @@ public static class IRGenerator
 
         string tmp = NewTempVar();
 
-        string? type = InferExpressionType(unaryExpression.Operand);
-        string instr = type switch
+        TypeInfo? typeInfo = InferExpressionType(unaryExpression.Operand);
+
+        string instr = typeInfo!.TypeName switch
         {
-            "i32" => "sub",
-            "float" => "fsub",
-            _ => throw new NotSupportedException($"Unary - on {type}")
+            "s32" => "sub",
+            "f32" => "fsub",
+            _ => throw new NotSupportedException($"Unary - on {typeInfo.TypeName}")
         };
 
-        string zero = type == "i32" ? "0" : "0.0";
-        code.AppendLine($"  %{tmp} = {instr} {type} {zero}, {val}");
+        string zero = typeInfo.TypeName == "s32" ? "0" : "0.0";
+
+        string llvmType = TypeToLLVM(typeInfo)!;
+
+        code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
         return (code, $"%{tmp}");
     }
 
@@ -272,10 +305,10 @@ public static class IRGenerator
     {
         if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) _, out TypeInfo? typeInfo))
         {
-            string type = typeInfo.TypeName;
+            string LLVMType = TypeToLLVM(typeInfo)!;
 
             string tmp = $"tmp{tmpCounter++}";
-            code.AppendLine($"  %{tmp} = load {type}, {type}* %{identifier.Name}");
+            code.AppendLine($"  %{tmp} = load {LLVMType}, {LLVMType}* %{identifier.Name}");
             return (code, $"%{tmp}");
         }
 
@@ -284,12 +317,14 @@ public static class IRGenerator
             int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
             if (index >= 0)
             {
-                string irType = sd.Fields[index].LLVMType;
+                TryResolveType(sd.Fields[index].Type, out TypeInfo? fieldInfo);
+                string LLVMType = TypeToLLVM(fieldInfo!)!;
+
                 string gep = $"%{NewTempVar()}";
                 code.AppendLine(
                     $"  {gep} = getelementptr %{sd.ReturnType}, %{sd.ReturnType}* %this, i32 0, i32 {index}");
                 string tempIdentifier = $"%{NewTempVar()}";
-                code.AppendLine($"  {tempIdentifier} = load {irType}, {irType}* {gep}");
+                code.AppendLine($"  {tempIdentifier} = load {LLVMType}, {LLVMType}* {gep}");
                 return (code, tempIdentifier);
             }
         }
@@ -304,11 +339,11 @@ public static class IRGenerator
         code.Append(cl);
         code.Append(cr);
 
-        string? ty = InferExpressionType(binaryExpression.Left);
+        TypeInfo? typeInfo = InferExpressionType(binaryExpression.Left);
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
-        if (ty == "i32") op = binaryExpression.Op switch
+        if (typeInfo!.TypeName == "s32") op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "add",
             BinaryOperator.Subtract => "sub",
@@ -317,7 +352,7 @@ public static class IRGenerator
             BinaryOperator.Less => "icmp slt",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
-        else if (ty == "float") op = binaryExpression.Op switch
+        else if (typeInfo.TypeName == "f32") op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "fadd",
             BinaryOperator.Subtract => "fsub",
@@ -327,9 +362,11 @@ public static class IRGenerator
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
 
-        else throw new Exception($"Unsupported type '{ty}'");
+        else throw new Exception($"Unsupported type '{typeInfo.TypeName}'");
 
-        code.AppendLine($"  %{tmp} = {op} {ty} {vl}, {vr}");
+        string LLVMType = TypeToLLVM(typeInfo)!;
+
+        code.AppendLine($"  %{tmp} = {op} {LLVMType} {vl}, {vr}");
         code.AppendLine();
 
         return (code, $"%{tmp}");
@@ -337,7 +374,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
-        string irType = instantiation.LLVMType;
+        string irType = instantiation.Type;
         string ptrName = $"%{NewTempVar()}";
         code.AppendLine($"  {ptrName} = alloca {irType}");
 
@@ -350,25 +387,28 @@ public static class IRGenerator
             code.AppendLine(
                 $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
 
-            string? argTy = InferExpressionType(instantiation.Arguments[i]);
-            code.AppendLine($"  store {argTy} {argReg}, {argTy}* {gep}");
+            TypeInfo? argumentTypeInfo = InferExpressionType(instantiation.Arguments[i]);
+            string llvmType = TypeToLLVM(argumentTypeInfo!)!;
+
+            code.AppendLine($"  store {llvmType} {argReg}, {llvmType}* {gep}");
         }
+
         return (code, ptrName);
     }
 
     static (StringBuilder code, string name) EmitCallExpression(CallExpression call, StringBuilder code)
     {
-        if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? symbolInfo, out _))
+        if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? calleeInfo, out _))
             throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
 
-        if (symbolInfo!.Kind != SymbolKind.Function)
+        if (calleeInfo!.Kind != SymbolKind.Function)
             throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
 
-        if (call.Arguments.Count != symbolInfo.Parameters!.Count)
+        if (call.Arguments.Count != calleeInfo.Parameters!.Count)
             Log.Error(11,  // pick an unused code
-                $"Function '{call.CalleeName}' expects {symbolInfo.Parameters.Count} arguments, " +
+                $"Function '{call.CalleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
                 $"but got {call.Arguments.Count}");
-        string retTy = symbolInfo.Type.TypeName;
+        string retTy = TypeToLLVM(calleeInfo.Type)!;
 
         List<string> argumentList = new List<string>();
 
@@ -380,20 +420,23 @@ public static class IRGenerator
             code.Append(argCode);
 
             // infer the LLVM type of the argument
-            string? actualType = InferExpressionType(argument);
-            string expectedType = symbolInfo.Parameters[i].LLVMType;
+            TypeInfo? actualType = InferExpressionType(argument);
+            string actualLLVMType = TypeToLLVM(actualType!)!;
 
-            if (actualType != expectedType)
+            TryResolveType(calleeInfo.Parameters[i].Type, out TypeInfo? argumentInfo);
+            string expectedLLVMType = TypeToLLVM(argumentInfo!)!;
+
+            if (actualType!.TypeName != argumentInfo!.TypeName)
                 Log.Error(12,
-                    $"Type mismatch in call to '{call.CalleeName}': parameter '{symbolInfo.Parameters[i].Name}' " +
-                    $"expected {expectedType}, got {actualType}");
+                    $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
+                    $"expected {argumentInfo!.TypeName}, got {actualType!.TypeName}");
 
-            argumentList.Add($"{expectedType} {argReg}");
+            argumentList.Add($"{actualLLVMType} {argReg}");
         }
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine(
-            $"  {tmp} = call {retTy} @{symbolInfo.Name}({string.Join(", ", argumentList)})");
+            $"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
     }
 
@@ -424,16 +467,16 @@ public static class IRGenerator
         if (memberIndex < 0)
             throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
-        string targetType = varTypes.Peek()[targetName].TypeName;   // alredy LLVM type
-        string memberType = targetInfo.Parameters[memberIndex].LLVMType;
+        string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
+        string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
 
         string gep = $"%{NewTempVar()}";
 
         code.AppendLine(
-            $"  {gep} = getelementptr inbounds {targetType}, {targetType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
+            $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
 
         string tmp = $"%{NewTempVar()}";
-        code.AppendLine($"  {tmp} = load {memberType}, {memberType}* {gep}");
+        code.AppendLine($"  {tmp} = load {memberLLVMType}, {memberLLVMType}* {gep}");
         return (code, tmp);
     }
 
@@ -462,11 +505,17 @@ public static class IRGenerator
         return false;
     }
 
-    static bool TryResolveType(string name, out TypeInfo? llvmType)
+    static bool TryResolveType(string name, out TypeInfo? type)
     {
+        if (IsBuiltinType(name))
+        {
+            type = new TypeInfo(name, null, null);
+            return true;
+        }
+
         foreach (Dictionary<string, TypeInfo> frame in varTypes)
         {
-            if (frame.TryGetValue(name, out llvmType))
+            if (frame.TryGetValue(name, out type))
                 return true;
         }
 
@@ -476,10 +525,10 @@ public static class IRGenerator
             int fieldIndex = sd.Fields.FindIndex(f => f.Name == name);
             if (fieldIndex >= 0)
             {
-                string fieldType = sd.Fields[fieldIndex].LLVMType;
+                string fieldType = sd.Fields[fieldIndex].Type;
 
                 // TODO: composite support
-                llvmType = new TypeInfo(
+                type = new TypeInfo(
                 fieldType,
                 null,
                 null);
@@ -488,18 +537,44 @@ public static class IRGenerator
             }
         }
 
-
-        llvmType = null!;
+        type = null!;
         return false;
     }
 
-    static string? InferExpressionType(IExpression expr) => expr switch
+    static string? TypeToLLVM(TypeInfo type)
     {
-        LiteralExpression lit when lit.Value is int => "i32",
-        LiteralExpression lit when lit.Value is double => "float",
-        LiteralExpression lit when lit.Value is bool => "i1",
+        bool builtin = IsBuiltinType(type.TypeName);
+        if (builtin)
+            return type.TypeName switch
+            {
+                "bool" => "i1",
+
+                "s8" => "i8",
+                "s16" => "i16",
+                "s32" => "i32",
+                "s64" => "i64",
+                "s128" => "i128",
+                "s256" => "i256",
+
+                "f16" => "half",
+                "f32" => "float",
+                "f64" => "double",
+                "f128" => "fp128",
+                _ => throw new NotImplementedException(),
+            };
+        else    // assume composite type
+            return $"%{type.TypeName}";
+
+        throw new Exception($"Unsupported type: '{type.TypeName}'");
+    }
+
+    static TypeInfo? InferExpressionType(IExpression expr) => expr switch
+    {
+        LiteralExpression lit when lit.Value is int => new TypeInfo("s32", null, null),
+        LiteralExpression lit when lit.Value is double => new TypeInfo("f32", null, null),
+        LiteralExpression lit when lit.Value is bool => new TypeInfo("bool", null, null),
         // composite types
-        IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type?.TypeName,
+        IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type,
         BinaryExpression bin => InferExpressionType(bin.Left),
         _ => throw new Exception($"Cannot infer type for Expression {expr}")
     };

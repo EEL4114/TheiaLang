@@ -99,12 +99,12 @@ It is possible to group digits with underscores `_`, for example:
 
 All binary floating point formats specified by IEEE 754 are available:
 
-|   Name   |  Alias   |  Alias 2  | Size (B) |     Min > 0    |      Max      |
-|----------|----------|-----------|----------|----------------|---------------|
-|  `f16`   |  `half`  |    ---    |    2     | 6.10×10^−5     | 65504         |
-|  `f32`   | `single` |  `float`  |    4     | 1.18×10^−38    | 3.40×10^38    |
-|  `f64`   | `double` |    ---    |    8     | 2.23×10^−30    | 1.80×10^308   |
-|  `f128`  |   ---    |    ---    |    16    | 3.36×10^−4932  | 1.19×10^4932  |
+|   Name   |  Alias   |  Alias 2  | Size (B) |     Min > 0    |      Max     |
+|----------|----------|-----------|----------|----------------|--------------|
+|  `f16`   |  `half`  |    ---    |    2     | 6.10×10^−5     | 65504        |
+|  `f32`   | `single` |  `float`  |    4     | 1.18×10^−38    | 3.40×10^38   |
+|  `f64`   | `double` |    ---    |    8     | 2.23×10^−30    | 1.80×10^308  |
+|  `f128`  |   ---    |    ---    |    16    | 3.36×10^−4932  | 1.19×10^4932 |
 
 Default: `0`.\
 Default type for implicitly typed variables: `f32`.

@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace TheiaLang;
 
 public enum SymbolKind
@@ -21,10 +19,12 @@ public class SymbolInfo(string name,
 }
 
 public class TypeInfo(string type,
-                      List<TypeNamePair>? fields)
+                      List<string>? fieldNames,
+                      List<string>? fieldTypes)
 {
     public string TypeName { get; init; } = type;
-    public List<TypeNamePair>? Fields { get; init; } = fields;
+    public List<string>? FieldNames { get; set; } = fieldNames;
+    public List<string>? FieldTypes { get; set; } = fieldTypes;
 }
 
 public class Scope : INode
@@ -103,6 +103,7 @@ public class Scope : INode
     }
 }
 
+
 public class Parser(List<Token> tokens)
 {
     int pos = 0;
@@ -114,18 +115,8 @@ public class Parser(List<Token> tokens)
         globalScope = new Scope("", null, null);
         currentScope = globalScope;   // global scope
 
-        DeclareBuiltin("i1");
-        DeclareBuiltin("i8");
-        DeclareBuiltin("i16");
-        DeclareBuiltin("i32");
-        DeclareBuiltin("i64");
-        DeclareBuiltin("i128");
-        DeclareBuiltin("i256");
-        DeclareBuiltin("half");
-        DeclareBuiltin("float");
-        DeclareBuiltin("double");
-        DeclareBuiltin("fp128");
-        DeclareBuiltin("void");
+        foreach (string builtinType in IRGenerator.BuiltinTypes)
+            DeclareBuiltin(builtinType);
 
         List<INode> nodes = new List<INode>();
         while (!IsAtEnd())
@@ -213,6 +204,8 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after struct name");
 
         List<TypeNamePair> fields = new List<TypeNamePair>();
+        List<string> fieldNames = new List<string>();
+        List<string> fieldTypes = new List<string>();
         List<FunctionDeclaration> methods = new List<FunctionDeclaration>();
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
@@ -241,6 +234,8 @@ public class Parser(List<Token> tokens)
                                         null
                                      ));
                 fields.Add(parameter);
+                fieldNames.Add(parameter.Name);
+                fieldTypes.Add(parameter.Type);
             } while (Match(TokenType.Punctuation_Comma));
         }
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after struct fields");
@@ -263,12 +258,13 @@ public class Parser(List<Token> tokens)
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
             new TypeInfo(
-                "%" + name,
-                fields),
+                name,
+                fieldNames,
+                fieldTypes),
             SymbolKind.Type,
             fields);
 
-        currentScope.Declare("%" + name, symbolInfo);
+        currentScope.Declare(name, symbolInfo);
 
         return structDeclaration;
     }
@@ -279,7 +275,10 @@ public class Parser(List<Token> tokens)
         string name = nameTok.Lexeme;
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after union name");
+        List<string> fieldNames = new List<string>();
+        List<string> fieldTypes = new List<string>();
         List<TypeNamePair> variants = new List<TypeNamePair>();
+
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
@@ -288,6 +287,8 @@ public class Parser(List<Token> tokens)
                 string type = TokenTypeToString(typeToken.TokenType);
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
+                fieldNames.Add(identifierToken.Lexeme);
+                fieldTypes.Add(type);
                 variants.Add(new TypeNamePair(type, identifierToken.Lexeme));
             }
             while (Match(TokenType.Punctuation_Comma));
@@ -300,7 +301,8 @@ public class Parser(List<Token> tokens)
             name,
             new TypeInfo(
                 name,
-                variants
+                fieldNames,
+                fieldTypes
             ),
             SymbolKind.Type,
             variants
@@ -329,7 +331,7 @@ public class Parser(List<Token> tokens)
             && PeekNext().TokenType == TokenType.Identifier)
         {
             Token typeToken = Advance();
-            string type = "%" + typeToken.Lexeme;     // composite type
+            string type = typeToken.Lexeme;     // composite type
             string varName = Advance().Lexeme;
 
             IExpression? init = null;
@@ -392,8 +394,13 @@ public class Parser(List<Token> tokens)
         try
         {
             IExpression? lhs = ParseExpression();
-            if (lhs.Assignable && PeekNext().TokenType == TokenType.Operator_Equals)
+            // Log.Info($"{lhs != null}\n{lhs}\n{Peek()}");
+
+            if (lhs.Assignable && Peek().TokenType == TokenType.Operator_Equals)
+            {
+                Log.Info("AA");
                 return ParseAssignment();
+            }
             else
                 pos = ret;
         }
@@ -489,7 +496,7 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Keyword_new))
         {
             Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
-            string type = "%" + typeToken.Lexeme;   // composite type
+            string type = typeToken.Lexeme;   // composite type
 
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after type name");
             List<IExpression> arguments = new List<IExpression>();
@@ -578,23 +585,23 @@ public class Parser(List<Token> tokens)
 
     static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_integer => "i32",
-        TokenType.Literal_floatingPoint => "float",
-        TokenType.Literal_Boolean => "i1",
+        TokenType.Literal_integer => "s32",     // TODO: make integer literals compatible with floating point numbers
+        TokenType.Literal_floatingPoint => "f32", // TODO: explicit abstraction from width 
+        TokenType.Literal_Boolean => "bool",
 
-        TokenType.Keyword_bool => "i1",
+        TokenType.Keyword_bool => "bool",
 
-        TokenType.Keyword_s8 => "i8",
-        TokenType.Keyword_s16 => "i16",
-        TokenType.Keyword_s32 => "i32",
-        TokenType.Keyword_s64 => "i64",
-        TokenType.Keyword_s128 => "i128",
-        TokenType.Keyword_s256 => "i256",
+        TokenType.Keyword_s8 => "s8",
+        TokenType.Keyword_s16 => "s16",
+        TokenType.Keyword_s32 => "s32",
+        TokenType.Keyword_s64 => "s64",
+        TokenType.Keyword_s128 => "s128",
+        TokenType.Keyword_s256 => "s256",
 
-        TokenType.Keyword_f16 => "half",
-        TokenType.Keyword_f32 => "float",
-        TokenType.Keyword_f64 => "double",
-        TokenType.Keyword_f128 => "fp128",
+        TokenType.Keyword_f16 => "f16",
+        TokenType.Keyword_f32 => "f32",
+        TokenType.Keyword_f64 => "f64",
+        TokenType.Keyword_f128 => "f128",
 
         _ => throw new Exception($"Unsupported Type '{tokenType}'"),
     };
@@ -673,6 +680,7 @@ public class Parser(List<Token> tokens)
                         typeName,
                         new TypeInfo(
                             typeName,
+                            null,
                             null
                         ),
                         SymbolKind.Type,
