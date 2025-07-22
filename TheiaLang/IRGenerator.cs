@@ -84,10 +84,7 @@ public static class IRGenerator
     {
         List<string> fieldLLVMTypes = new List<string>();
         foreach (TypeNamePair field in sd.Fields)
-        {
-            TryResolveType(field.TypeName, out TypeInfo? fieldTypeInfo);
-            fieldLLVMTypes.Add(TypeToLLVM(fieldTypeInfo!)!);
-        }
+            fieldLLVMTypes.Add(TypeToLLVM(field.ResolvedType!)!);
 
         string fieldIr = string.Join(
             ", ",
@@ -116,8 +113,7 @@ public static class IRGenerator
     {
         EnterScope(fn.Scope!);
 
-        TryResolveType(fn.TypeName, out TypeInfo? returnType);
-        string returnTypeLLVM = TypeToLLVM(returnType!)!;
+        string returnTypeLLVM = TypeToLLVM(fn.ResolvedType)!;
 
         List<string> args = new List<string>();
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
@@ -131,8 +127,7 @@ public static class IRGenerator
         string paramList = "";
         foreach (TypeNamePair parameter in fn.Arguments)
         {
-            TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
-            string parameterLLVMType = TypeToLLVM(parameterInfo!)!;
+            string parameterLLVMType = TypeToLLVM(parameter.ResolvedType!)!;
             args.Add($"{parameterLLVMType} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
@@ -142,15 +137,14 @@ public static class IRGenerator
 
         foreach (TypeNamePair parameter in fn.Arguments)
         {
-            TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
-            string LLVMType = TypeToLLVM(parameterInfo!)!;
+            string LLVMType = TypeToLLVM(parameter.ResolvedType!)!;
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {LLVMType}");
             sb.AppendLine($"  store {LLVMType} %{parameter.Name}, {LLVMType}* {varName}");
 
             allocas.Peek()[parameter.Name] = (varName, null);
-            varTypes.Peek()[parameter.Name] = parameterInfo!;
+            varTypes.Peek()[parameter.Name] = parameter.ResolvedType!;
         }
 
         foreach (IStatement statement in fn.Statements)
@@ -184,14 +178,13 @@ public static class IRGenerator
 
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
-        TryResolveType(variableDeclaration.TypeName, out TypeInfo? typeInfo);
-        string LLVMType = TypeToLLVM(typeInfo!)!;
+        string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
 
         string slot = $"%{variableDeclaration.Name}";
         sb.AppendLine($"  {slot} = alloca {LLVMType}");
 
         allocas.Peek()[variableDeclaration.Name] = (slot, null);
-        varTypes.Peek()[variableDeclaration.Name] = typeInfo!;
+        varTypes.Peek()[variableDeclaration.Name] = variableDeclaration.ResolvedType!;
 
         if (variableDeclaration.Init is InstantiationExpression inst)
         {
@@ -315,8 +308,7 @@ public static class IRGenerator
             int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
             if (index >= 0)
             {
-                TryResolveType(sd.Fields[index].TypeName, out TypeInfo? fieldInfo);
-                string LLVMType = TypeToLLVM(fieldInfo!)!;
+                string LLVMType = TypeToLLVM(sd.Fields[index].ResolvedType!)!;
 
                 string gep = $"%{NewTempVar()}";
                 code.AppendLine(
@@ -420,13 +412,12 @@ public static class IRGenerator
             TypeInfo actualType = argument.ResolvedType;
             string actualLLVMType = TypeToLLVM(actualType!)!;
 
-            TryResolveType(calleeInfo.Parameters[i].TypeName, out TypeInfo? argumentInfo);
-            string expectedLLVMType = TypeToLLVM(argumentInfo!)!;
+            string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
 
-            if (actualType.TypeName != argumentInfo!.TypeName)
+            if (actualType.TypeName != calleeInfo.Type.TypeName)
                 Log.Error(12,
                     $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
-                    $"expected {argumentInfo!.TypeName}, got {actualType.TypeName}");
+                    $"expected {calleeInfo.Type.TypeName}, got {actualType.TypeName}");
 
             argumentList.Add($"{actualLLVMType} {argReg}");
         }
@@ -499,42 +490,6 @@ public static class IRGenerator
         }
         alloc = (null, null)!;
         typeInfo = null!;
-        return false;
-    }
-
-    static bool TryResolveType(string name, out TypeInfo? type)
-    {
-        if (IsBuiltinType(name))
-        {
-            type = new TypeInfo(name, null, null);
-            return true;
-        }
-
-        foreach (Dictionary<string, TypeInfo> frame in varTypes)
-        {
-            if (frame.TryGetValue(name, out type))
-                return true;
-        }
-
-        if (currentScope!.DeclaringNode is FunctionDeclaration fn
-            && currentScope.Parent?.DeclaringNode is StructDeclaration sd)
-        {
-            int fieldIndex = sd.Fields.FindIndex(f => f.Name == name);
-            if (fieldIndex >= 0)
-            {
-                string fieldType = sd.Fields[fieldIndex].TypeName;
-
-                // TODO: composite support
-                type = new TypeInfo(
-                fieldType,
-                null,
-                null);
-
-                return true;
-            }
-        }
-
-        type = null!;
         return false;
     }
 
