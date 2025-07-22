@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 15:57:21
+Generated at 22.07.2025 16:06:34
 
 StructDeclaration: Vector3
     Fields: {
