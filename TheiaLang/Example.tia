@@ -2,15 +2,6 @@ struct Vector3(float x, float y, float z);
 
 union StringData(int i, float f);
 
-struct Entity(float health, float speed)
-{
-    bool IsAlive()
-    {
-        bool alive = health > 0.0; 
-        return alive;
-    }
-}
-
 int main()
 {
     m(7);
@@ -65,4 +56,14 @@ int m(int j)
     int health = 7;
     return 0;
 }
+
+struct Entity(float health, float speed)
+{
+    bool IsAlive()
+    {
+        bool alive = health > 0.0; 
+        return alive;
+    }
+}
+
 

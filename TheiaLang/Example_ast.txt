@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 04:26:45
+Generated at 22.07.2025 14:03:24
 
 StructDeclaration: Vector3
     Fields: {
@@ -11,23 +11,6 @@ StructDeclaration: Vector3
 UnionDeclaration: StringData
     s32 i
     f32 f
-
-StructDeclaration: Entity
-    Fields: {
-        f32 health
-        f32 speed
-    }
-    FunctionDeclaration: TheiaLang.TypeInfo IsAlive
-        Arguments: (
-        )
-        BlockSatement
-            VariableDeclaration: bool alive =
-                BinaryExpression: Greater
-                    Identifier: health
-                    Literal: 0.0
-
-            Return
-                Identifier: alive
 
 FunctionDeclaration: TheiaLang.TypeInfo main
     Arguments: (
@@ -166,4 +149,21 @@ FunctionDeclaration: TheiaLang.TypeInfo m
 
         Return
             Literal: 0
+
+StructDeclaration: Entity
+    Fields: {
+        f32 health
+        f32 speed
+    }
+    FunctionDeclaration: TheiaLang.TypeInfo IsAlive
+        Arguments: (
+        )
+        BlockSatement
+            VariableDeclaration: bool alive =
+                BinaryExpression: Greater
+                    Identifier: health
+                    Literal: 0.0
+
+            Return
+                Identifier: alive
 

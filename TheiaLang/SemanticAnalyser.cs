@@ -54,7 +54,11 @@ public static class SemanticAnalyser
     {
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
-            field.ResolvedType = GetTypeInfo(field.TypeName);
+        {
+            currentScope.TryLookup(field.Name, out SymbolInfo fieldInfo, out _);
+            fieldInfo.Type = GetTypeInfo(field.TypeName);
+            field.ResolvedType = fieldInfo.Type;
+        }
 
         ExitScope();
     }
@@ -70,11 +74,14 @@ public static class SemanticAnalyser
     static void ResolveFunctionTypeAndArgs(FunctionDeclaration function)
     {
         currentScope = function.Scope!;
-        function.ResolvedType = GetTypeInfo(function.ResolvedType.TypeName);
+        currentScope.TryLookup(function.Name, out SymbolInfo? functionInfo, out _);
+        functionInfo!.Type = GetTypeInfo(function.ResolvedType.TypeName);
+        function.ResolvedType = functionInfo.Type;
 
         foreach (TypeNamePair arg in function.Arguments)
         {
             arg.ResolvedType = GetTypeInfo(arg.TypeName);
+            // function arguments do not get declared in the Parser so we do it here
             currentScope.Declare(arg.Name, new SymbolInfo(arg.Name, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
@@ -104,9 +111,9 @@ public static class SemanticAnalyser
         switch (statement)
         {
             case VariableDeclaration variable:
-                variable.ResolvedType = GetTypeInfo(variable.TypeName);
-                currentScope.TryLookup(variable.Name, out SymbolInfo? symbolInfo, out Scope? varScope);
-                symbolInfo.Type = variable.ResolvedType;
+                currentScope.TryLookup(variable.Name, out SymbolInfo? symbolInfo, out _);
+                symbolInfo.Type = GetTypeInfo(variable.TypeName);
+                variable.ResolvedType = symbolInfo.Type;
 
                 if (variable.Init != null)
                 {
