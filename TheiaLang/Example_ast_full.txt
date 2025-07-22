@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 15:51:43
+Generated at 22.07.2025 15:57:21
 
 StructDeclaration: Vector3
     Fields: {
@@ -155,11 +155,8 @@ StructDeclaration: Entity
         Arguments: (
         )
         BlockSatement
-            VariableDeclaration: bool alive =
+            Return
                 BinaryExpression: bool Greater
                     Identifier: f32 health
                     Literal: f32 0.0
-
-            Return
-                Identifier: bool alive
 

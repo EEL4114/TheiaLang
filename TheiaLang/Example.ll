@@ -105,20 +105,15 @@ entry:
   store i32 4, i32* %tmp29
   %health = alloca i32
   store i32 7, i32* %health
-  call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
   ret i32 0
 }
 
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %alive = alloca i1
   %tmp30 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
   %tmp31 = load float, float* %tmp30
   %tmp32 = fcmp ogt float %tmp31, 0.0
 
-  store i1 %tmp32, i1* %alive
-  call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
-  %tmp33 = load i1, i1* %alive
-  ret i1 %tmp33
+  ret i1 %tmp32
 }
 

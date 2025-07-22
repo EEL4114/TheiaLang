@@ -231,9 +231,10 @@ public static class IRGenerator
 
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
-        sb.AppendLine(
-            "  call i32 @puts(i8* getelementptr inbounds " +
-            "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
+        if (currentScope!.Name == "main")
+            sb.AppendLine(
+                "  call i32 @puts(i8* getelementptr inbounds " +
+                "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
 
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
