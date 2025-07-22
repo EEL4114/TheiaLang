@@ -374,7 +374,10 @@ public class Parser(List<Token> tokens)
         try
         {
             IExpression? lhs = ParseExpression();
-            // Log.Info($"{lhs != null}\n{lhs}\n{Peek()}");
+            if (lhs.Assignable)
+            {
+                // Log.Info(lhs.ToString());
+            }
 
             if (lhs.Assignable && Peek().TokenType == TokenType.Operator_Equals)
                 return ParseAssignment();
@@ -402,6 +405,7 @@ public class Parser(List<Token> tokens)
     AssignmentStatement ParseAssignment()
     {
         Token nameToken = Advance();
+        // Log.Info(nameToken.Lexeme);
 
         IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme);
 
@@ -492,15 +496,17 @@ public class Parser(List<Token> tokens)
         {
             object v;
 
-            v = Previous().Lexeme switch
+            (object Value, string Type) lit = Previous().Lexeme switch
             {
-                string s when int.TryParse(s, out int i) => i,
-                string s when double.TryParse(s, out double d) => d,
-                string s when bool.TryParse(s, out bool b) => b,
+                string s when int.TryParse(s, out var i) => (i, "int"),
+                string s when double.TryParse(s, out var d) => (d, "float"),
+                string s when bool.TryParse(s, out var b) => (b, "bool"),
                 _ => throw new Exception("Invalid literal")
             };
 
-            return new LiteralExpression(v, Previous().Lexeme);
+            LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
+            literal.ResolvedType = new TypeInfo(lit.Type, null, null);
+            return literal;
         }
 
         if (Peek().TokenType == TokenType.Identifier

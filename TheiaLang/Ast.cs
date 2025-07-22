@@ -174,8 +174,20 @@ public sealed record UnaryExpression(
     IExpression Operand
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+
+    private TypeInfo? _resolvedType;
+    public TypeInfo? ResolvedType
+    {
+        get => _resolvedType;
+        set
+        {
+            _resolvedType = value;
+            // automatically update the literal if that’s what the operand is
+            if (Operand is LiteralExpression lit)
+                lit.ResolvedType = value;
+        }
+    }
 }
 
 public sealed record BinaryExpression(

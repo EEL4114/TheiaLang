@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 16:06:34
+Generated at 22.07.2025 19:35:38
 
 StructDeclaration: Vector3
     Fields: {
@@ -19,30 +19,30 @@ FunctionDeclaration: s32 main
         Expression:
             Call:  m
                 Arguments: (
-                    Literal: 7
+                    Literal: int 7
                 )
 
         VariableDeclaration: s32 t =
             Call:  m
                 Arguments: (
-                    Literal: 8
+                    Literal: int 8
                 )
 
         VariableDeclaration: s32 u =
             BinaryExpression: Add
                 BinaryExpression: Add
-                    Literal: 1
+                    Literal: int 1
                     Call:  m
                         Arguments: (
-                            Literal: 8
+                            Literal: int 8
                         )
-                Literal: 9
+                Literal: int 9
 
         VariableDeclaration: Entity entity =
             Instantiation: Entity
                 Arguments: (
-                    Literal: 70.0
-                    Literal: 1.5
+                    Literal: float 70.0
+                    Literal: float 1.5
                 )
 
         VariableDeclaration: f32 health =
@@ -51,7 +51,7 @@ FunctionDeclaration: s32 main
 
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: Add
-                Literal: 1.0
+                Literal: float 1.0
                 MemberAccess: Target: entity
                     Member: 'health'
 
@@ -72,24 +72,24 @@ FunctionDeclaration: s32 main
         VariableDeclaration: s32 i =
             UnaryExpression: Negate
                 Operand:
-                    Literal: 1
+                    Literal: int 1
 
         VariableDeclaration: f32 j =
             UnaryExpression: Negate
                 Operand:
-                    Literal: 1.0
+                    Literal: float 1.0
 
         VariableDeclaration: bool fg =
-            Literal: false
+            Literal: bool false
 
         VariableDeclaration: bool ffg =
-            Literal: true
+            Literal: bool true
 
         VariableDeclaration: s32 a =
-            Literal: 5
+            Literal: int 5
 
         VariableDeclaration: s32 b =
-            Literal: 10
+            Literal: int 10
 
         VariableDeclaration: s32 c =
             BinaryExpression: Add
@@ -97,7 +97,7 @@ FunctionDeclaration: s32 main
                 Identifier: b
 
         VariableDeclaration: s32 d =
-            Literal: 4
+            Literal: int 4
 
         Assign: d =
             BinaryExpression: Add
@@ -106,16 +106,16 @@ FunctionDeclaration: s32 main
         Assign: d =
             BinaryExpression: Add
                 Identifier: d
-                Literal: 42
+                Literal: int 42
         VariableDeclaration: f32 f =
-            Literal: 2.5
+            Literal: float 2.5
 
         Assign: f =
             BinaryExpression: Multiply
                 Identifier: f
-                Literal: 2.0
+                Literal: float 2.0
         VariableDeclaration: f32 g =
-            Literal: 3.0
+            Literal: float 3.0
 
         VariableDeclaration: f32 h =
             BinaryExpression: Subtract
@@ -125,7 +125,7 @@ FunctionDeclaration: s32 main
         VariableDeclaration: bool ok =
             BinaryExpression: Greater
                 Identifier: c
-                Literal: 5
+                Literal: int 5
 
         Return
             Identifier: c
@@ -136,15 +136,15 @@ FunctionDeclaration: s32 m
     )
     BlockSatement
         VariableDeclaration: s32 i =
-            Literal: 3
+            Literal: int 3
 
         Assign: j =
-            Literal: 4
+            Literal: int 4
         VariableDeclaration: s32 health =
-            Literal: 7
+            Literal: int 7
 
         Return
-            Literal: 0
+            Literal: int 0
 
 StructDeclaration: Entity
     Fields: {
@@ -158,5 +158,5 @@ StructDeclaration: Entity
             Return
                 BinaryExpression: Greater
                     Identifier: health
-                    Literal: 0.0
+                    Literal: float 0.0
 

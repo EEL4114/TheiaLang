@@ -1,3 +1,4 @@
+using System.Runtime;
 using System.Security.Cryptography.X509Certificates;
 
 namespace TheiaLang;
@@ -120,6 +121,7 @@ public static class SemanticAnalyser
                 if (variable.Init != null)
                 {
                     AnalyseExpression(variable.Init);
+                    variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType, variable.ResolvedType.TypeName);
 
                     if (!CanImplicitlyCast(variable.ResolvedType.TypeName,
                                            variable.Init.ResolvedType.TypeName))
@@ -132,11 +134,13 @@ public static class SemanticAnalyser
                 assignment.Target.ResolvedType = GetTypeInfo(assignment.Target.Name);
 
                 AnalyseExpression(assignment.Expression);
+                assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType,
+                                                                      assignment.Target.ResolvedType.TypeName);
 
                 if (!CanImplicitlyCast(assignment.Target.ResolvedType.TypeName,
                        assignment.Expression.ResolvedType.TypeName))
-                    throw new Exception($"Cannot implicitly convert between '{assignment.Target.ResolvedType}'" +
-                                        $" and '{assignment.Expression.ResolvedType.TypeName}'");
+                    throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName} '{assignment.Target.Name}'" +
+                                        $" and {assignment.Expression.ResolvedType.TypeName}");
                 break;
             case ExpressionStatement expression:
                 AnalyseExpression(expression.Expression);
@@ -145,10 +149,14 @@ public static class SemanticAnalyser
                 AnalyseExpression(returnStatement.Expression);
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
+                {
+                    returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType,
+                                                                               function.ResolvedType.TypeName);
                     if (!CanImplicitlyCast(function.ResolvedType.TypeName,
                                            returnStatement.Expression.ResolvedType.TypeName))
                         throw new Exception($"Invalid return type: '{returnStatement.Expression.ResolvedType.TypeName}'" +
                                             $" cannot be implicitly converted to '{function.ResolvedType.TypeName}'");
+                }
                 break;
         }
     }
@@ -157,19 +165,8 @@ public static class SemanticAnalyser
     {
         switch (expression)
         {
-            case LiteralExpression literal:
-                // this is very bare-bones for now
-                string type = "";
-                if (literal.Value is int)
-                    type = "s32";
-                else if (literal.Value is double)
-                    type = "f32";
-                else if (literal.Value is bool)
-                    type = "bool";
-                else
-                    throw new Exception($"Unknown literal type {literal.Value}");
-                literal.ResolvedType = new TypeInfo(type, null, null);
-
+            case LiteralExpression:
+                // these have already been resolved in the Parser
                 break;
             case IdentifierExpression identifier:
                 identifier.ResolvedType = GetTypeInfo(identifier.Name);
@@ -190,6 +187,8 @@ public static class SemanticAnalyser
                 {
                     string actual = call.Arguments[i].ResolvedType!.TypeName;
                     string expected = function.Parameters[i].ResolvedType!.TypeName;
+                    call.Arguments[i].ResolvedType = PromoteIfLiteral(call.Arguments[i].ResolvedType,
+                                                                      function.Parameters[i].ResolvedType!.TypeName);
                     if (!CanImplicitlyCast(actual, expected))
                         throw new Exception(
                           $"Cannot implicitly convert {actual} to {expected}");
@@ -198,7 +197,6 @@ public static class SemanticAnalyser
                 call.ResolvedType = function.Type;
                 break;
             case MemberAccessExpression memberAccess:
-
                 AnalyseExpression(memberAccess.Target);
                 TypeInfo targetInfo = memberAccess.Target.ResolvedType!;
 
@@ -220,6 +218,9 @@ public static class SemanticAnalyser
                 AnalyseExpression(binary.Left);
                 AnalyseExpression(binary.Right);
 
+                binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType, binary.Right.ResolvedType.TypeName);
+                binary.Right.ResolvedType = PromoteIfLiteral(binary.Right.ResolvedType, binary.Left.ResolvedType.TypeName);
+
                 binary.ResolvedType = GetTypeInfo(GetBinaryOpReturnType(binary.Op,
                     binary.Left.ResolvedType.TypeName,
                     binary.Right.ResolvedType.TypeName));
@@ -238,6 +239,8 @@ public static class SemanticAnalyser
                 {
                     AnalyseExpression(instantiation.Arguments[i]);
                     // check implicit cast from arg type → field type
+                    instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType,
+                                                                               typeSymbolInfo.Parameters![i].TypeName);
                     if (!CanImplicitlyCast(instantiation.Arguments[i].ResolvedType.TypeName!,
                         typeSymbolInfo.Parameters![i].TypeName))
                         throw new Exception("Type mismatch in ctor");
@@ -268,52 +271,58 @@ public static class SemanticAnalyser
     #endregion
 
     #region Interoperability
-    static readonly bool[,] LoslessTypeInterop = new bool[11, 11]
+    static readonly bool[,] LosslessTypeInterop = new bool[13, 13]
     {
-        //from  \  to   bool    s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s16   */  {   false,  false,  true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s32   */  {   false,  false,  false,  true,   true,   true,   true,   false,  false,  false,  false },
-        /*s64   */  {   false,  false,  false,  false,  true,   true,   true,   false,  false,  false,  false },
-        /*s128  */  {   false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false },
-        /*s256  */  {   false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  false },
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false },
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false },
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   false },
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true  },
+        //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true  },
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false },
+        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false },
+        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false },
+        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false },
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false },
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false },
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true  },
     };
 
-    static readonly bool[,] ScalarTypeInterop = new bool[11, 11]
+    static readonly bool[,] ScalarTypeInterop = new bool[13, 13]
     {
-        //              bool    s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s16   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s32   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s64   */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s128  */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*s256  */  {   false,  true,   true,   true,   true,   true,   true,   false,  false,  false,  false },
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false },
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false },
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   false },
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true  },
+        //  A   \   B   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true  },
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s16   */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s32   */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s64   */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s128  */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*s256  */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
+        /*float */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
+        /*f16   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false },
+        /*f32   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false },
+        /*f64   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false },
+        /*f128  */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true  },
     };
 
-    static readonly string[,] ImplicitPromotion = new string[11, 11]
+    static readonly string[,] ImplicitPromotion = new string[13, 13]
     {
-        // A   \    B   bool    s8      s16     s32     s64     s128    s256    f16     f32     f64     f128
-        /*bool  */  {   "bool", "",     "",     "",     "",     "",     "",     "",     "",     "",     ""     },
-        /*s8    */  {   "",     "s8",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
-        /*s16   */  {   "",    "s16",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
-        /*s32   */  {   "",    "s32",   "s32",  "s32",  "s64",  "s128", "s256", "",     "",     "",     ""     },
-        /*s64   */  {   "",    "s64",   "s64",  "s64",  "s64",  "s128", "s256", "",     "",     "",     ""     },
-        /*s128  */  {   "",    "s128",  "s128", "s128", "s128", "s128", "s256", "",     "",     "",     ""     },
-        /*s256  */  {   "",    "s256",  "s256", "s256", "s256", "s256", "s256", "",     "",     "",     ""     },
-        /*f16   */  {   "",    "",      "",     "",     "",     "",     "",     "f16",  "",     "",     ""     },
-        /*f32   */  {   "",    "",      "",     "",     "",     "",     "",     "",     "f32",  "",     ""     },
-        /*f64   */  {   "",    "",      "",     "",     "",     "",     "",     "",     "",     "f64",  ""     },
-        /*f128  */  {   "",    "",      "",     "",     "",     "",     "",     "",     "",     "",     "f128" },
+        // A   \    B   bool    int      s8      s16     s32     s64     s128    s256   float   f16     f32     f64     f128
+        /*bool  */  {   "bool", "",     "",     "",     "",     "",     "",     "",     "",     "",     "",     "",     ""     },
+        /*int   */  {   "",     "int",  "s8",   "s16",  "s32",  "s64",  "s128", "s256", "float","f16",  "f32",  "f64",  "f128 "},
+        /*s8    */  {   "",     "s8",   "s8",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
+        /*s16   */  {   "",     "s16",  "s16",  "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
+        /*s32   */  {   "",     "s32",  "s32",  "s32",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
+        /*s64   */  {   "",     "s64",  "s64",  "s64",  "s64",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
+        /*s128  */  {   "",     "s128", "s128", "s128", "s128", "s128", "s128", "s256", "",     "",     "",     "",     ""     },
+        /*s256  */  {   "",     "s256", "s256", "s256", "s256", "s256", "s256", "s256", "",     "",     "",     "",     ""     },
+        /*float */  {   "",     "float","",      "",     "",     "",     "",     "",    "float","f16",  "f32",  "f64",  "f128" },
+        /*f16   */  {   "",     "f16",  "",      "",     "",     "",     "",     "",    "f16",  "f16",  "",     "",     ""     },
+        /*f32   */  {   "",     "f32",  "",      "",     "",     "",     "",     "",    "f32",  "",     "f32",  "",     ""     },
+        /*f64   */  {   "",     "f64",  "",      "",     "",     "",     "",     "",    "f64",  "",     "",     "f64",  ""     },
+        /*f128  */  {   "",     "f128", "",      "",     "",     "",     "",     "",    "f128", "",     "",     "",     "f128" },
     };
 
     static string GetBinaryOpReturnType(BinaryOperator binaryOperator, string typeA, string typeB)
@@ -352,7 +361,7 @@ public static class SemanticAnalyser
         if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
             return typeA == typeB;
 
-        return LoslessTypeInterop[indexA, indexB];
+        return LosslessTypeInterop[indexA, indexB];
     }
 
     static string? GetImplicitPromotionType(string typeA, string typeB)
@@ -378,5 +387,24 @@ public static class SemanticAnalyser
 
         return result;
     }
+
+    static TypeInfo PromoteIfLiteral(TypeInfo typeInfo, string expectedType)
+    {
+        int builtinA = IRGenerator.BuiltinTypeIndex(typeInfo.TypeName);
+        int builtinB = IRGenerator.BuiltinTypeIndex(expectedType);
+
+        if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
+            return typeInfo;
+
+        if (LosslessTypeInterop[builtinA, builtinB])
+        {
+            TypeInfo type = new TypeInfo(expectedType, null, null);
+            // Log.Info($"{typeInfo.TypeName} {expectedType} -> {type.TypeName}");
+            return type;  // literals always cast to the more concrete value
+        }
+
+        throw new Exception($"Cannot implicitly convert {typeInfo.TypeName} to {expectedType}");
+    }
+
     #endregion
 }

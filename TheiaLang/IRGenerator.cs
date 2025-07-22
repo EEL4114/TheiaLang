@@ -8,6 +8,7 @@ public static class IRGenerator
     {
         "bool",
 
+        "int",
         "s8",
         "s16",
         "s32",
@@ -15,6 +16,7 @@ public static class IRGenerator
         "s128",
         "s256",
 
+        "float",
         "f16",
         "f32",
         "f64",
@@ -411,9 +413,9 @@ public static class IRGenerator
 
             // infer the LLVM type of the argument
             TypeInfo actualType = argument.ResolvedType;
-            string actualLLVMType = TypeToLLVM(actualType!)!;
-
+            string actualLLVMType = TypeToLLVM(actualType)!;
             string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
+
 
             if (actualType.TypeName != calleeInfo.Type.TypeName)
                 Log.Error(12,
@@ -512,7 +514,8 @@ public static class IRGenerator
                 "f32" => "float",
                 "f64" => "double",
                 "f128" => "fp128",
-                _ => throw new NotImplementedException(),
+
+                _ => throw new NotImplementedException(type.TypeName),
             };
         else    // assume composite type
             return $"%{type.TypeName}";
