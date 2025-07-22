@@ -51,15 +51,14 @@ static class AstPrinter
         w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
     }
 
-    static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)
+    static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.TypeName} {functionDeclaration.Name}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}");
         w.WriteLine($"{Indent(indent + tab)}Arguments: (");
-        foreach (TypeNamePair typeNamePair in functionDeclaration.Arguments)
+        foreach (TypeNamePair typeNamePair in function.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
         w.WriteLine($"{Indent(indent + tab)})");
-
-        PrintBlock(functionDeclaration.Statements, w, indent + tab);
+        PrintBlock(function.Statements, w, indent + tab);
     }
 
     static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
@@ -77,15 +76,14 @@ static class AstPrinter
             case VariableDeclaration vd:
                 w.WriteLine($"{Indent(indent)}VariableDeclaration: {vd.TypeName} {vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
-                if (vd.Init is not null)
+                if (vd.Init != null)
                     PrintExpression(vd.Init, w, indent + tab);
                 w.WriteLine();
                 break;
 
             case AssignmentStatement a:
-                w.WriteLine($"{Indent(indent)}Assign: {a.Target.Name} =");
+                w.WriteLine($"{Indent(indent)}Assign: {TryType(a.Target.ResolvedType)}{a.Target.Name} =");
                 PrintExpression(a.Expression, w, indent + tab);
-                w.WriteLine();
                 break;
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return");
@@ -108,20 +106,20 @@ static class AstPrinter
         switch (expr)
         {
             case LiteralExpression lit:
-                w.WriteLine($"{Indent(indent)}Literal: {lit.Lexeme}");
+                w.WriteLine($"{Indent(indent)}Literal: {TryType(lit.ResolvedType)}{lit.Lexeme}");
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {id.Name}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}");
                 break;
 
             case BinaryExpression bin:
-                w.WriteLine($"{Indent(indent)}BinaryExpression: {bin.Op}");
+                w.WriteLine($"{Indent(indent)}BinaryExpression: {TryType(bin.ResolvedType)}{bin.Op}");
                 PrintExpression(bin.Left, w, indent + tab);
                 PrintExpression(bin.Right, w, indent + tab);
                 break;
             case CallExpression call:
-                w.WriteLine($"{Indent(indent)}Call: {call.CalleeName}");
+                w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)} {call.CalleeName}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments: (");
 
                 foreach (IExpression arument in call.Arguments)
@@ -130,13 +128,13 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + tab)})");
                 break;
             case UnaryExpression u:
-                w.WriteLine($"{Indent(indent)}UnaryExpression: {u.Op}");
+                w.WriteLine($"{Indent(indent)}UnaryExpression: {TryType(u.ResolvedType)}{u.Op}");
                 w.WriteLine($"{Indent(indent + tab)}Operand:");
                 PrintExpression(u.Operand, w, indent + tab * 2);
                 break;
-            case MemberAccessExpression m:
-                w.WriteLine($"{Indent(indent)}MemberAccess: Target: '{m.Target.Name}'");
-                w.WriteLine($"{Indent(indent + tab)}Member: '{m.Member.Name}'");
+            case MemberAccessExpression mem:
+                w.WriteLine($"{Indent(indent)}MemberAccess: Target: {TryType(mem.ResolvedType)}{mem.Target.Name}");
+                w.WriteLine($"{Indent(indent + tab)}Member: '{mem.Member.Name}'");
                 break;
             case InstantiationExpression isnt:
                 w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
@@ -152,6 +150,7 @@ static class AstPrinter
                 break;
         }
     }
-
     static string Indent(int n) => new string(' ', n);
+
+    static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ";
 }

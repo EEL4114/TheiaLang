@@ -7,13 +7,14 @@ const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
 const ConsoleColor IRGEN_COL = ConsoleColor.Green;
 const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
 
+
+string programName = "Example";
+string code = File.ReadAllText(programName + ".tia");
+
 Stopwatch sw = new Stopwatch();
 Stopwatch sw2 = new Stopwatch();
 sw.Start();
 sw2.Start();
-
-string programName = "Example";
-string code = File.ReadAllText(programName + ".tia");
 Lexer lexer = new Lexer(code);
 
 List<Token> tokens = new List<Token>();
@@ -36,10 +37,11 @@ Parser parser = new Parser(tokens);
 int parserTime = (int)sw2.Elapsed.TotalMilliseconds;
 
 Log.Time("Parser took", parserTime, PARSER_COL);
-sw2.Restart();
+sw2.Stop();
 
 sw.Stop();
 using StreamWriter writer = new StreamWriter($"{programName}_ast.txt");
+sw2.Restart();
 AstPrinter.Print(ast, writer);
 int printTime = (int)sw2.ElapsedMilliseconds;
 sw.Start();
@@ -48,10 +50,11 @@ sw2.Restart();
 (ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
 int semTime = (int)sw2.Elapsed.TotalMilliseconds;
 Log.Time("Semantic Analysis took", semTime, SEM_COL);
-sw2.Restart();
+sw2.Stop();
 
 sw.Stop();
 using StreamWriter writer2 = new StreamWriter($"{programName}_ast_full.txt");
+sw2.Restart();
 AstPrinter.Print(ast, writer2);
 Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds + printTime} ms");
 sw.Start();
@@ -73,7 +76,7 @@ sw2.Stop();
 
 Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");
 
-int totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
+double totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
 int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * 50);
 int parserChars = (int)Math.Round(parserTime / (double)totalTime * 50);

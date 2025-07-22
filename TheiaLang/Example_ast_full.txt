@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 14:26:34
+Generated at 22.07.2025 15:36:51
 
 StructDeclaration: Vector3
     Fields: {
@@ -17,42 +17,42 @@ FunctionDeclaration: s32 main
     )
     BlockSatement
         Expression:
-            Call: m
+            Call: s32  m
                 Arguments: (
-                    Literal: 7
+                    Literal: s32 7
                 )
 
         VariableDeclaration: s32 t =
-            Call: m
+            Call: s32  m
                 Arguments: (
-                    Literal: 8
+                    Literal: s32 8
                 )
 
         VariableDeclaration: s32 u =
-            BinaryExpression: Add
-                BinaryExpression: Add
-                    Literal: 1
-                    Call: m
+            BinaryExpression: s32 Add
+                BinaryExpression: s32 Add
+                    Literal: s32 1
+                    Call: s32  m
                         Arguments: (
-                            Literal: 8
+                            Literal: s32 8
                         )
-                Literal: 9
+                Literal: s32 9
 
         VariableDeclaration: Entity entity =
             Instantiation: Entity
                 Arguments: (
-                    Literal: 70.0
-                    Literal: 1.5
+                    Literal: f32 70.0
+                    Literal: f32 1.5
                 )
 
         VariableDeclaration: f32 health =
-            MemberAccess: Target: 'entity'
+            MemberAccess: Target: f32 entity
                 Member: 'health'
 
         VariableDeclaration: f32 moreHealth =
-            BinaryExpression: Add
-                Literal: 1.0
-                MemberAccess: Target: 'entity'
+            BinaryExpression: f32 Add
+                Literal: f32 1.0
+                MemberAccess: Target: f32 entity
                     Member: 'health'
 
         VariableDeclaration: s32 defaultInt
@@ -70,68 +70,65 @@ FunctionDeclaration: s32 main
         VariableDeclaration: f128 quad
 
         VariableDeclaration: s32 i =
-            UnaryExpression: Negate
+            UnaryExpression: s32 Negate
                 Operand:
-                    Literal: 1
+                    Literal: s32 1
 
         VariableDeclaration: f32 j =
-            UnaryExpression: Negate
+            UnaryExpression: f32 Negate
                 Operand:
-                    Literal: 1.0
+                    Literal: f32 1.0
 
         VariableDeclaration: bool fg =
-            Literal: false
+            Literal: bool false
 
         VariableDeclaration: bool ffg =
-            Literal: true
+            Literal: bool true
 
         VariableDeclaration: s32 a =
-            Literal: 5
+            Literal: s32 5
 
         VariableDeclaration: s32 b =
-            Literal: 10
+            Literal: s32 10
 
         VariableDeclaration: s32 c =
-            BinaryExpression: Add
-                Identifier: a
-                Identifier: b
+            BinaryExpression: s32 Add
+                Identifier: s32 a
+                Identifier: s32 b
 
         VariableDeclaration: s32 d =
-            Literal: 4
+            Literal: s32 4
 
-        Assign: d =
-            BinaryExpression: Add
-                Identifier: a
-                Identifier: c
-
-        Assign: d =
-            BinaryExpression: Add
-                Identifier: d
-                Literal: 42
-
+        Assign: s32 d =
+            BinaryExpression: s32 Add
+                Identifier: s32 a
+                Identifier: s32 c
+        Assign: s32 d =
+            BinaryExpression: s32 Add
+                Identifier: s32 d
+                Literal: s32 42
         VariableDeclaration: f32 f =
-            Literal: 2.5
+            Literal: f32 2.5
 
-        Assign: f =
-            BinaryExpression: Multiply
-                Identifier: f
-                Literal: 2.0
-
+        Assign: f32 f =
+            BinaryExpression: f32 Multiply
+                Identifier: f32 f
+                Literal: f32 2.0
         VariableDeclaration: f32 g =
-            Literal: 3.0
+            Literal: f32 3.0
 
         VariableDeclaration: f32 h =
-            BinaryExpression: Subtract
-                Identifier: f
-                Identifier: g
+            BinaryExpression: f32 Subtract
+                Identifier: f32 f
+                Identifier: f32 g
 
         VariableDeclaration: bool ok =
-            BinaryExpression: Greater
-                Identifier: c
-                Literal: 5
+            BinaryExpression: bool Greater
+                Identifier: s32 c
+                Literal: s32 5
 
         Return
-            Identifier: c
+            Identifier: s32 c
 
 FunctionDeclaration: s32 m
     Arguments: (
@@ -139,16 +136,15 @@ FunctionDeclaration: s32 m
     )
     BlockSatement
         VariableDeclaration: s32 i =
-            Literal: 3
+            Literal: s32 3
 
-        Assign: j =
-            Literal: 4
-
+        Assign: s32 j =
+            Literal: s32 4
         VariableDeclaration: s32 health =
-            Literal: 7
+            Literal: s32 7
 
         Return
-            Literal: 0
+            Literal: s32 0
 
 StructDeclaration: Entity
     Fields: {
@@ -160,10 +156,10 @@ StructDeclaration: Entity
         )
         BlockSatement
             VariableDeclaration: bool alive =
-                BinaryExpression: Greater
-                    Identifier: health
-                    Literal: 0.0
+                BinaryExpression: bool Greater
+                    Identifier: f32 health
+                    Literal: f32 0.0
 
             Return
-                Identifier: alive
+                Identifier: bool alive
 

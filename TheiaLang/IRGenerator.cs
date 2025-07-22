@@ -543,8 +543,7 @@ public static class IRGenerator
 
     static string? TypeToLLVM(TypeInfo type)
     {
-        bool builtin = IsBuiltinType(type.TypeName);
-        if (builtin)
+        if (IsBuiltinType(type.TypeName))
             return type.TypeName switch
             {
                 "bool" => "i1",

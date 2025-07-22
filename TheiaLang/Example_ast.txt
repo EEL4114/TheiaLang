@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.07.2025 14:26:34
+Generated at 22.07.2025 15:36:51
 
 StructDeclaration: Vector3
     Fields: {
@@ -17,13 +17,13 @@ FunctionDeclaration: s32 main
     )
     BlockSatement
         Expression:
-            Call: m
+            Call:  m
                 Arguments: (
                     Literal: 7
                 )
 
         VariableDeclaration: s32 t =
-            Call: m
+            Call:  m
                 Arguments: (
                     Literal: 8
                 )
@@ -32,7 +32,7 @@ FunctionDeclaration: s32 main
             BinaryExpression: Add
                 BinaryExpression: Add
                     Literal: 1
-                    Call: m
+                    Call:  m
                         Arguments: (
                             Literal: 8
                         )
@@ -46,13 +46,13 @@ FunctionDeclaration: s32 main
                 )
 
         VariableDeclaration: f32 health =
-            MemberAccess: Target: 'entity'
+            MemberAccess: Target: entity
                 Member: 'health'
 
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: Add
                 Literal: 1.0
-                MemberAccess: Target: 'entity'
+                MemberAccess: Target: entity
                     Member: 'health'
 
         VariableDeclaration: s32 defaultInt
@@ -103,12 +103,10 @@ FunctionDeclaration: s32 main
             BinaryExpression: Add
                 Identifier: a
                 Identifier: c
-
         Assign: d =
             BinaryExpression: Add
                 Identifier: d
                 Literal: 42
-
         VariableDeclaration: f32 f =
             Literal: 2.5
 
@@ -116,7 +114,6 @@ FunctionDeclaration: s32 main
             BinaryExpression: Multiply
                 Identifier: f
                 Literal: 2.0
-
         VariableDeclaration: f32 g =
             Literal: 3.0
 
@@ -143,7 +140,6 @@ FunctionDeclaration: s32 m
 
         Assign: j =
             Literal: 4
-
         VariableDeclaration: s32 health =
             Literal: 7
 

@@ -53,7 +53,6 @@ public class Scope : INode
             Log.Error(7, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
     }
 
-    // convenience for parser when you hit a declaration
     public void Declare(string name, SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(name))
