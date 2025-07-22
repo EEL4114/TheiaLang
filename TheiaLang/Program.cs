@@ -77,6 +77,7 @@ int totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
 int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * 50);
 int parserChars = (int)Math.Round(parserTime / (double)totalTime * 50);
+int semChars = (int)Math.Round(semTime / (double)totalTime * 50);
 int IRgenChars = (int)Math.Round(IRgenTime / (double)totalTime * 50);
 int llvmChars = 50 - lexerChars - parserChars - IRgenChars;
 
@@ -90,6 +91,7 @@ void PrintSegment(int count, ConsoleColor color)
 Console.Write("[");
 PrintSegment(lexerChars, LEXER_COL);
 PrintSegment(parserChars, PARSER_COL);
+PrintSegment(semChars, SEM_COL);
 PrintSegment(IRgenChars, IRGEN_COL);
 PrintSegment(llvmChars, LLVM_COL);
 Console.WriteLine("]");
