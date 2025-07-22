@@ -1,5 +1,5 @@
 Program: Example
-Generated at 21.07.2025 00:48:40
+Generated at 22.07.2025 04:26:45
 
 StructDeclaration: Vector3
     Fields: {
@@ -17,7 +17,7 @@ StructDeclaration: Entity
         f32 health
         f32 speed
     }
-    FunctionDeclaration:  IsAlive
+    FunctionDeclaration: TheiaLang.TypeInfo IsAlive
         Arguments: (
         )
         BlockSatement
@@ -29,7 +29,7 @@ StructDeclaration: Entity
             Return
                 Identifier: alive
 
-FunctionDeclaration:  main
+FunctionDeclaration: TheiaLang.TypeInfo main
     Arguments: (
     )
     BlockSatement
@@ -150,7 +150,7 @@ FunctionDeclaration:  main
         Return
             Identifier: c
 
-FunctionDeclaration:  m
+FunctionDeclaration: TheiaLang.TypeInfo m
     Arguments: (
         s32 j
     )

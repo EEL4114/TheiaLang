@@ -12,7 +12,7 @@ static class AstPrinter
         w.WriteLine($"Generated at {DateTime.Now}");
         w.WriteLine();
 
-        foreach (INode node in p.Declarations)
+        foreach (INode node in p.Nodes)
         {
             if (node is FunctionDeclaration function)
                 PrintFunction(function, w, indent);
@@ -55,7 +55,7 @@ static class AstPrinter
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.ResolvedType} {functionDeclaration.Name}");
         w.WriteLine($"{Indent(indent + tab)}Arguments: (");
-        foreach (TypeNamePair typeNamePair in functionDeclaration.Parameters)
+        foreach (TypeNamePair typeNamePair in functionDeclaration.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
         w.WriteLine($"{Indent(indent + tab)})");
 
@@ -89,7 +89,7 @@ static class AstPrinter
                 break;
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return");
-                PrintExpression(r.Expr, w, indent + tab);
+                PrintExpression(r.Expression, w, indent + tab);
                 break;
             case ExpressionStatement e:
                 w.WriteLine($"{Indent(indent)}Expression:");
@@ -139,7 +139,7 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + tab)}Member: '{m.Member.Name}'");
                 break;
             case InstantiationExpression isnt:
-                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.Type}");
+                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments: (");
                 foreach (IExpression arument in isnt.Arguments)
                     PrintExpression(arument, w, indent + tab * 2);

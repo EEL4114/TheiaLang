@@ -1,18 +1,24 @@
 namespace TheiaLang;
 
+public sealed record ProgramNode(
+    string Name,
+    List<INode> Nodes
+);
+
 public interface INode { }
 public interface IDeclaration : INode
 {
     string Name { get; }
-    TypeInfo ResolvedType { get; }
+    TypeInfo ResolvedType { get; set; }
 }
 public interface IStatement : INode { }
 public interface IExpression : INode
 {
-    TypeInfo ResolvedType { get; }
+    TypeInfo ResolvedType { get; set; }
     bool Assignable { get; }
 }
 
+#region  Operators
 public enum UnaryOperator
 {
     Negate
@@ -29,6 +35,7 @@ public enum BinaryOperator
     Equal,
     NotEqual
 }
+#endregion
 
 public enum Type
 {
@@ -43,9 +50,9 @@ public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
     public string TypeName { get; }
-    public TypeInfo ResolvedType { get; }
+    public TypeInfo ResolvedType { get; set; }
     public string Name { get; set; }
-    public readonly List<TypeNamePair> Parameters;
+    public readonly List<TypeNamePair> Arguments;
     public readonly List<IStatement> Statements;    // the { … } body
     public FunctionDeclaration(string typeName,
                                string name,
@@ -54,8 +61,10 @@ public class FunctionDeclaration : IDeclaration
     {
         TypeName = typeName;
         Name = name;
-        Parameters = paramaters;
+        Arguments = paramaters;
         Statements = statements;
+
+        ResolvedType = new TypeInfo(TypeName, null, null);
     }
 }
 
@@ -63,7 +72,7 @@ public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
     public string Name { get; }
-    public TypeInfo ResolvedType { get; }
+    public TypeInfo ResolvedType { get; set; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
 
@@ -84,8 +93,11 @@ public class StructDeclaration : IDeclaration
 public record UnionDeclaration(
     string Name,
     List<TypeNamePair> Variants,
-    TypeInfo ResolvedType
-) : IDeclaration;
+    TypeInfo resolvedType
+) : IDeclaration
+{
+    public TypeInfo ResolvedType { get; set; } = resolvedType;
+}
 
 public record VariableDeclaration(
     string TypeName,                  // "int", "float", "bool"
@@ -93,7 +105,7 @@ public record VariableDeclaration(
     IExpression? Init           // null if no initializer
 ) : IDeclaration, IStatement
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
 }
 #endregion
 public sealed record TypeNamePair(
@@ -101,14 +113,9 @@ public sealed record TypeNamePair(
     string Name
 )
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
-
-public sealed record ProgramNode(
-    string Name,
-    List<INode> Declarations
-);
 
 #region  Statements
 /// A “new” expression for any nominal type (struct, union, etc.)
@@ -128,7 +135,7 @@ public sealed record AssignmentStatement(
 ) : IStatement;
 
 public sealed record ReturnStatement(
-    IExpression Expr
+    IExpression Expression
 ) : IStatement;
 #endregion
 
@@ -140,7 +147,7 @@ public sealed record MemberAccessExpression(
 ) : IExpression
 
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
 }
 
@@ -149,16 +156,16 @@ public sealed record CallExpression(
     List<IExpression> Arguments       // positional & named args
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
 
 public sealed record InstantiationExpression(
-    string Type,
+    string TypeName,
     List<IExpression> Arguments
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
 
@@ -167,7 +174,7 @@ public sealed record UnaryExpression(
     IExpression Operand
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
 
@@ -177,7 +184,7 @@ public sealed record BinaryExpression(
     IExpression Right
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
 
@@ -186,7 +193,7 @@ public sealed record LiteralExpression(
     string Lexeme
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 }
 
@@ -194,7 +201,7 @@ public sealed record IdentifierExpression(
     string Name
 ) : IExpression
 {
-    public TypeInfo? ResolvedType { get; }
+    public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
 }
 #endregion

@@ -49,13 +49,13 @@ public static class IRGenerator
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
         sb.AppendLine();
 
-        foreach (INode decl in program.Declarations)
+        foreach (INode decl in program.Nodes)
             if (decl is StructDeclaration sd)
                 EmitStructType(sd, sb);
 
         sb.AppendLine();
 
-        foreach (INode node in program.Declarations)
+        foreach (INode node in program.Nodes)
             switch (node)
             {
                 case FunctionDeclaration fn:
@@ -129,7 +129,7 @@ public static class IRGenerator
         // this is messy but works for now?
 
         string paramList = "";
-        foreach (TypeNamePair parameter in fn.Parameters)
+        foreach (TypeNamePair parameter in fn.Arguments)
         {
             TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
             string parameterLLVMType = TypeToLLVM(parameterInfo!)!;
@@ -140,7 +140,7 @@ public static class IRGenerator
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
 
-        foreach (TypeNamePair parameter in fn.Parameters)
+        foreach (TypeNamePair parameter in fn.Arguments)
         {
             TryResolveType(parameter.TypeName, out TypeInfo? parameterInfo);
             string LLVMType = TypeToLLVM(parameterInfo!)!;
@@ -243,9 +243,9 @@ public static class IRGenerator
             "  call i32 @puts(i8* getelementptr inbounds " +
             "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
 
-        (StringBuilder code, string val) = EmitExpression(returnStatement.Expr);
+        (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
-        TypeInfo? typeInfo = InferExpressionType(returnStatement.Expr);
+        TypeInfo? typeInfo = InferExpressionType(returnStatement.Expression);
         string LLVMType = TypeToLLVM(typeInfo!)!;
 
         sb.AppendLine($"  ret {LLVMType} {val}");
@@ -374,7 +374,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
-        string irType = instantiation.Type;
+        string irType = instantiation.TypeName;
         string ptrName = $"%{NewTempVar()}";
         code.AppendLine($"  {ptrName} = alloca {irType}");
 

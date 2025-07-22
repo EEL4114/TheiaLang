@@ -3,6 +3,7 @@ using TheiaLang;
 
 const ConsoleColor LEXER_COL = ConsoleColor.Cyan;
 const ConsoleColor PARSER_COL = ConsoleColor.Yellow;
+const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
 const ConsoleColor IRGEN_COL = ConsoleColor.Green;
 const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
 
@@ -46,9 +47,11 @@ sw2.Restart();
 sw.Stop();
 using StreamWriter writer = new StreamWriter($"{programName}_ast.txt");
 AstPrinter.Print(ast, writer);
-Console.WriteLine($"AST building took {sw2.ElapsedMilliseconds} ms");
+Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds} ms");
 sw.Start();
 sw2.Restart();
+
+SemanticAnalyser.AnalyseProgram(ast, globalScope);
 
 IRGenerator.Emit(ast, globalScope, "Example.ll");
 int IRgenTime = (int)sw2.Elapsed.TotalMilliseconds;
