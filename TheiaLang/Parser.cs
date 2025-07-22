@@ -90,19 +90,6 @@ public class Scope : INode
         }
         return Parent!.GetParentOf(scope, out parent);
     }
-
-    /*
-    public TypeInfo ResolveType(string typeName)
-    {
-        if (!TryLookup(typeName, out SymbolInfo? symbolInfo, out _))
-            throw new Exception($"Unknown type '{typeName}' in scope '{FullName}'");
-
-        if (symbolInfo!.Kind != SymbolKind.Type)
-            throw new Exception($"'{typeName}' in scope '{FullName}' is not a type");
-
-        return symbolInfo.Type;
-    }
-    */
 }
 
 public class Parser(List<Token> tokens)
@@ -176,12 +163,12 @@ public class Parser(List<Token> tokens)
         TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName, null, null);
 
         currentScope.Declare(name,
-                                new SymbolInfo(
-                                functionDeclaration.Name,
-                                returnTypeInfo,
-                                SymbolKind.Function,
-                                functionDeclaration.Arguments
-                                ));
+                             new SymbolInfo(
+                             functionDeclaration.Name,
+                             returnTypeInfo,
+                             SymbolKind.Function,
+                             functionDeclaration.Arguments
+                             ));
 
         return functionDeclaration;
     }
@@ -247,9 +234,9 @@ public class Parser(List<Token> tokens)
 
         ExitScope();
         structDeclaration.ResolvedType = new TypeInfo(
-                name,
-                fieldNames,
-                fieldTypes);
+            name,
+            fieldNames,
+            fieldTypes);
 
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
@@ -258,8 +245,6 @@ public class Parser(List<Token> tokens)
             fields);
 
         currentScope.Declare(name, symbolInfo);
-
-        currentScope.TryLookup(name, out SymbolInfo? structInfo, out _);
         return structDeclaration;
     }
 
@@ -625,36 +610,21 @@ public class Parser(List<Token> tokens)
         return null!;
     }
 
-    static bool IsTypeKeyword(TokenType tokenType)
-        => tokenType == TokenType.Keyword_bool
-        || tokenType == TokenType.Keyword_s8
-        || tokenType == TokenType.Keyword_s16
-        || tokenType == TokenType.Keyword_s32
-        || tokenType == TokenType.Keyword_s64
-        || tokenType == TokenType.Keyword_s128
-        || tokenType == TokenType.Keyword_s256
-        || tokenType == TokenType.Keyword_f16
-        || tokenType == TokenType.Keyword_f32
-        || tokenType == TokenType.Keyword_f64
-        || tokenType == TokenType.Keyword_f128;
+    // 4 == Keyword_bool; 14 == Keyword_f128
+    static bool IsTypeKeyword(TokenType tokenType) => (int)tokenType >= 4 && (int)tokenType <= 14;
 
     bool Check(TokenType type)
         => !IsAtEnd() && Peek().TokenType == type;
 
-    Token Advance()
-        => pos < tokens.Count ? tokens[pos++] : tokens[^1];
+    Token Advance() => pos < tokens.Count ? tokens[pos++] : tokens[^1];
 
-    bool IsAtEnd()
-        => Peek().TokenType == TokenType.EOF;
+    bool IsAtEnd() => Peek().TokenType == TokenType.EOF;
 
-    Token Peek()
-        => tokens[pos];
+    Token Peek() => tokens[pos];
 
-    Token PeekNext()
-        => pos + 1 < tokens.Count ? tokens[pos + 1] : tokens[^1];
+    Token PeekNext() => pos + 1 < tokens.Count ? tokens[pos + 1] : tokens[^1];
 
-    Token Previous()
-        => tokens[pos - 1];
+    Token Previous() => tokens[pos - 1];
 
     void EnterScope(string name, INode? declaringNode = null)
     {
@@ -671,16 +641,16 @@ public class Parser(List<Token> tokens)
     void DeclareBuiltin(string typeName)
     {
         globalScope!.Declare(typeName,
-                    new SymbolInfo(
-                        typeName,
-                        new TypeInfo(
-                            typeName,
-                            null,
-                            null
-                        ),
-                        SymbolKind.Type,
-                        null
-                    ));
+            new SymbolInfo(
+                typeName,
+                new TypeInfo(
+                    typeName,
+                    null,
+                    null
+                ),
+                SymbolKind.Type,
+                null
+            ));
     }
     #endregion
 }
