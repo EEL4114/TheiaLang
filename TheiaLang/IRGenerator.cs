@@ -207,8 +207,7 @@ public static class IRGenerator
                   $"  {gep} = getelementptr {LLVMType}, {LLVMType}* {slot}, i32 0, i32 {i}");
 
                 // store the argument into that field
-                TypeInfo? argumentType = InferExpressionType(inst.Arguments[i]);
-                string LLVMTypeArg = TypeToLLVM(argumentType!)!;
+                string LLVMTypeArg = TypeToLLVM(inst.Arguments[i].ResolvedType)!;
 
                 sb.AppendLine(
                   $"  store {LLVMTypeArg} {argReg}, {LLVMTypeArg}* {gep}");
@@ -228,7 +227,7 @@ public static class IRGenerator
     {
         if (!TryResolveSlot(assignment.Target.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
             throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
-            $"{assignment.Target} = {InferExpressionType(assignment.Expression)} {assignment.Expression}");
+            $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
 
         string LLVMType = TypeToLLVM(typeInfo)!;
 
@@ -245,8 +244,7 @@ public static class IRGenerator
 
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
-        TypeInfo? typeInfo = InferExpressionType(returnStatement.Expression);
-        string LLVMType = TypeToLLVM(typeInfo!)!;
+        string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType)!;
 
         sb.AppendLine($"  ret {LLVMType} {val}");
     }
@@ -276,9 +274,9 @@ public static class IRGenerator
 
         string tmp = NewTempVar();
 
-        TypeInfo? typeInfo = InferExpressionType(unaryExpression.Operand);
+        TypeInfo typeInfo = unaryExpression.Operand.ResolvedType;
 
-        string instr = typeInfo!.TypeName switch
+        string instr = typeInfo.TypeName switch
         {
             "s32" => "sub",
             "f32" => "fsub",
@@ -339,11 +337,11 @@ public static class IRGenerator
         code.Append(cl);
         code.Append(cr);
 
-        TypeInfo? typeInfo = InferExpressionType(binaryExpression.Left);
+        TypeInfo typeInfo = binaryExpression.Left.ResolvedType;
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
-        if (typeInfo!.TypeName == "s32") op = binaryExpression.Op switch
+        if (typeInfo.TypeName == "s32") op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "add",
             BinaryOperator.Subtract => "sub",
@@ -387,8 +385,7 @@ public static class IRGenerator
             code.AppendLine(
                 $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
 
-            TypeInfo? argumentTypeInfo = InferExpressionType(instantiation.Arguments[i]);
-            string llvmType = TypeToLLVM(argumentTypeInfo!)!;
+            string llvmType = TypeToLLVM(instantiation.Arguments[i].ResolvedType)!;
 
             code.AppendLine($"  store {llvmType} {argReg}, {llvmType}* {gep}");
         }
@@ -420,16 +417,16 @@ public static class IRGenerator
             code.Append(argCode);
 
             // infer the LLVM type of the argument
-            TypeInfo? actualType = InferExpressionType(argument);
+            TypeInfo actualType = argument.ResolvedType;
             string actualLLVMType = TypeToLLVM(actualType!)!;
 
             TryResolveType(calleeInfo.Parameters[i].TypeName, out TypeInfo? argumentInfo);
             string expectedLLVMType = TypeToLLVM(argumentInfo!)!;
 
-            if (actualType!.TypeName != argumentInfo!.TypeName)
+            if (actualType.TypeName != argumentInfo!.TypeName)
                 Log.Error(12,
                     $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
-                    $"expected {argumentInfo!.TypeName}, got {actualType!.TypeName}");
+                    $"expected {argumentInfo!.TypeName}, got {actualType.TypeName}");
 
             argumentList.Add($"{actualLLVMType} {argReg}");
         }
@@ -566,17 +563,6 @@ public static class IRGenerator
 
         throw new Exception($"Unsupported type: '{type.TypeName}'");
     }
-
-    static TypeInfo? InferExpressionType(IExpression expr) => expr switch
-    {
-        LiteralExpression lit when lit.Value is int => new TypeInfo("s32", null, null),
-        LiteralExpression lit when lit.Value is double => new TypeInfo("f32", null, null),
-        LiteralExpression lit when lit.Value is bool => new TypeInfo("bool", null, null),
-        // composite types
-        IdentifierExpression id when TryResolveType(id.Name, out TypeInfo? type) => type,
-        BinaryExpression bin => InferExpressionType(bin.Left),
-        _ => throw new Exception($"Cannot infer type for Expression {expr}")
-    };
 
     static void EnterScope(string scopeName)
     {

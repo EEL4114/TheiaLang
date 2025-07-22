@@ -252,7 +252,7 @@ public static class SemanticAnalyser
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
-            throw new Exception($"Type '{typeOrName}' is not defined in {currentScope.FullName}");
+            throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
 
         return symbolInfo!.Type;
     }
