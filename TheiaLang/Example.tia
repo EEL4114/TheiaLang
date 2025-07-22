@@ -65,5 +65,3 @@ struct Entity(float health, float speed)
         return alive;
     }
 }
-
-

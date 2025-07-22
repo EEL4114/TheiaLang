@@ -6,7 +6,7 @@ public static class SemanticAnalyser
 {
     static Scope GlobalScope;
     static Scope currentScope;
-    public static void AnalyseProgram(ProgramNode program, Scope globalScope)
+    public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         GlobalScope = globalScope;
         currentScope = globalScope;
@@ -48,6 +48,8 @@ public static class SemanticAnalyser
             if (node is FunctionDeclaration fn)
                 AnalyseFunctionBody(fn);
         }
+
+        return (program, globalScope);
     }
 
     static void ResolveStructFields(StructDeclaration structDeclaration)

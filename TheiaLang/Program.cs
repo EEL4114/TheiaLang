@@ -28,37 +28,38 @@ do
 
 int lexerTime = (int)sw2.Elapsed.TotalMilliseconds;
 
-Console.Write($"Lexer took ");
-Console.ForegroundColor = LEXER_COL;
-Console.WriteLine($"{lexerTime} ms");
-Console.ResetColor();
+Log.Time("Lexer took", lexerTime, LEXER_COL);
 sw2.Restart();
 
 Parser parser = new Parser(tokens);
 (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
 int parserTime = (int)sw2.Elapsed.TotalMilliseconds;
 
-Console.Write($"Parser took ");
-Console.ForegroundColor = PARSER_COL;
-Console.WriteLine($"{parserTime} ms");
-Console.ResetColor();
+Log.Time("Parser took", parserTime, PARSER_COL);
 sw2.Restart();
 
 sw.Stop();
 using StreamWriter writer = new StreamWriter($"{programName}_ast.txt");
 AstPrinter.Print(ast, writer);
-Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds} ms");
+int printTime = (int)sw2.ElapsedMilliseconds;
 sw.Start();
 sw2.Restart();
 
-SemanticAnalyser.AnalyseProgram(ast, globalScope);
+(ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
+int semTime = (int)sw2.Elapsed.TotalMilliseconds;
+Log.Time("Semantic Analysis took", semTime, SEM_COL);
+sw2.Restart();
+
+sw.Stop();
+using StreamWriter writer2 = new StreamWriter($"{programName}_ast_full.txt");
+AstPrinter.Print(ast, writer2);
+Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds + printTime} ms");
+sw.Start();
+sw2.Restart();
 
 IRGenerator.Emit(ast, globalScope, "Example.ll");
 int IRgenTime = (int)sw2.Elapsed.TotalMilliseconds;
-Console.Write($"IR Generation took ");
-Console.ForegroundColor = IRGEN_COL;
-Console.WriteLine($"{IRgenTime} ms");
-Console.ResetColor();
+Log.Time("IR Generation took", IRgenTime, IRGEN_COL);
 sw2.Restart();
 
 Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
@@ -108,5 +109,13 @@ Log
     public static void Info(string text)
     {
         Console.WriteLine(text);
+    }
+
+    public static void Time(string text, int time, ConsoleColor highlight = ConsoleColor.White)
+    {
+        Console.Write($"{text} ");
+        Console.ForegroundColor = highlight;
+        Console.WriteLine($"{time} ms");
+        Console.ResetColor();
     }
 }

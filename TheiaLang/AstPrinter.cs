@@ -53,7 +53,7 @@ static class AstPrinter
 
     static void PrintFunction(FunctionDeclaration functionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.ResolvedType} {functionDeclaration.Name}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {functionDeclaration.TypeName} {functionDeclaration.Name}");
         w.WriteLine($"{Indent(indent + tab)}Arguments: (");
         foreach (TypeNamePair typeNamePair in functionDeclaration.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
