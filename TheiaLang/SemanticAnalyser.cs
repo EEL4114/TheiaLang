@@ -399,7 +399,6 @@ public static class SemanticAnalyser
         if (LosslessTypeInterop[builtinA, builtinB])
         {
             TypeInfo type = new TypeInfo(expectedType, null, null);
-            // Log.Info($"{typeInfo.TypeName} {expectedType} -> {type.TypeName}");
             return type;  // literals always cast to the more concrete value
         }
 

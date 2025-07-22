@@ -287,11 +287,39 @@ public static class IRGenerator
         return (code, $"%{tmp}");
     }
 
-    static (StringBuilder code, string name) EmitLiteralExpression(LiteralExpression literalExpression, StringBuilder code)
+    static (StringBuilder code, string name) EmitLiteralExpression(
+        LiteralExpression literalExpression,
+        StringBuilder code)
     {
-        if (literalExpression.Value is int i) return (code, literalExpression.Lexeme);
-        if (literalExpression.Value is double d) return (code, literalExpression.Lexeme);
-        if (literalExpression.Value is bool b) return (code, b ? "1" : "0");
+        // Make sure the semantic pass has filled in the type
+        TypeInfo typeInfo = literalExpression.ResolvedType
+            ?? throw new InvalidOperationException("Literal has no ResolvedType");
+
+        // Integer literals
+        if (literalExpression.Value is int i)
+        {
+            return typeInfo.TypeName switch
+            {
+                "f16" or "f32" or "f64" => (code, $"{i}.0"),// decimal is fine
+                "f128" => (code, ToHexFp128(i)),
+                _ => (code, literalExpression.Lexeme),
+            };
+        }
+
+        // Floating‐point literals
+        if (literalExpression.Value is double d)
+        {
+            return typeInfo.TypeName switch
+            {
+                "f128" => (code, ToHexFp128(d)),// the original Lexeme is decimal; convert to hex‐float
+                _ => (code, literalExpression.Lexeme),// leave as written for f32/f64
+            };
+        }
+
+        // Booleans
+        if (literalExpression.Value is bool b)
+            return (code, b ? "1" : "0");
+
         throw new Exception("Unknown literal");
     }
 
@@ -336,7 +364,9 @@ public static class IRGenerator
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
-        if (typeInfo.TypeName == "s32") op = binaryExpression.Op switch
+        if (!IsBuiltinType(typeInfo.TypeName))
+            throw new Exception($"Unsupported type '{typeInfo.TypeName}'");
+        if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "add",
             BinaryOperator.Subtract => "sub",
@@ -345,7 +375,7 @@ public static class IRGenerator
             BinaryOperator.Less => "icmp slt",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
-        else if (typeInfo.TypeName == "f32") op = binaryExpression.Op switch
+        else if (typeInfo.TypeName.StartsWith('f')) op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "fadd",
             BinaryOperator.Subtract => "fsub",
@@ -494,6 +524,30 @@ public static class IRGenerator
         alloc = (null, null)!;
         typeInfo = null!;
         return false;
+    }
+
+    static string ToHexFp128(double v)
+    {
+        if (v == 0.0) return "0xL00";
+
+        // Decompose a double into sign, exponent, and mantissa
+        long bits = BitConverter.DoubleToInt64Bits(v);
+        bool sign = (bits >> 63) != 0;
+        int exp = (int)((bits >> 52) & 0x7FF) - 1023;
+        long mant = bits & 0xFFFFFFFFFFFFFL;
+        mant |= 1L << 52;
+
+        // Normalize to one hex digit before the point:
+        // mantissa is (mant / 2^52), so shift left by 4 bits
+        // to extract the first hex digit, then the rest.
+        int shift = 52 - 4;
+        long hexMant = mant >> shift;           // top 13 bits
+        string hex = hexMant.ToString("X");     // hex digits
+        // split hex into a.b form (first digit, rest)
+        string a = hex.Substring(0, 1);
+        string b = hex.Substring(1);
+
+        return (sign ? "-" : "") + $"0xL{a}{b}{exp}";
     }
 
     static string? TypeToLLVM(TypeInfo type)
