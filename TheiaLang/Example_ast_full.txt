@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 01:45:12
+Generated at 25.07.2025 01:49:49
 
 StructDeclaration: Vector3
     Fields:
@@ -153,6 +153,25 @@ FunctionDeclaration: s32 Branchy
                                 Literal: s32 42
                     VariableDeclaration: f32 f =
                         Literal: f32 78
+
+        Return: s32 
+            Identifier: s32 value
+
+FunctionDeclaration: s32 Abs
+    Arguments:
+        s32 value
+    BlockSatement:
+        If:
+            Condition:
+                BinaryExpression: bool Less
+                    Identifier: s32 value
+                    Literal: s32 0
+            Then:
+                BlockSatement:
+                    Return: s32 
+                        UnaryExpression: s32 Negate
+                            Operand:
+                                Identifier: s32 value
 
         Return: s32 
             Identifier: s32 value

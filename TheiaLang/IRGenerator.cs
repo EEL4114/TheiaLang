@@ -293,8 +293,9 @@ public static class IRGenerator
         sb.Append(code);
         string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType)!;
 
-        sb.AppendLine(
-            $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
+        if (currentScope.DeclaringNode is FunctionDeclaration)
+            sb.AppendLine(
+                $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
             $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
             $"i8* getelementptr inbounds ([{LLVMType.Length + 1} x i8], [{LLVMType.Length + 1} x i8]* @.fn_{currentScope.Name}_str, i32 0, i32 0), " +
             $"{LLVMType} {val})"
@@ -330,7 +331,7 @@ public static class IRGenerator
     static (StringBuilder code, string name) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
         (StringBuilder cl, string val) = EmitExpression(unaryExpression.Operand);
-        code.Append(code);
+        code.Append(cl);
 
         string tmp = NewTempVar();
 

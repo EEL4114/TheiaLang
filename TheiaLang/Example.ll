@@ -133,42 +133,62 @@ if_end_0:
   ret i32 %tmp38
 }
 
+@.fn_Abs_str = private constant [4 x i8] c"Abs\00"
+define i32 @Abs(i32 %value) {
+entry:
+  %tmp39 = alloca i32
+  store i32 %value, i32* %tmp39
+  %tmp40 = load i32, i32* %tmp39
+  %tmp41 = icmp slt i32 %tmp40, 0
+
+  br i1 %tmp41, label %if_then_1, label %if_end_1
+if_then_1:
+  %tmp42 = load i32, i32* %tmp39
+  %tmp43 = sub i32 0, %tmp42
+  ret i32 %tmp43
+  br label %if_end_1
+if_end_1:
+  %tmp44 = load i32, i32* %tmp39
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Abs_str, i32 0, i32 0), i32 %tmp44)
+  ret i32 %tmp44
+}
+
 @.fn_n_str = private constant [2 x i8] c"n\00"
 define i1 @n(i1 %b) {
 entry:
-  %tmp39 = alloca i1
-  store i1 %b, i1* %tmp39
-  %tmp40 = load i1, i1* %tmp39
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_n_str, i32 0, i32 0), i1 %tmp40)
-  ret i1 %tmp40
+  %tmp45 = alloca i1
+  store i1 %b, i1* %tmp45
+  %tmp46 = load i1, i1* %tmp45
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_n_str, i32 0, i32 0), i1 %tmp46)
+  ret i1 %tmp46
 }
 
 @.fn_m_str = private constant [2 x i8] c"m\00"
 define i32 @m(i32 %j) {
 entry:
-  %tmp41 = alloca i32
-  store i32 %j, i32* %tmp41
+  %tmp47 = alloca i32
+  store i32 %j, i32* %tmp47
   %i_m = alloca i32
   store i32 3, i32* %i_m
-  %tmp42 = load i32, i32* %tmp41
-  %tmp43 = add i32 %tmp42, 4
+  %tmp48 = load i32, i32* %tmp47
+  %tmp49 = add i32 %tmp48, 4
 
-  store i32 %tmp43, i32* %tmp41
+  store i32 %tmp49, i32* %tmp47
   %health_m = alloca i32
   store i32 7, i32* %health_m
-  %tmp44 = load i32, i32* %tmp41
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_m_str, i32 0, i32 0), i32 %tmp44)
-  ret i32 %tmp44
+  %tmp50 = load i32, i32* %tmp47
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_m_str, i32 0, i32 0), i32 %tmp50)
+  ret i32 %tmp50
 }
 
 @.fn_IsAlive_str = private constant [8 x i8] c"IsAlive\00"
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp45 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
-  %tmp46 = load float, float* %tmp45
-  %tmp47 = fcmp ogt float %tmp46, 0.0
+  %tmp51 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
+  %tmp52 = load float, float* %tmp51
+  %tmp53 = fcmp ogt float %tmp52, 0.0
 
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp47)
-  ret i1 %tmp47
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp53)
+  ret i1 %tmp53
 }
 

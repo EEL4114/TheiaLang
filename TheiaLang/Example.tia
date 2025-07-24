@@ -70,6 +70,15 @@ int Branchy(int value)
     return value;
 }
 
+int Abs(int value)
+{
+    if(value < 0)
+    {
+        return -value;
+    }
+    return value;
+}
+
 bool n(bool b)
 {
     return b;
