@@ -9,7 +9,7 @@ declare i32 @puts(i8*, ...)
 define i32 @main() {
 entry:
   %tmp0 = call i32 @m(i32 7)
-  %tmp1 = call i1 @n()
+  %tmp1 = call i1 @n(i1 1)
   %t = alloca i32
   %tmp2 = call i32 @m(i32 8)
   store i32 %tmp2, i32* %t
@@ -101,31 +101,32 @@ entry:
   ret i32 %tmp31
 }
 
+define i1 @n(i1 %b) {
+entry:
+  %tmp32 = alloca i1
+  store i1 %b, i1* %tmp32
+  %tmp33 = load i1, i1* %tmp32
+  ret i1 %tmp33
+}
+
 define i32 @m(i32 %j) {
 entry:
-  %tmp32 = alloca i32
-  store i32 %j, i32* %tmp32
+  %tmp34 = alloca i32
+  store i32 %j, i32* %tmp34
   %i = alloca i32
   store i32 3, i32* %i
-  store i32 4, i32* %tmp32
+  store i32 4, i32* %tmp34
   %health = alloca i32
   store i32 7, i32* %health
   ret i32 0
 }
 
-define i1 @n() {
-entry:
-  %tmp33 = and i1 0, 0
-
-  ret i1 %tmp33
-}
-
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp34 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
-  %tmp35 = load float, float* %tmp34
-  %tmp36 = fcmp ogt float %tmp35, 0.0
+  %tmp35 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
+  %tmp36 = load float, float* %tmp35
+  %tmp37 = fcmp ogt float %tmp36, 0.0
 
-  ret i1 %tmp36
+  ret i1 %tmp37
 }
 

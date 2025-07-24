@@ -345,12 +345,12 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
-        if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) _, out TypeInfo? typeInfo))
+        if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
         {
             string LLVMType = TypeToLLVM(typeInfo)!;
 
             string tmp = $"tmp{tmpCounter++}";
-            code.AppendLine($"  %{tmp} = load {LLVMType}, {LLVMType}* %{identifier.Name}");
+            code.AppendLine($"  %{tmp} = load {LLVMType}, {LLVMType}* {alloc.ptr}");
             return (code, $"%{tmp}");
         }
 

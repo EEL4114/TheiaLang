@@ -5,7 +5,7 @@ union StringData(int i, float f);
 int main()
 {
     m(7);
-    n();
+    n(true);
 
     int t = m(8);
     int u = 1 + m(8) + 9;
@@ -50,6 +50,10 @@ int main()
     bool ok = c > 5;
     return c;
 }
+bool n(bool b)
+{
+    return b;
+}
 
 int m(int j)
 {
@@ -59,10 +63,6 @@ int m(int j)
     return 0;
 }
 
-bool n()
-{
-    return false && false;
-}
 
 struct Entity(float health, float speed)
 {
