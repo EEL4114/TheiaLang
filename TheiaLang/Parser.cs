@@ -240,6 +240,30 @@ public class Parser(List<Token> tokens)
             return variableDeclaration;
         }
 
+        if (Match(TokenType.Keyword_if))
+        {
+            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after if statement");
+            IExpression condition = ParseExpression();
+            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' to close condition of if statement");
+
+            EnterScope($"if_then{pos}");
+            List<IStatement> thenBranch = ParseBlock();
+            Scope thenScope = currentScope!;
+            Scope? elseScope = null;
+            ExitScope();
+            List<IStatement>? elseBranch = null;
+            if (Peek().TokenType == TokenType.Keyword_else)
+            {
+                EnterScope($"if_else{pos}");
+                elseScope = currentScope;
+                Consume(TokenType.Keyword_else, "");
+                elseBranch = ParseBlock();
+                ExitScope();
+            }
+
+            return new IfStatement(condition, thenBranch, elseBranch, thenScope, elseScope);
+        }
+
         if (Match(TokenType.Keyword_return))
         {
             IExpression expr = ParseExpression();

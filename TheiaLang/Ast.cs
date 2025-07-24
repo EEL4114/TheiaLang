@@ -138,6 +138,14 @@ public sealed record AssignmentStatement(
     IExpression Expression
 ) : IStatement;
 
+public sealed record IfStatement(
+    IExpression Condition,
+    List<IStatement> ThenBranch,
+    List<IStatement>? ElseBranch,
+    Scope ThenScope,
+    Scope? ElseScope
+) : IStatement;
+
 public sealed record ReturnStatement(
     IExpression Expression
 ) : IStatement;

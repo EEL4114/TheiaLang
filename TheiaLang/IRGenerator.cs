@@ -33,6 +33,7 @@ public static class IRGenerator
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
     static Scope? currentScope;
+    static ulong labelCounter = 0;
 
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
     {
@@ -177,6 +178,9 @@ public static class IRGenerator
             case AssignmentStatement assignment:
                 EmitAssignmentStatement(assignment, sb);
                 break;
+            case IfStatement ifStatement:
+                EmitIfStatement(ifStatement, sb);
+                break;
             case ReturnStatement returnStatement:
                 EmitReturnStatement(returnStatement, sb);
                 break;
@@ -193,7 +197,7 @@ public static class IRGenerator
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
 
-        string slot = $"%{variableDeclaration.Name}";
+        string slot = $"%{variableDeclaration.Name}_{currentScope.Name}";
         sb.AppendLine($"  {slot} = alloca {LLVMType}");
 
         allocas.Peek()[variableDeclaration.Name] = (slot, null);
@@ -250,6 +254,39 @@ public static class IRGenerator
         sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
     }
 
+    static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
+    {
+        var (condCode, condReg) = EmitExpression(ifStatement.Condition);
+        sb.Append(condCode);  // discard the result, but emit code for side effects
+
+        string thenLabel = $"if_then_{labelCounter}";
+        string? elseLabel = ifStatement.ElseBranch != null
+                                ? $"if_else_{labelCounter}"
+                                : null;
+        string mergeLabel = $"if_end_{labelCounter}";
+        labelCounter++;
+
+        sb.AppendLine(
+              $"  br i1 {condReg}, label %{thenLabel}, label %{elseLabel ?? mergeLabel}");
+
+        sb.AppendLine($"{thenLabel}:");
+        EnterScope(ifStatement.ThenScope);
+        foreach (IStatement statement in ifStatement.ThenBranch)
+            EmitStatement(statement, sb);
+        ExitScope();
+        sb.AppendLine($"  br label %{mergeLabel}");
+
+        if (ifStatement.ElseBranch != null)
+        {
+            EnterScope(ifStatement.ElseScope!);
+            sb.AppendLine($"{elseLabel}:");
+            foreach (IStatement statement in ifStatement.ElseBranch)
+                EmitStatement(statement, sb);
+            ExitScope();
+            sb.AppendLine($"  br label %{mergeLabel}");
+        }
+        sb.AppendLine($"{mergeLabel}:");
+    }
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);

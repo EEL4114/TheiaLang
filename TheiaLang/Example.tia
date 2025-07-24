@@ -29,8 +29,9 @@ int main()
     f128 quad = 14;
 
     int i = -1;
-    float j = -1;
 
+    float j = -1;
+    
     bool fg = false;
     bool ffg = true;
     int a = 5;
@@ -38,6 +39,7 @@ int main()
     int c = a + b;
 
     int d = 4;
+
     d = a + c;
 
     d = d + 42;
@@ -51,6 +53,23 @@ int main()
     bool ok = c > 5;
     return c;
 }
+
+int Branchy(int value)
+{
+    if(value == 0)
+    {
+        value = 42;
+        float f = 0;
+        f = -1;
+    }
+    else
+    {
+        value = -42;
+        float f = 78;
+    }
+    return value;
+}
+
 bool n(bool b)
 {
     return b;

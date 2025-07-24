@@ -47,7 +47,7 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}Union {typeNamePair.TypeName} {typeNamePair.Name}");
+        w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
     }
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
@@ -61,7 +61,7 @@ static class AstPrinter
 
     static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}BlockSatement");
+        w.WriteLine($"{Indent(indent)}BlockSatement:");
         foreach (IStatement stmt in block)
             PrintStatement(stmt, w, indent + tab);
         w.WriteLine();
@@ -81,6 +81,18 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}Assign:");
                 PrintExpression(a.Target, w, indent + tab);
                 PrintExpression(a.Expression, w, indent + tab);
+                break;
+            case IfStatement ifStatement:
+                w.WriteLine($"{Indent(indent)}If:");
+                w.WriteLine($"{Indent(indent + tab)}Condition:");
+                PrintExpression(ifStatement.Condition, w, indent + tab * 2);
+                w.WriteLine($"{Indent(indent + tab)}Then:");
+                PrintBlock(ifStatement.ThenBranch, w, indent + tab * 2);
+                if (ifStatement.ElseBranch != null)
+                {
+                    w.WriteLine($"{Indent(indent + tab)}Else:");
+                    PrintBlock(ifStatement.ElseBranch, w, indent + tab * 2);
+                }
                 break;
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return: {TryType(r.Expression.ResolvedType)}");

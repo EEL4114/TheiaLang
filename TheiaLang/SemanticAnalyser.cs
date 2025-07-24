@@ -144,6 +144,25 @@ public static class SemanticAnalyser
             case ExpressionStatement expression:
                 AnalyseExpression(expression.Expression);
                 break;
+            case IfStatement ifStatement:
+                AnalyseExpression(ifStatement.Condition);
+
+                if (ifStatement.Condition.ResolvedType.TypeName != "bool")
+                    throw new Exception($"Condition of if statement must resolve to type 'bool', got: {ifStatement.Condition.ResolvedType.TypeName}");
+
+                EnterScope(ifStatement.ThenScope);
+                foreach (IStatement thenStatement in ifStatement.ThenBranch)
+                    AnalyseStatement(thenStatement);
+                ExitScope();
+
+                if (ifStatement.ElseBranch != null)
+                {
+                    EnterScope(ifStatement.ElseScope!);
+                    foreach (IStatement elseStatement in ifStatement.ElseBranch)
+                        AnalyseStatement(elseStatement);
+                    ExitScope();
+                }
+                break;
             case ReturnStatement returnStatement:
                 AnalyseExpression(returnStatement.Expression);
 
@@ -157,6 +176,8 @@ public static class SemanticAnalyser
                                             $" cannot be implicitly converted to '{function.ResolvedType.TypeName}'");
                 }
                 break;
+            default:
+                throw new Exception($"Unknown Statement: {statement}");
         }
     }
 
@@ -258,6 +279,17 @@ public static class SemanticAnalyser
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
 
         return symbolInfo!.Type;
+    }
+
+    static void EnterScope(Scope scope)
+    {
+        if (currentScope == null)
+            throw new Exception("'currentScope' is null!");
+
+        if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
+            Log.Error(14, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
+
+        currentScope = scope;
     }
 
     static void ExitScope()

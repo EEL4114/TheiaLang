@@ -1,19 +1,19 @@
 Program: Example
-Generated at 24.07.2025 23:15:54
+Generated at 25.07.2025 01:45:12
 
 StructDeclaration: Vector3
     Fields:
-        Union f32 x
-        Union f32 y
-        Union f32 z
+        f32 x
+        f32 y
+        f32 z
 
 UnionDeclaration: StringData
-    Union s32 i
-    Union f32 f
+    s32 i
+    f32 f
 
 FunctionDeclaration: s32 main
     Arguments:
-    BlockSatement
+    BlockSatement:
         Expression:
             Call:  m
                 Arguments:
@@ -122,17 +122,52 @@ FunctionDeclaration: s32 main
         Return: 
             Identifier: c
 
+FunctionDeclaration: s32 Branchy
+    Arguments:
+        s32 value
+    BlockSatement:
+        If:
+            Condition:
+                BinaryExpression: EqualEqual
+                    Identifier: value
+                    Literal: int 0
+            Then:
+                BlockSatement:
+                    Assign:
+                        Identifier: value
+                        Literal: int 42
+                    VariableDeclaration: f32 f =
+                        Literal: int 0
+                    Assign:
+                        Identifier: f
+                        UnaryExpression: Negate
+                            Operand:
+                                Literal: int 1
+
+            Else:
+                BlockSatement:
+                    Assign:
+                        Identifier: value
+                        UnaryExpression: Negate
+                            Operand:
+                                Literal: int 42
+                    VariableDeclaration: f32 f =
+                        Literal: int 78
+
+        Return: 
+            Identifier: value
+
 FunctionDeclaration: bool n
     Arguments:
-        Union bool b
-    BlockSatement
+        bool b
+    BlockSatement:
         Return: 
             Identifier: b
 
 FunctionDeclaration: s32 m
     Arguments:
-        Union s32 j
-    BlockSatement
+        s32 j
+    BlockSatement:
         VariableDeclaration: s32 i =
             Literal: int 3
         Assign:
@@ -147,11 +182,11 @@ FunctionDeclaration: s32 m
 
 StructDeclaration: Entity
     Fields:
-        Union f32 health
-        Union f32 speed
+        f32 health
+        f32 speed
     FunctionDeclaration: bool IsAlive
         Arguments:
-        BlockSatement
+        BlockSatement:
             Return: 
                 BinaryExpression: Greater
                     Identifier: health

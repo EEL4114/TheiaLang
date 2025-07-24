@@ -27,6 +27,9 @@ public enum TokenType
     Keyword_struct,
     Keyword_union,
 
+
+    Keyword_if,
+    Keyword_else,
     Keyword_new,
     Keyword_return,
 
@@ -177,11 +180,15 @@ class Lexer(string sourceCode)
             "double" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
             "f128" => new Token(TokenType.Keyword_f128, lexeme, line, startCol),
 
+            "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
+            "union" => new Token(TokenType.Keyword_union, lexeme, line, startCol),
+
+            "if" => new Token(TokenType.Keyword_if, lexeme, line, startCol),
+            "else" => new Token(TokenType.Keyword_else, lexeme, line, startCol),
+
             "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
             "true" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
             "false" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
-            "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
-            "union" => new Token(TokenType.Keyword_union, lexeme, line, startCol),
             "new" => new Token(TokenType.Keyword_new, lexeme, line, startCol),
             _ => new Token(TokenType.Identifier, lexeme, line, startCol),
         };
