@@ -376,11 +376,13 @@ public class Parser(List<Token> tokens)
             IExpression? lhs = ParseExpression();
             if (lhs.Assignable)
             {
-                // Log.Info(lhs.ToString());
+                Consume(TokenType.Operator_Equals, "expected '=' after expression");
+                IExpression? rhs = ParseExpression();
+                Log.Info(lhs!.ToString());
+                Log.Info(rhs!.ToString());
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
+                return new AssignmentStatement(lhs, rhs);
             }
-
-            if (lhs.Assignable && Peek().TokenType == TokenType.Operator_Equals)
-                return ParseAssignment();
             else
                 pos = ret;
         }

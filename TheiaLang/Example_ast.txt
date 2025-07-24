@@ -1,163 +1,150 @@
 Program: Example
-Generated at 22.07.2025 20:18:11
+Generated at 24.07.2025 17:54:51
 
 StructDeclaration: Vector3
-    Fields: {
-        f32 x
-        f32 y
-        f32 z
-    }
+    Fields:
+        Union f32 x
+        Union f32 y
+        Union f32 z
 
 UnionDeclaration: StringData
-    s32 i
-    f32 f
+    Union s32 i
+    Union f32 f
 
 FunctionDeclaration: s32 main
-    Arguments: (
-    )
+    Arguments:
     BlockSatement
         Expression:
             Call:  m
-                Arguments: (
+                Arguments:
                     Literal: int 7
-                )
+
+        Expression:
+            Call:  n
+                Arguments:
 
         VariableDeclaration: s32 t =
             Call:  m
-                Arguments: (
+                Arguments:
                     Literal: int 8
-                )
-
         VariableDeclaration: s32 u =
             BinaryExpression: Add
                 BinaryExpression: Add
                     Literal: int 1
                     Call:  m
-                        Arguments: (
+                        Arguments:
                             Literal: int 8
-                        )
                 Literal: int 9
-
         VariableDeclaration: Entity entity =
             Instantiation: Entity
                 Arguments: (
-                    Literal: float 70.0
+                    Literal: int 70
                     Literal: float 1.5
                 )
-
-        VariableDeclaration: f32 health =
-            MemberAccess: Target: entity
-                Member: 'health'
-
+        VariableDeclaration: f32 HP =
+            MemberAccess: entity.health
+                Target: entity
+                Member: health
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: Add
-                Literal: float 1.0
-                MemberAccess: Target: entity
-                    Member: 'health'
-
+                Literal: int 1
+                MemberAccess: entity.health
+                    Target: entity
+                    Member: health
         VariableDeclaration: s32 defaultInt
-
         VariableDeclaration: f32 defaultFloat
-
         VariableDeclaration: bool defaultBool
-
+        Assign:
+            MemberAccess: entity.health
+                Target: entity
+                Member: health
+            Literal: int 4
         VariableDeclaration: s32 default_s32
-
         VariableDeclaration: f32 default_f32
-
         VariableDeclaration: bool default_bool
-
         VariableDeclaration: f128 quad =
             Literal: int 14
-
         VariableDeclaration: s32 i =
             UnaryExpression: Negate
                 Operand:
                     Literal: int 1
-
         VariableDeclaration: f32 j =
             UnaryExpression: Negate
                 Operand:
-                    Literal: float 1.0
-
+                    Literal: int 1
         VariableDeclaration: bool fg =
             Literal: bool false
-
         VariableDeclaration: bool ffg =
             Literal: bool true
-
         VariableDeclaration: s32 a =
             Literal: int 5
-
         VariableDeclaration: s32 b =
             Literal: int 10
-
         VariableDeclaration: s32 c =
             BinaryExpression: Add
                 Identifier: a
                 Identifier: b
-
         VariableDeclaration: s32 d =
             Literal: int 4
-
-        Assign: d =
+        Assign:
+            Identifier: d
             BinaryExpression: Add
                 Identifier: a
                 Identifier: c
-        Assign: d =
+        Assign:
+            Identifier: d
             BinaryExpression: Add
                 Identifier: d
                 Literal: int 42
         VariableDeclaration: f32 f =
             Literal: float 2.5
-
-        Assign: f =
+        Assign:
+            Identifier: f
             BinaryExpression: Multiply
                 Identifier: f
-                Literal: float 2.0
+                Literal: int 2
         VariableDeclaration: f32 g =
-            Literal: float 3.0
-
+            Literal: int 3
         VariableDeclaration: f32 h =
             BinaryExpression: Subtract
                 Identifier: f
                 Identifier: g
-
         VariableDeclaration: bool ok =
             BinaryExpression: Greater
                 Identifier: c
                 Literal: int 5
-
         Return
             Identifier: c
 
 FunctionDeclaration: s32 m
-    Arguments: (
-        s32 j
-    )
+    Arguments:
+        Union s32 j
     BlockSatement
         VariableDeclaration: s32 i =
             Literal: int 3
-
-        Assign: j =
+        Assign:
+            Identifier: j
             Literal: int 4
         VariableDeclaration: s32 health =
             Literal: int 7
-
         Return
             Literal: int 0
 
+FunctionDeclaration: bool n
+    Arguments:
+    BlockSatement
+        Return
+            Literal: bool false
+
 StructDeclaration: Entity
-    Fields: {
-        f32 health
-        f32 speed
-    }
+    Fields:
+        Union f32 health
+        Union f32 speed
     FunctionDeclaration: bool IsAlive
-        Arguments: (
-        )
+        Arguments:
         BlockSatement
             Return
                 BinaryExpression: Greater
                     Identifier: health
-                    Literal: float 0.0
+                    Literal: int 0
 

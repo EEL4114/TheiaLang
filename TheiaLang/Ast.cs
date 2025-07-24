@@ -130,7 +130,7 @@ public sealed record ExpressionStatement(
 ) : IStatement;
 
 public sealed record AssignmentStatement(
-    IdentifierExpression Target,
+    IExpression Target,
     IExpression Expression
 ) : IStatement;
 

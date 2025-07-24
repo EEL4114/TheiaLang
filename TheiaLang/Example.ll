@@ -8,46 +8,50 @@ declare i32 @puts(i8*, ...)
 
 define i32 @main() {
 entry:
+  %tmp0 = call i32 @m(i32 7)
+  %tmp1 = call i1 @n()
   %t = alloca i32
-  %tmp0 = call i32 @m(i32 8)
-  store i32 %tmp0, i32* %t
+  %tmp2 = call i32 @m(i32 8)
+  store i32 %tmp2, i32* %t
   %u = alloca i32
-  %tmp1 = call i32 @m(i32 8)
-  %tmp2 = add i32 1, %tmp1
+  %tmp3 = call i32 @m(i32 8)
+  %tmp4 = add i32 1, %tmp3
 
-  %tmp3 = add i32 %tmp2, 9
+  %tmp5 = add i32 %tmp4, 9
 
-  store i32 %tmp3, i32* %u
+  store i32 %tmp5, i32* %u
   %entity = alloca %Entity
-  %tmp4 = getelementptr %Entity, %Entity* %entity, i32 0, i32 0
-  store float 70.0, float* %tmp4
-  %tmp5 = getelementptr %Entity, %Entity* %entity, i32 0, i32 1
-  store float 1.5, float* %tmp5
+  %tmp6 = getelementptr %Entity, %Entity* %entity, i32 0, i32 0
+  store float 70.0, float* %tmp6
+  %tmp7 = getelementptr %Entity, %Entity* %entity, i32 0, i32 1
+  store float 1.5, float* %tmp7
 
-  %health = alloca float
-  %tmp6 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
-  %tmp7 = load float, float* %tmp6
-  store float %tmp7, float* %health
-  %moreHealth = alloca float
+  %HP = alloca float
   %tmp8 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
   %tmp9 = load float, float* %tmp8
-  %tmp10 = fadd float 1.0, %tmp9
+  store float %tmp9, float* %HP
+  %moreHealth = alloca float
+  %tmp10 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
+  %tmp11 = load float, float* %tmp10
+  %tmp12 = fadd float 1.0, %tmp11
 
-  store float %tmp10, float* %moreHealth
+  store float %tmp12, float* %moreHealth
   %defaultInt = alloca i32
   %defaultFloat = alloca float
   %defaultBool = alloca i1
+  %tmp13 = getelementptr inbounds %Entity, %Entity* %entity, i32 0, i32 0
+  store float 4.0, float* %tmp13
   %default_s32 = alloca i32
   %default_f32 = alloca float
   %default_bool = alloca i1
   %quad = alloca fp128
   store fp128 0xL1C3, fp128* %quad
   %i = alloca i32
-  %tmp11 = sub i32 0, 1
-  store i32 %tmp11, i32* %i
+  %tmp14 = sub i32 0, 1
+  store i32 %tmp14, i32* %i
   %j = alloca float
-  %tmp12 = fsub float 0.0, 1.0
-  store float %tmp12, float* %j
+  %tmp15 = fsub float 0.0, 1.0
+  store float %tmp15, float* %j
   %fg = alloca i1
   store i1 0, i1* %fg
   %ffg = alloca i1
@@ -57,64 +61,69 @@ entry:
   %b = alloca i32
   store i32 10, i32* %b
   %c = alloca i32
-  %tmp13 = load i32, i32* %a
-  %tmp14 = load i32, i32* %b
-  %tmp15 = add i32 %tmp13, %tmp14
-
-  store i32 %tmp15, i32* %c
-  %d = alloca i32
-  store i32 4, i32* %d
   %tmp16 = load i32, i32* %a
-  %tmp17 = load i32, i32* %c
+  %tmp17 = load i32, i32* %b
   %tmp18 = add i32 %tmp16, %tmp17
 
-  store i32 %tmp18, i32* %d
-  %tmp19 = load i32, i32* %d
-  %tmp20 = add i32 %tmp19, 42
+  store i32 %tmp18, i32* %c
+  %d = alloca i32
+  store i32 4, i32* %d
+  %tmp19 = load i32, i32* %a
+  %tmp20 = load i32, i32* %c
+  %tmp21 = add i32 %tmp19, %tmp20
 
-  store i32 %tmp20, i32* %d
+  store i32 %tmp21, i32* %d
+  %tmp22 = load i32, i32* %d
+  %tmp23 = add i32 %tmp22, 42
+
+  store i32 %tmp23, i32* %d
   %f = alloca float
   store float 2.5, float* %f
-  %tmp21 = load float, float* %f
-  %tmp22 = fmul float %tmp21, 2.0
+  %tmp24 = load float, float* %f
+  %tmp25 = fmul float %tmp24, 2.0
 
-  store float %tmp22, float* %f
+  store float %tmp25, float* %f
   %g = alloca float
   store float 3.0, float* %g
   %h = alloca float
-  %tmp23 = load float, float* %f
-  %tmp24 = load float, float* %g
-  %tmp25 = fsub float %tmp23, %tmp24
+  %tmp26 = load float, float* %f
+  %tmp27 = load float, float* %g
+  %tmp28 = fsub float %tmp26, %tmp27
 
-  store float %tmp25, float* %h
+  store float %tmp28, float* %h
   %ok = alloca i1
-  %tmp26 = load i32, i32* %c
-  %tmp27 = icmp sgt i32 %tmp26, 5
+  %tmp29 = load i32, i32* %c
+  %tmp30 = icmp sgt i32 %tmp29, 5
 
-  store i1 %tmp27, i1* %ok
+  store i1 %tmp30, i1* %ok
   call i32 @puts(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))
-  %tmp28 = load i32, i32* %c
-  ret i32 %tmp28
+  %tmp31 = load i32, i32* %c
+  ret i32 %tmp31
 }
 
 define i32 @m(i32 %j) {
 entry:
-  %tmp29 = alloca i32
-  store i32 %j, i32* %tmp29
+  %tmp32 = alloca i32
+  store i32 %j, i32* %tmp32
   %i = alloca i32
   store i32 3, i32* %i
-  store i32 4, i32* %tmp29
+  store i32 4, i32* %tmp32
   %health = alloca i32
   store i32 7, i32* %health
   ret i32 0
 }
 
+define i1 @n() {
+entry:
+  ret i1 0
+}
+
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp30 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
-  %tmp31 = load float, float* %tmp30
-  %tmp32 = fcmp ogt float %tmp31, 0.0
+  %tmp33 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
+  %tmp34 = load float, float* %tmp33
+  %tmp35 = fcmp ogt float %tmp34, 0.0
 
-  ret i1 %tmp32
+  ret i1 %tmp35
 }
 

@@ -26,10 +26,9 @@ static class AstPrinter
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}");
-        w.WriteLine($"{Indent(indent + tab)}Fields: {{");
+        w.WriteLine($"{Indent(indent + tab)}Fields:");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
-        w.WriteLine($"{Indent(indent + tab)}}}");
 
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
@@ -48,16 +47,15 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{typeNamePair.TypeName} {typeNamePair.Name}");
+        w.WriteLine($"{Indent(indent)}Union {typeNamePair.TypeName} {typeNamePair.Name}");
     }
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}");
-        w.WriteLine($"{Indent(indent + tab)}Arguments: (");
+        w.WriteLine($"{Indent(indent + tab)}Arguments:");
         foreach (TypeNamePair typeNamePair in function.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
-        w.WriteLine($"{Indent(indent + tab)})");
         PrintBlock(function.Statements, w, indent + tab);
     }
 
@@ -78,11 +76,10 @@ static class AstPrinter
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init != null)
                     PrintExpression(vd.Init, w, indent + tab);
-                w.WriteLine();
                 break;
-
             case AssignmentStatement a:
-                w.WriteLine($"{Indent(indent)}Assign: {TryType(a.Target.ResolvedType)}{a.Target.Name} =");
+                w.WriteLine($"{Indent(indent)}Assign:");
+                PrintExpression(a.Target, w, indent + tab);
                 PrintExpression(a.Expression, w, indent + tab);
                 break;
             case ReturnStatement r:
@@ -97,6 +94,7 @@ static class AstPrinter
 
             default:
                 w.WriteLine($"{Indent(indent)}<unknown statement '{stmt.GetType().Name}'>");
+                w.WriteLine($"{Indent(indent + tab)}<{stmt}'>");
                 break;
         }
     }
@@ -120,12 +118,10 @@ static class AstPrinter
                 break;
             case CallExpression call:
                 w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)} {call.CalleeName}");
-                w.WriteLine($"{Indent(indent + tab)}Arguments: (");
+                w.WriteLine($"{Indent(indent + tab)}Arguments:");
 
                 foreach (IExpression arument in call.Arguments)
                     PrintExpression(arument, w, indent + tab * 2);
-
-                w.WriteLine($"{Indent(indent + tab)})");
                 break;
             case UnaryExpression u:
                 w.WriteLine($"{Indent(indent)}UnaryExpression: {TryType(u.ResolvedType)}{u.Op}");
@@ -133,8 +129,9 @@ static class AstPrinter
                 PrintExpression(u.Operand, w, indent + tab * 2);
                 break;
             case MemberAccessExpression mem:
-                w.WriteLine($"{Indent(indent)}MemberAccess: Target: {TryType(mem.ResolvedType)}{mem.Target.Name}");
-                w.WriteLine($"{Indent(indent + tab)}Member: '{mem.Member.Name}'");
+                w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}{mem.Target.Name}.{mem.Member.Name}");
+                w.WriteLine($"{Indent(indent + tab)}Target: {TryType(mem.Target.ResolvedType)}{mem.Target.Name}");
+                w.WriteLine($"{Indent(indent + tab)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
                 break;
             case InstantiationExpression isnt:
                 w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
@@ -147,6 +144,7 @@ static class AstPrinter
 
             default:
                 w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>");
+                w.WriteLine($"{Indent(indent + tab)}<{expr}>");
                 break;
         }
     }

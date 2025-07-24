@@ -7,16 +7,13 @@ const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
 const ConsoleColor IRGEN_COL = ConsoleColor.Green;
 const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
 
-
 string programName = "Example";
 string code = File.ReadAllText(programName + ".tia");
-
 Stopwatch sw = new Stopwatch();
 Stopwatch sw2 = new Stopwatch();
-sw.Start();
 sw2.Start();
+sw.Start();
 Lexer lexer = new Lexer(code);
-
 List<Token> tokens = new List<Token>();
 Token token;
 
@@ -60,12 +57,13 @@ Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds + printTime} ms")
 sw.Start();
 sw2.Restart();
 
-IRGenerator.Emit(ast, globalScope, "Example.ll");
+IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
 int IRgenTime = (int)sw2.Elapsed.TotalMilliseconds;
 Log.Time("IR Generation took", IRgenTime, IRGEN_COL);
 sw2.Restart();
 
 Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
+
 int LLVMTime = (int)sw2.Elapsed.TotalMilliseconds;
 
 Console.Write($"LLVM took ");
@@ -116,11 +114,15 @@ Log
         Console.WriteLine(text);
     }
 
-    public static void Time(string text, int time, ConsoleColor highlight = ConsoleColor.White)
+    public static void Time(string text, int time, ConsoleColor highlight = ConsoleColor.White, float linesPerS = 0)
     {
         Console.Write($"{text} ");
         Console.ForegroundColor = highlight;
-        Console.WriteLine($"{time} ms");
+        Console.Write($"{time} ms ");
         Console.ResetColor();
+        if (linesPerS > 0)
+            Console.WriteLine($"  -  {linesPerS} lines/s");
+        else
+            Console.WriteLine();
     }
 }

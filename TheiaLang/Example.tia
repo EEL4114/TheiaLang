@@ -5,18 +5,21 @@ union StringData(int i, float f);
 int main()
 {
     m(7);
+    n();
 
     int t = m(8);
     int u = 1 + m(8) + 9;
 
-    Entity entity = new Entity(70.0, 1.5);
+    Entity entity = new Entity(70, 1.5);
 
-    float health = entity.health;
-    float moreHealth = 1.0 + entity.health;
+    float HP = entity.health;
+    float moreHealth = 1+ entity.health;
 
     int defaultInt;
     float defaultFloat;
     bool defaultBool;
+
+    entity.health = 4;
 
     s32 default_s32;
     f32 default_f32;
@@ -25,7 +28,7 @@ int main()
     f128 quad = 14;
 
     int i = -1;
-    float j = -1.0;
+    float j = -1;
 
     bool fg = false;
     bool ffg = true;
@@ -39,9 +42,9 @@ int main()
     d = d + 42;
 
     float f = 2.5;
-    f = f * 2.0;
+    f = f * 2;
 
-    float g = 3.0;
+    float g = 3;
     float h = f - g;
 
     bool ok = c > 5;
@@ -56,10 +59,15 @@ int m(int j)
     return 0;
 }
 
+bool n()
+{
+    return false;
+}
+
 struct Entity(float health, float speed)
 {
     bool IsAlive()
     {
-        return health > 0.0;
+        return health > 0;
     }
 }

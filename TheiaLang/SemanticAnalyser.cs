@@ -1,6 +1,3 @@
-using System.Runtime;
-using System.Security.Cryptography.X509Certificates;
-
 namespace TheiaLang;
 
 public static class SemanticAnalyser
@@ -131,15 +128,22 @@ public static class SemanticAnalyser
                 }
                 break;
             case AssignmentStatement assignment:
-                assignment.Target.ResolvedType = GetTypeInfo(assignment.Target.Name);
-
+                AnalyseExpression(assignment.Target);
                 AnalyseExpression(assignment.Expression);
+                if (assignment.Target is IdentifierExpression identifier)
+                    assignment.Target.ResolvedType = GetTypeInfo(identifier.Name);
+                else if (assignment.Target is MemberAccessExpression memberAccess)
+                {
+                    Log.Info(memberAccess.ResolvedType.TypeName);
+                    assignment.Target.ResolvedType = memberAccess.ResolvedType;
+                }
+
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType,
                                                                       assignment.Target.ResolvedType.TypeName);
 
                 if (!CanImplicitlyCast(assignment.Target.ResolvedType.TypeName,
                        assignment.Expression.ResolvedType.TypeName))
-                    throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName} '{assignment.Target.Name}'" +
+                    throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName}" +
                                         $" and {assignment.Expression.ResolvedType.TypeName}");
                 break;
             case ExpressionStatement expression:
@@ -208,6 +212,7 @@ public static class SemanticAnalyser
                     throw new Exception($"Field '{memberAccess.Member.Name}' is not defined in {targetInfo.TypeName}");
 
                 currentScope.TryLookup(targetInfo.FieldTypes![memberIndex], out SymbolInfo? memberInfo, out _);
+                memberAccess.Member.ResolvedType = memberInfo!.Type;
                 memberAccess.ResolvedType = memberInfo!.Type;
                 break;
             case UnaryExpression unary:

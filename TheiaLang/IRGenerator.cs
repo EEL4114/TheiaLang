@@ -8,7 +8,7 @@ public static class IRGenerator
     {
         "bool",
 
-        "int",
+        "int",      // literals only
         "s8",
         "s16",
         "s32",
@@ -16,7 +16,7 @@ public static class IRGenerator
         "s128",
         "s256",
 
-        "float",
+        "float",    // literals only
         "f16",
         "f32",
         "f64",
@@ -171,10 +171,15 @@ public static class IRGenerator
             case AssignmentStatement assignment:
                 EmitAssignmentStatement(assignment, sb);
                 break;
-
             case ReturnStatement returnStatement:
                 EmitReturnStatement(returnStatement, sb);
                 break;
+            case ExpressionStatement expression:
+                EmitExpressionStatement(expression, sb);
+                break;
+
+            default:
+                throw new Exception($"Unknown statement {statement}");
         }
     }
 
@@ -220,15 +225,23 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        if (!TryResolveSlot(assignment.Target.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
-            throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
-            $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
+        string? ptr = null;
+        string? LLVMType = null;
+        if (assignment.Target is IdentifierExpression identifier)
+        {
+            if (!TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
+                throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
+                $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
+            ptr = alloc.ptr;
+            LLVMType = TypeToLLVM(typeInfo)!;
+        }
+        else if (assignment.Target is MemberAccessExpression memberAccess)
+            (sb, ptr, LLVMType) = EmitAddressOf(memberAccess, sb);
 
-        string LLVMType = TypeToLLVM(typeInfo)!;
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
-        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {alloc.ptr}");
+        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
     }
 
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
@@ -244,8 +257,14 @@ public static class IRGenerator
 
         sb.AppendLine($"  ret {LLVMType} {val}");
     }
-    #endregion
 
+    static void EmitExpressionStatement(ExpressionStatement stmt, StringBuilder sb)
+    {
+        (StringBuilder code, _) = EmitExpression(stmt.Expression);
+        sb.Append(code);  // discard the result, but emit code for side effects
+    }
+
+    #endregion
 
     #region Expressions
     static (StringBuilder, string) EmitExpression(IExpression expression)
@@ -463,6 +482,15 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
+        (code, string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
+
+        string tmp = $"%{NewTempVar()}";
+        code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
+        return (code, tmp);
+    }
+
+    static (StringBuilder code, string ptr, string llvmType) EmitAddressOf(MemberAccessExpression memberAccess, StringBuilder code)
+    {
         string targetName = memberAccess.Target.Name;
         string memberName = memberAccess.Member.Name;
 
@@ -496,9 +524,7 @@ public static class IRGenerator
         code.AppendLine(
             $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
 
-        string tmp = $"%{NewTempVar()}";
-        code.AppendLine($"  {tmp} = load {memberLLVMType}, {memberLLVMType}* {gep}");
-        return (code, tmp);
+        return (code, gep, memberLLVMType);
     }
 
     #endregion
