@@ -133,10 +133,7 @@ public static class SemanticAnalyser
                 if (assignment.Target is IdentifierExpression identifier)
                     assignment.Target.ResolvedType = GetTypeInfo(identifier.Name);
                 else if (assignment.Target is MemberAccessExpression memberAccess)
-                {
-                    Log.Info(memberAccess.ResolvedType.TypeName);
                     assignment.Target.ResolvedType = memberAccess.ResolvedType;
-                }
 
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType,
                                                                       assignment.Target.ResolvedType.TypeName);

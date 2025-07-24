@@ -378,8 +378,6 @@ public class Parser(List<Token> tokens)
             {
                 Consume(TokenType.Operator_Equals, "expected '=' after expression");
                 IExpression? rhs = ParseExpression();
-                Log.Info(lhs!.ToString());
-                Log.Info(rhs!.ToString());
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
                 return new AssignmentStatement(lhs, rhs);
             }
