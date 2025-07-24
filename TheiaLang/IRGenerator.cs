@@ -50,6 +50,10 @@ public static class IRGenerator
         sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
         sb.AppendLine("declare i32 @puts(i8*, ...)");
         sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
+
+        sb.AppendLine("declare i32 @printf(i8*, ...)");
+        sb.AppendLine("@.print_ret_fmt = private constant [16 x i8] c\"%s returned %d\\0A\\00\"");
+
         sb.AppendLine();
 
         foreach (INode decl in program.Nodes)
@@ -134,6 +138,8 @@ public static class IRGenerator
             args.Add($"{parameterLLVMType} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
+
+        sb.AppendLine($"@.fn_{currentScope.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
@@ -247,14 +253,16 @@ public static class IRGenerator
 
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
-        if (currentScope!.Name == "main")
-            sb.AppendLine(
-                "  call i32 @puts(i8* getelementptr inbounds " +
-                "([19 x i8], [19 x i8]* @.theia_print_str, i32 0, i32 0))");
-
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
         string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType)!;
+
+        sb.AppendLine(
+            $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
+            $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
+            $"i8* getelementptr inbounds ([{LLVMType.Length + 1} x i8], [{LLVMType.Length + 1} x i8]* @.fn_{currentScope.Name}_str, i32 0, i32 0), " +
+            $"{LLVMType} {val})"
+            );
 
         sb.AppendLine($"  ret {LLVMType} {val}");
     }

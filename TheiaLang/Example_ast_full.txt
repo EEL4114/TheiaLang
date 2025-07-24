@@ -1,5 +1,5 @@
 Program: Example
-Generated at 24.07.2025 22:40:29
+Generated at 24.07.2025 22:51:56
 
 StructDeclaration: Vector3
     Fields:
@@ -23,6 +23,11 @@ FunctionDeclaration: s32 main
             Call: bool  n
                 Arguments:
                     Literal: bool true
+
+        Expression:
+            Call: bool  n
+                Arguments:
+                    Literal: bool false
 
         VariableDeclaration: s32 t =
             Call: s32  m
@@ -132,11 +137,13 @@ FunctionDeclaration: s32 m
             Literal: s32 3
         Assign:
             Identifier: s32 j
-            Literal: s32 4
+            BinaryExpression: s32 Add
+                Identifier: s32 j
+                Literal: s32 4
         VariableDeclaration: s32 health =
             Literal: s32 7
         Return: s32 
-            Literal: s32 0
+            Identifier: s32 j
 
 StructDeclaration: Entity
     Fields:

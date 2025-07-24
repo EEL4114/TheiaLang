@@ -6,6 +6,7 @@ int main()
 {
     m(7);
     n(true);
+    n(false);
 
     int t = m(8);
     int u = 1 + m(8) + 9;
@@ -58,9 +59,9 @@ bool n(bool b)
 int m(int j)
 {
     int i = 3;
-    j = 4;
+    j = j + 4;
     int health = 7;
-    return 0;
+    return j;
 }
 
 
