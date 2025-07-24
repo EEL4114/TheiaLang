@@ -417,7 +417,42 @@ public class Parser(List<Token> tokens)
     #endregion
 
     #region  Expressions
-    IExpression ParseExpression() => ParseComparison();
+    IExpression ParseExpression() => ParseOR();
+
+    IExpression ParseOR()
+    {
+        IExpression left = ParseAND();
+        while (Match(TokenType.Operator_OR))
+        {
+            IExpression right = ParseAND();
+            left = new BinaryExpression(left, BinaryOperator.OR, right);
+        }
+        return left;
+    }
+
+    IExpression ParseAND()
+    {
+        IExpression left = ParseEquality();
+        while (Match(TokenType.Operator_AND))
+        {
+            IExpression right = ParseEquality();
+            left = new BinaryExpression(left, BinaryOperator.AND, right);
+        }
+        return left;
+    }
+
+    IExpression ParseEquality()
+    {
+        IExpression left = ParseComparison();
+        while (Match(TokenType.Operator_EqualsEquals) || Match(TokenType.Operator_Inequal))
+        {
+            Token op = Previous();
+            BinaryOperator compOperatorType = OperatorTypeToType(op.TokenType);
+            IExpression right = ParseComparison();
+            left = new BinaryExpression(left, compOperatorType, right);
+        }
+        return left;
+    }
 
     IExpression ParseComparison()
     {
@@ -471,6 +506,12 @@ public class Parser(List<Token> tokens)
             IExpression operand = ParseUnary();
             return new UnaryExpression(UnaryOperator.Negate, operand);
         }
+
+        if (Match(TokenType.Operator_Invert))
+        {
+            IExpression operand = ParseUnary();
+            return new UnaryExpression(UnaryOperator.Invert, operand);
+        }
         return ParsePrimary();
     }
 
@@ -494,8 +535,6 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Literal_integer) || Match(TokenType.Literal_floatingPoint) || Match(TokenType.Literal_Boolean))
         {
-            object v;
-
             (object Value, string Type) lit = Previous().Lexeme switch
             {
                 string s when int.TryParse(s, out int i) => (i, "int"),
@@ -565,13 +604,15 @@ public class Parser(List<Token> tokens)
         TokenType.Operator_Equals => BinaryOperator.Equal,
         TokenType.Operator_Greater => BinaryOperator.Greater,
         TokenType.Operator_Less => BinaryOperator.Less,
+        TokenType.Operator_EqualsEquals => BinaryOperator.EqualEqual,
+        TokenType.Operator_Inequal => BinaryOperator.NotEqual,
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 
     static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_integer => "s32",     // TODO: make integer literals compatible with floating point numbers
-        TokenType.Literal_floatingPoint => "f32", // TODO: explicit abstraction from width 
+        TokenType.Literal_integer => "s32",         // TODO: make integer literals compatible with floating point numbers
+        TokenType.Literal_floatingPoint => "f32",   // TODO: explicit abstraction from width 
         TokenType.Literal_Boolean => "bool",
 
         TokenType.Keyword_bool => "bool",

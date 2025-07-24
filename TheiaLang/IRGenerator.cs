@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Text;
 
 namespace TheiaLang;
@@ -384,14 +385,26 @@ public static class IRGenerator
         string op;
 
         if (!IsBuiltinType(typeInfo.TypeName))
+        {
             throw new Exception($"Unsupported type '{typeInfo.TypeName}'");
-        if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
+        }
+        else if (typeInfo.TypeName == "bool") op = binaryExpression.Op switch
+        {
+            BinaryOperator.EqualEqual => "icmp eq",
+            BinaryOperator.NotEqual => "icmp ne",
+            BinaryOperator.AND => "and",
+            BinaryOperator.OR => "or",
+            _ => throw new Exception($"Op {binaryExpression.Op}")
+        };
+        else if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
         {
             BinaryOperator.Add => "add",
             BinaryOperator.Subtract => "sub",
             BinaryOperator.Multiply => "mul",
             BinaryOperator.Greater => "icmp sgt",
             BinaryOperator.Less => "icmp slt",
+            BinaryOperator.EqualEqual => "icmp eq",
+            BinaryOperator.NotEqual => "icmp ne",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
         else if (typeInfo.TypeName.StartsWith('f')) op = binaryExpression.Op switch
@@ -401,6 +414,8 @@ public static class IRGenerator
             BinaryOperator.Multiply => "fmul",
             BinaryOperator.Greater => "fcmp ogt",
             BinaryOperator.Less => "fcmp olt",
+            BinaryOperator.EqualEqual => "fcmp oeq",
+            BinaryOperator.NotEqual => "fcmp one",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
 

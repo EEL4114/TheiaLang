@@ -21,7 +21,8 @@ public interface IExpression : INode
 #region  Operators
 public enum UnaryOperator
 {
-    Negate
+    Negate,     // -1
+    Invert      // !false
 }
 
 public enum BinaryOperator
@@ -33,7 +34,10 @@ public enum BinaryOperator
     Greater,
     Less,
     Equal,
-    NotEqual
+    EqualEqual,
+    NotEqual,
+    AND,
+    OR
 }
 #endregion
 

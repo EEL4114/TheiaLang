@@ -115,15 +115,17 @@ entry:
 
 define i1 @n() {
 entry:
-  ret i1 0
+  %tmp33 = and i1 0, 0
+
+  ret i1 %tmp33
 }
 
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp33 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
-  %tmp34 = load float, float* %tmp33
-  %tmp35 = fcmp ogt float %tmp34, 0.0
+  %tmp34 = getelementptr %Entity, %Entity* %this, i32 0, i32 0
+  %tmp35 = load float, float* %tmp34
+  %tmp36 = fcmp ogt float %tmp35, 0.0
 
-  ret i1 %tmp35
+  ret i1 %tmp36
 }
 

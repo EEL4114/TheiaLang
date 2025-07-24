@@ -61,7 +61,7 @@ int m(int j)
 
 bool n()
 {
-    return false;
+    return false && false;
 }
 
 struct Entity(float health, float speed)

@@ -2,11 +2,9 @@ namespace TheiaLang;
 
 public static class SemanticAnalyser
 {
-    static Scope GlobalScope;
     static Scope currentScope;
     public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
-        GlobalScope = globalScope;
         currentScope = globalScope;
 
         // Struct types are already fully resolved in the parser,
@@ -331,8 +329,13 @@ public static class SemanticAnalyser
     {
         string shared = GetImplicitPromotionType(typeA, typeB)!;
 
-        if (binaryOperator == BinaryOperator.Equal
+        if (binaryOperator == BinaryOperator.EqualEqual
             || binaryOperator == BinaryOperator.NotEqual)
+            return "bool";
+
+        if (typeA == "bool" && typeB == "bool"
+            && binaryOperator == BinaryOperator.AND
+            || binaryOperator == BinaryOperator.OR)
             return "bool";
 
         if (shared != "bool" && IRGenerator.IsBuiltinType(shared))

@@ -37,6 +37,11 @@ public enum TokenType
     Operator_Div,
     Operator_Greater,
     Operator_Less,
+    Operator_AND,
+    Operator_OR,
+    Operator_EqualsEquals,
+    Operator_Inequal,
+    Operator_Invert,
 
     Punctuation_Comma,
     Punctuation_Dot,
@@ -81,8 +86,16 @@ class Lexer(string sourceCode)
             case '+': return MakeToken(TokenType.Operator_Plus, "+");
             case '-': return MakeToken(TokenType.Operator_Minus, "-");
             case '*': return MakeToken(TokenType.Operator_Mult, "*");
-            case '=': return MakeToken(TokenType.Operator_Equals, "=");
+            case '=':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_EqualsEquals, "==");
+                }
+                return MakeToken(TokenType.Operator_Equals, "=");
             case '>': return MakeToken(TokenType.Operator_Greater, ">");
+            case '<': return MakeToken(TokenType.Operator_Less, "<");
+            case '!': return MakeToken(TokenType.Operator_Invert, "!");
         }
 
         if (char.IsDigit(c))
@@ -90,6 +103,23 @@ class Lexer(string sourceCode)
 
         if (char.IsLetter(c) || c == '_')
             return ReadIdentifierOrKeyword(c);
+
+        Token token;
+
+        string s = $"{c}{Peek()}";
+        token = s switch
+        {
+            "==" => MakeToken(TokenType.Operator_EqualsEquals, s),
+            "!=" => MakeToken(TokenType.Operator_Inequal, s),
+            "&&" => MakeToken(TokenType.Operator_AND, s),
+            "||" => MakeToken(TokenType.Operator_AND, s),
+        };
+
+        if (token != null)
+        {
+            Advance();
+            return token;
+        }
 
         Log.Error(0, $"Unexpected character '{c}' at {line + 1}:{col}");
         return null!;
