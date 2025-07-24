@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 01:49:49
+Generated at 25.07.2025 01:58:23
 
 StructDeclaration: Vector3
     Fields:
@@ -74,6 +74,18 @@ FunctionDeclaration: s32 main
             UnaryExpression: Negate
                 Operand:
                     Literal: int 1
+        Expression:
+            Call:  Abs
+                Arguments:
+                    Identifier: i
+
+        Expression:
+            Call:  Abs
+                Arguments:
+                    UnaryExpression: Negate
+                        Operand:
+                            Identifier: i
+
         VariableDeclaration: f32 j =
             UnaryExpression: Negate
                 Operand:

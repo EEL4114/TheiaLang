@@ -29,6 +29,8 @@ int main()
     f128 quad = 14;
 
     int i = -1;
+    Abs(i);
+    Abs(-i);
 
     float j = -1;
     
