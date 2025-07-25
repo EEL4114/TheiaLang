@@ -96,6 +96,16 @@ static class AstPrinter
                     PrintBlock(ifStatement.ElseBranch, w, indent + tab * 2);
                 }
                 break;
+            case ForStatement forStatement:
+                w.WriteLine($"{Indent(indent)}For:");
+                w.WriteLine($"{Indent(indent + tab)}Initialiser:");
+                PrintStatement(forStatement.Initialiser, w, indent + tab * 2);
+                w.WriteLine($"{Indent(indent + tab)}Condition:");
+                PrintExpression(forStatement.Condition, w, indent + tab * 2);
+                w.WriteLine($"{Indent(indent + tab)}Iterator:");
+                PrintStatement(forStatement.Iterator, w, indent + tab * 2);
+                PrintBlock(forStatement.Body, w, indent + tab * 2);
+                break;
             case ReturnStatement r:
                 w.WriteLine($"{Indent(indent)}Return: {TryType(r.Expression.ResolvedType)}");
                 PrintExpression(r.Expression, w, indent + tab);

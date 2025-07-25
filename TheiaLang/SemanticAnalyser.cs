@@ -169,6 +169,21 @@ public static class SemanticAnalyser
                     ExitScope();
                 }
                 break;
+            case ForStatement forStatement:
+                EnterScope(forStatement.Scope);
+                AnalyseStatement(forStatement.Initialiser);
+                AnalyseExpression(forStatement.Condition);
+
+                if (forStatement.Condition.ResolvedType.TypeName != "bool")
+                    throw new Exception($"Condition of for loop must resolve to type 'bool', got: {forStatement.Condition.ResolvedType.TypeName}");
+
+                AnalyseStatement(forStatement.Iterator);
+
+                foreach (IStatement s in forStatement.Body)
+                    AnalyseStatement(s);
+
+                ExitScope();
+                break;
             case ReturnStatement returnStatement:
                 AnalyseExpression(returnStatement.Expression);
 
@@ -183,7 +198,7 @@ public static class SemanticAnalyser
                 }
                 break;
             default:
-                throw new Exception($"Unknown Statement: {statement}");
+                throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
 
@@ -448,7 +463,7 @@ public static class SemanticAnalyser
         if (LosslessTypeInterop[builtinA, builtinB])
         {
             TypeInfo type = new TypeInfo(expectedType, null, null);
-            return type;  // literals always cast to the more concrete value
+            return type;    // literals always cast to the more concrete value
         }
 
         throw new Exception($"Cannot implicitly convert {typeInfo.TypeName} to {expectedType}");

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.Tasks.Dataflow;
 
 namespace TheiaLang;
 
@@ -181,6 +182,9 @@ public static class IRGenerator
             case IfStatement ifStatement:
                 EmitIfStatement(ifStatement, sb);
                 break;
+            case ForStatement forStatement:
+                EmitForStatement(forStatement, sb);
+                break;
             case ReturnStatement returnStatement:
                 EmitReturnStatement(returnStatement, sb);
                 break;
@@ -189,7 +193,7 @@ public static class IRGenerator
                 break;
 
             default:
-                throw new Exception($"Unknown statement {statement}");
+                throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
 
@@ -256,7 +260,7 @@ public static class IRGenerator
 
     static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
     {
-        var (condCode, condReg) = EmitExpression(ifStatement.Condition);
+        (StringBuilder condCode, string condReg) = EmitExpression(ifStatement.Condition);
         sb.Append(condCode);  // discard the result, but emit code for side effects
 
         string thenLabel = $"if_then_{labelCounter}";
@@ -287,6 +291,40 @@ public static class IRGenerator
         }
         sb.AppendLine($"{mergeLabel}:");
     }
+
+    static void EmitForStatement(ForStatement forStatement, StringBuilder sb)
+    {
+        // Loop init
+        EmitStatement(forStatement.Initialiser!, sb);
+        EnterScope(forStatement.Scope);
+        string condLabel = $"for_cond{labelCounter}";
+        string bodyLabel = $"for_body{labelCounter}";
+        string iterLabel = $"for_iter{labelCounter}";
+        string endLabel = $"for_end{labelCounter}";
+        labelCounter++;
+
+        sb.AppendLine($"  br label %{condLabel}");
+
+        // Loop Condition
+        sb.AppendLine($"{condLabel}:");
+        (StringBuilder condCode, string condReg) = EmitExpression(forStatement.Condition!);
+        sb.Append(condCode);
+        sb.AppendLine($"  br i1 {condReg}, label %{bodyLabel}, label %{endLabel}");
+        // Loop Body
+        sb.AppendLine($"{bodyLabel}:");
+        foreach (IStatement statement in forStatement.Body)
+            EmitStatement(statement, sb);
+        sb.AppendLine($"  br label %{iterLabel}");
+        // Loop Iterator
+        sb.AppendLine($"{iterLabel}:");
+        EmitStatement(forStatement.Iterator!, sb);
+        sb.AppendLine($"  br label %{condLabel}");
+        // Loop End
+        sb.AppendLine($"{endLabel}:");
+
+        ExitScope();
+    }
+
     static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
@@ -682,11 +720,8 @@ public static class IRGenerator
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
             Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
 
-        if (scope.DeclaringNode is FunctionDeclaration)
-        {
-            allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
-            varTypes.Push(new Dictionary<string, TypeInfo>());
-        }
+        allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
+        varTypes.Push(new Dictionary<string, TypeInfo>());
 
         currentScope = scope;
     }
@@ -699,7 +734,7 @@ public static class IRGenerator
         if (currentScope.Parent == null)
             Log.Error(9, $"Can't exit out of scope '{currentScope.FullName}'");
 
-        if (currentScope.DeclaringNode is FunctionDeclaration)
+        if (currentScope.DeclaringNode != null)
         {
             allocas.Pop();
             varTypes.Pop();

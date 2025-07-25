@@ -37,7 +37,7 @@ Log.Time("Parser took", parserTime, PARSER_COL);
 sw2.Stop();
 
 sw.Stop();
-using StreamWriter writer = new StreamWriter($"{programName}_ast.txt");
+using StreamWriter writer = new StreamWriter($"{programName}.ast");
 sw2.Restart();
 AstPrinter.Print(ast, writer);
 int printTime = (int)sw2.ElapsedMilliseconds;
@@ -50,7 +50,7 @@ Log.Time("Semantic Analysis took", semTime, SEM_COL);
 sw2.Stop();
 
 sw.Stop();
-using StreamWriter writer2 = new StreamWriter($"{programName}_ast_full.txt");
+using StreamWriter writer2 = new StreamWriter($"{programName}_full.ast");
 sw2.Restart();
 AstPrinter.Print(ast, writer2);
 Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds + printTime} ms");

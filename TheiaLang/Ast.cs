@@ -146,6 +146,14 @@ public sealed record IfStatement(
     Scope? ElseScope
 ) : IStatement;
 
+public sealed record ForStatement(
+    IStatement? Initialiser,
+    IExpression? Condition,
+    IStatement? Iterator,
+    List<IStatement> Body,
+    Scope Scope
+) : IStatement;
+
 public sealed record ReturnStatement(
     IExpression Expression
 ) : IStatement;

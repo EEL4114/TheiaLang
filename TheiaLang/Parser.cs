@@ -214,7 +214,7 @@ public class Parser(List<Token> tokens)
         return statements;
     }
 
-    IStatement ParseStatement()
+    IStatement ParseStatement(bool requireSemicolon = true)
     {
         if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Identifier)
@@ -226,7 +226,8 @@ public class Parser(List<Token> tokens)
             IExpression? init = null;
             if (Match(TokenType.Operator_Equals))
                 init = ParseExpression();
-            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
+            if (requireSemicolon)
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
             TypeInfo typeInfo = new TypeInfo(type, null, null);
@@ -265,6 +266,23 @@ public class Parser(List<Token> tokens)
             return new IfStatement(condition, thenBranch, elseBranch, thenScope, elseScope);
         }
 
+        if (Match(TokenType.Keyword_for))
+        {
+            EnterScope($"for_{Line()}");
+            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after for keyword");
+            IStatement initialiser = ParseStatement();
+            IExpression condition = ParseExpression();
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after loop condition");
+            IStatement iterator = ParseStatement(requireSemicolon: false);
+            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after loop head");
+
+            Scope bodyScope = currentScope!;
+            List<IStatement> body = ParseBlock();
+            ExitScope();
+
+            return new ForStatement(initialiser, condition, iterator, body, bodyScope);
+        }
+
         if (Match(TokenType.Keyword_return))
         {
             IExpression expr = ParseExpression();
@@ -280,7 +298,8 @@ public class Parser(List<Token> tokens)
             IExpression? init = null;
             if (Match(TokenType.Operator_Equals))
                 init = ParseExpression();
-            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
+            if (requireSemicolon)
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
 
             string type = TokenTypeToString(typeToken.TokenType);
 
@@ -301,7 +320,7 @@ public class Parser(List<Token> tokens)
         if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Operator_Equals)
         {
-            return ParseAssignment();
+            return ParseAssignment(requireSemicolon);
         }
 
         int ret = pos;
@@ -312,7 +331,8 @@ public class Parser(List<Token> tokens)
             {
                 Consume(TokenType.Operator_Equals, "expected '=' after expression");
                 IExpression? rhs = ParseExpression();
-                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
+                if (requireSemicolon)
+                    Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
                 return new AssignmentStatement(lhs, rhs);
             }
             else
@@ -327,7 +347,8 @@ public class Parser(List<Token> tokens)
              && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
             IExpression expression = ParseExpression();
-            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
+            if (requireSemicolon)
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
             return new ExpressionStatement(expression);
         }
 
@@ -336,7 +357,7 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
-    AssignmentStatement ParseAssignment()
+    AssignmentStatement ParseAssignment(bool requireSemicolon = true)
     {
         Token nameToken = Advance();
         // Log.Info(nameToken.Lexeme);
@@ -345,7 +366,8 @@ public class Parser(List<Token> tokens)
 
         Advance(); // consume '='
         IExpression expr = ParseExpression();
-        Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
+        if (requireSemicolon)
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
         return new AssignmentStatement(identifier, expr);
     }
     #endregion

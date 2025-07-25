@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 02:33:37
+Generated at 25.07.2025 18:05:23
 
 StructDeclaration: Vector3
     Fields:
@@ -184,6 +184,34 @@ FunctionDeclaration: s32 Abs
                         UnaryExpression: s32 Negate
                             Operand:
                                 Identifier: s32 value
+
+        Return: s32 
+            Identifier: s32 value
+
+FunctionDeclaration: s32 Loopy
+    Arguments:
+        s32 value
+    BlockSatement:
+        For:
+            Initialiser:
+                VariableDeclaration: s32 i =
+                    Literal: s32 0
+            Condition:
+                BinaryExpression: bool Less
+                    Identifier: s32 i
+                    Identifier: s32 value
+            Iterator:
+                Assign:
+                    Identifier: s32 i
+                    BinaryExpression: s32 Add
+                        Identifier: s32 i
+                        Literal: s32 1
+                BlockSatement:
+                    Assign:
+                        Identifier: s32 value
+                        BinaryExpression: s32 Add
+                            Identifier: s32 value
+                            Identifier: s32 i
 
         Return: s32 
             Identifier: s32 value

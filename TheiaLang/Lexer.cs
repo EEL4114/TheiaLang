@@ -28,6 +28,7 @@ public enum TokenType
 
     Keyword_if,
     Keyword_else,
+    Keyword_for,
     Keyword_new,
     Keyword_return,
 
@@ -183,6 +184,8 @@ class Lexer(string sourceCode)
 
             "if" => new Token(TokenType.Keyword_if, lexeme, line, startCol),
             "else" => new Token(TokenType.Keyword_else, lexeme, line, startCol),
+
+            "for" => new Token(TokenType.Keyword_for, lexeme, line, startCol),
 
             "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
             "true" => new Token(TokenType.Literal, lexeme, line, startCol),

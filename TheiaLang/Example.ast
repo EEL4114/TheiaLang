@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 16:05:29
+Generated at 25.07.2025 18:05:23
 
 StructDeclaration: Vector3
     Fields:
@@ -192,8 +192,29 @@ FunctionDeclaration: s32 Loopy
     Arguments:
         s32 value
     BlockSatement:
-        <unknown statement 'ForStatement'>
-            <ForStatement { Initialiser = VariableDeclaration { TypeName = s32, Name = i, Init = LiteralExpression { Value = 0, Lexeme = 0, ResolvedType = TheiaLang.TypeInfo, Assignable = False }, ResolvedType = TheiaLang.TypeInfo }, Condition = BinaryExpression { Left = IdentifierExpression { Name = i, ResolvedType = , Assignable = True }, Op = Less, Right = IdentifierExpression { Name = value, ResolvedType = , Assignable = True }, ResolvedType = , Assignable = False }, Iterator = AssignmentStatement { Target = IdentifierExpression { Name = i, ResolvedType = , Assignable = True }, Expression = BinaryExpression { Left = IdentifierExpression { Name = i, ResolvedType = , Assignable = True }, Op = Add, Right = LiteralExpression { Value = 1, Lexeme = 1, ResolvedType = TheiaLang.TypeInfo, Assignable = False }, ResolvedType = , Assignable = False } }, Body = System.Collections.Generic.List`1[TheiaLang.IStatement], LoopScope = TheiaLang.Scope }'>
+        For:
+            Initialiser:
+                VariableDeclaration: s32 i =
+                    Literal: int 0
+            Condition:
+                BinaryExpression: Less
+                    Identifier: i
+                    Identifier: value
+            Iterator:
+                Assign:
+                    Identifier: i
+                    BinaryExpression: Add
+                        Identifier: i
+                        Literal: int 1
+                BlockSatement:
+                    Assign:
+                        Identifier: value
+                        BinaryExpression: Add
+                            Identifier: value
+                            Identifier: i
+
+        Return: 
+            Identifier: value
 
 FunctionDeclaration: bool n
     Arguments:
