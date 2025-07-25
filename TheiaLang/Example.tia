@@ -47,7 +47,7 @@ int main()
     d = d + 42;
 
     float f = 2.5;
-    f = f * 2;
+    f *= 2;
 
     float g = 3;
     float h = f - g;
@@ -85,7 +85,7 @@ int Loopy(int value)
 {
     for(int i = 0; i < value; i -= 3)
     {
-        value = value + i;
+        value += i;
     }
     return value;
 }
@@ -98,11 +98,10 @@ bool n(bool b)
 int m(int j)
 {
     int i = 3;
-    j = j + 4;
+    j += 4;
     int health = 7;
     return j;
 }
-
 
 struct Entity(float health, float speed)
 {

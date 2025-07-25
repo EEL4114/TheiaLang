@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 21:59:27
+Generated at 25.07.2025 22:00:27
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -116,11 +116,9 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Literal: s32 42
         VariableDeclaration: f32 f =
             Literal: f32 2.5
-        Assign:
+        Compound Assignment: MultEqual
             Identifier: f32 f
-            BinaryExpression: f32 Multiply
-                Identifier: f32 f
-                Literal: f32 2
+            Literal: f32 2
         VariableDeclaration: f32 g =
             Literal: f32 3
         VariableDeclaration: f32 h =
@@ -143,7 +141,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then233' 
+            Then: | Scope: 'if_then231' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -156,7 +154,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: f32 1
 
-            Else: | Scope: 'if_else249' 
+            Else: | Scope: 'if_else247' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -178,7 +176,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then279' 
+            Then: | Scope: 'if_then277' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -192,7 +190,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_297' 
+        For: | Scope: 'for_295' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0
@@ -205,11 +203,9 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
                     Identifier: s32 i
                     Literal: s32 3
                 BlockSatement:
-                    Assign:
+                    Compound Assignment: PlusEqual
                         Identifier: s32 value
-                        BinaryExpression: s32 Add
-                            Identifier: s32 value
-                            Identifier: s32 i
+                        Identifier: s32 i
 
         Return: s32 
             Identifier: s32 value
