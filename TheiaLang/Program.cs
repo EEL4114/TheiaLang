@@ -76,13 +76,15 @@ Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");
 
 double totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
+#region Chart Printing
+
 int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * 50);
 int parserChars = (int)Math.Round(parserTime / (double)totalTime * 50);
 int semChars = (int)Math.Round(semTime / (double)totalTime * 50);
 int IRgenChars = (int)Math.Round(IRgenTime / (double)totalTime * 50);
 int llvmChars = 50 - lexerChars - parserChars - IRgenChars;
 
-void PrintSegment(int count, ConsoleColor color)
+static void PrintSegment(int count, ConsoleColor color)
 {
     Console.ForegroundColor = color;
     Console.Write(new string('■', count));
@@ -97,8 +99,11 @@ PrintSegment(IRgenChars, IRGEN_COL);
 PrintSegment(llvmChars, LLVM_COL);
 Console.WriteLine("]");
 
-public class
-Log
+#endregion
+
+#region  Log
+
+public static class Log
 {
     public static void Error(uint code, string message)
     {
@@ -126,3 +131,5 @@ Log
             Console.WriteLine();
     }
 }
+
+#endregion

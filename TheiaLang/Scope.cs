@@ -53,6 +53,8 @@ public class Scope : INode
             Log.Error(7, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
     }
 
+    #region Helpers
+
     public void Declare(string name, SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(name))
@@ -89,4 +91,6 @@ public class Scope : INode
         }
         return Parent!.GetParentOf(scope, out parent);
     }
+
+    #endregion
 }

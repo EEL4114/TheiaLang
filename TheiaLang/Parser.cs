@@ -3,6 +3,7 @@ namespace TheiaLang;
 public class Parser(List<Token> tokens)
 {
     int pos = 0;
+
     Scope? globalScope;
     Scope? currentScope;
 
@@ -330,7 +331,7 @@ public class Parser(List<Token> tokens)
             return new ExpressionStatement(expression);
         }
 
-        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {Peek().Line + 1}:{Peek().Column}");
+        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos}");
         Environment.Exit(1);
         return null;
     }
@@ -466,7 +467,7 @@ public class Parser(List<Token> tokens)
             return new InstantiationExpression(type, arguments);
         }
 
-        if (Match(TokenType.Literal_integer) || Match(TokenType.Literal_floatingPoint) || Match(TokenType.Literal_Boolean))
+        if (Match(TokenType.Literal))
         {
             (object Value, string Type) lit = Previous().Lexeme switch
             {
@@ -522,7 +523,7 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression");
+        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression at: {Peek().Line}:{Peek().Column}");
         return null!;
     }
     #endregion
@@ -544,10 +545,6 @@ public class Parser(List<Token> tokens)
 
     static string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
-        TokenType.Literal_integer => "s32",         // TODO: make integer literals compatible with floating point numbers
-        TokenType.Literal_floatingPoint => "f32",   // TODO: explicit abstraction from width 
-        TokenType.Literal_Boolean => "bool",
-
         TokenType.Keyword_bool => "bool",
 
         TokenType.Keyword_s8 => "s8",
@@ -589,8 +586,15 @@ public class Parser(List<Token> tokens)
         return null!;
     }
 
-    // 4 == Keyword_bool; 14 == Keyword_f128
-    static bool IsTypeKeyword(TokenType tokenType) => (int)tokenType >= 4 && (int)tokenType <= 14;
+    // 2 == Keyword_bool; 12 == Keyword_f128
+    static bool IsTypeKeyword(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
+
+    int Line() => tokens[pos].Line;
+    int Column() => tokens[pos].Column;
+    string PrintCurrentPos()
+    {
+        return $"at {Line()}:{Column()}";
+    }
 
     bool Check(TokenType type)
         => !IsAtEnd() && Peek().TokenType == type;

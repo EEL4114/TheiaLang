@@ -67,6 +67,8 @@ static class AstPrinter
         w.WriteLine();
     }
 
+    #region  Statements
+
     static void PrintStatement(IStatement stmt, TextWriter w, int indent)
     {
         switch (stmt)
@@ -110,6 +112,10 @@ static class AstPrinter
                 break;
         }
     }
+
+    #endregion
+
+    #region Expressions
 
     static void PrintExpression(IExpression expr, TextWriter w, int indent)
     {
@@ -160,7 +166,14 @@ static class AstPrinter
                 break;
         }
     }
+
+    #endregion
+
+    #region Helpers
+
     static string Indent(int n) => new string(' ', n);
 
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ";
+
+    #endregion
 }

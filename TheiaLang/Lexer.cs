@@ -6,9 +6,7 @@ public enum TokenType
 {
     Identifier,
 
-    Literal_Boolean,
-    Literal_integer,
-    Literal_floatingPoint,
+    Literal,
 
     Keyword_bool,
 
@@ -143,10 +141,10 @@ class Lexer(string sourceCode)
             while (!IsAtEnd() && char.IsDigit(Peek()))
                 sb.Append(Advance());
 
-            return new Token(TokenType.Literal_floatingPoint, sb.ToString(), line, startCol);
+            return new Token(TokenType.Literal, sb.ToString(), line, startCol);
         }
 
-        return new Token(TokenType.Literal_integer, sb.ToString(), line, startCol);
+        return new Token(TokenType.Literal, sb.ToString(), line, startCol);
     }
 
     Token ReadIdentifierOrKeyword(char first)
@@ -187,8 +185,8 @@ class Lexer(string sourceCode)
             "else" => new Token(TokenType.Keyword_else, lexeme, line, startCol),
 
             "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
-            "true" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
-            "false" => new Token(TokenType.Literal_Boolean, lexeme, line, startCol),
+            "true" => new Token(TokenType.Literal, lexeme, line, startCol),
+            "false" => new Token(TokenType.Literal, lexeme, line, startCol),
             "new" => new Token(TokenType.Keyword_new, lexeme, line, startCol),
             _ => new Token(TokenType.Identifier, lexeme, line, startCol),
         };

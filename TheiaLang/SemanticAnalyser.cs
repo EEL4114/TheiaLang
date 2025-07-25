@@ -48,6 +48,8 @@ public static class SemanticAnalyser
         return (program, globalScope);
     }
 
+    #region Functions, Structs
+
     static void ResolveStructFields(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
@@ -103,6 +105,10 @@ public static class SemanticAnalyser
 
         ExitScope();
     }
+
+    #endregion
+
+    #region  Statements
 
     static void AnalyseStatement(IStatement statement)
     {
@@ -180,6 +186,10 @@ public static class SemanticAnalyser
                 throw new Exception($"Unknown Statement: {statement}");
         }
     }
+
+    #endregion
+
+    #region  Expressions
 
     static void AnalyseExpression(IExpression expression)
     {
@@ -271,6 +281,8 @@ public static class SemanticAnalyser
         }
     }
 
+    #endregion
+
     #region Helpers
 
     static TypeInfo GetTypeInfo(string typeOrName)
@@ -302,7 +314,7 @@ public static class SemanticAnalyser
 
     #endregion
 
-    #region Interoperability
+    #region Interop
     static readonly bool[,] LosslessTypeInterop = new bool[13, 13]
     {
         //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128
