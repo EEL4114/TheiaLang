@@ -83,7 +83,7 @@ int Abs(int value)
 
 int Loopy(int value)
 {
-    for(int i = 0; i < value; i = i + 1)
+    for(int i = 0; i < value; i -= 3)
     {
         value = value + i;
     }

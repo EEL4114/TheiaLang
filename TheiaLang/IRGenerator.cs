@@ -1,5 +1,5 @@
+using System.Collections;
 using System.Text;
-using System.Threading.Tasks.Dataflow;
 
 namespace TheiaLang;
 
@@ -179,6 +179,9 @@ public static class IRGenerator
             case AssignmentStatement assignment:
                 EmitAssignmentStatement(assignment, sb);
                 break;
+            case CompoundAssignmentStatement compound:
+                EmitCompoundAssignmentStatement(compound, sb);
+                break;
             case IfStatement ifStatement:
                 EmitIfStatement(ifStatement, sb);
                 break;
@@ -257,6 +260,37 @@ public static class IRGenerator
         sb.Append(code);
         sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
     }
+
+    static void EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
+    {
+        string? ptr = null;
+        string? LLVMType = null;
+        if (assignment.Target is IdentifierExpression identifier)
+        {
+            if (!TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
+                throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
+                $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
+            ptr = alloc.ptr;
+            LLVMType = TypeToLLVM(typeInfo)!;
+        }
+        else if (assignment.Target is MemberAccessExpression memberAccess)
+            (sb, ptr, LLVMType) = EmitAddressOf(memberAccess, sb);
+
+        BinaryOperator op = assignment.Op switch
+        {
+            BinaryOperator.PlusEqual => BinaryOperator.Add,
+            BinaryOperator.MinusEqual => BinaryOperator.Subtract,
+            BinaryOperator.MultEqual => BinaryOperator.Multiply,
+            BinaryOperator.DivEqual => BinaryOperator.Divide,
+            _ => throw new Exception($"Invalid compound operator: '{assignment.Op}'")
+        };
+
+        (StringBuilder code, string val) = EmitExpression(new BinaryExpression(assignment.Target, op, assignment.Expression));
+
+        sb.Append(code);
+        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
+    }
+
 
     static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
     {

@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 18:22:21
+Generated at 25.07.2025 21:59:27
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -201,11 +201,9 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
                     Identifier: s32 i
                     Identifier: s32 value
             Iterator:
-                Assign:
+                Compound Assignment: MinusEqual
                     Identifier: s32 i
-                    BinaryExpression: s32 Add
-                        Identifier: s32 i
-                        Literal: s32 1
+                    Literal: s32 3
                 BlockSatement:
                     Assign:
                         Identifier: s32 value

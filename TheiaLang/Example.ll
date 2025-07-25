@@ -181,7 +181,7 @@ for_body2:
   br label %for_iter2
 for_iter2:
   %tmp57 = load i32, i32* %i_Loopy
-  %tmp58 = add i32 %tmp57, 1
+  %tmp58 = sub i32 %tmp57, 3
 
   store i32 %tmp58, i32* %i_Loopy
   br label %for_cond2

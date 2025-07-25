@@ -115,7 +115,11 @@ static class AstPrinter
                 PrintExpression(e.Expression, w, indent + tab);
                 w.WriteLine();
                 break;
-
+            case CompoundAssignmentStatement compound:
+                w.WriteLine($"{Indent(indent)}Compound Assignment: {compound.Op}");
+                PrintExpression(compound.Target, w, indent + tab);
+                PrintExpression(compound.Expression, w, indent + tab);
+                break;
             default:
                 w.WriteLine($"{Indent(indent)}<unknown statement '{stmt.GetType().Name}'>");
                 w.WriteLine($"{Indent(indent + tab)}<{stmt}'>");

@@ -32,18 +32,24 @@ public enum TokenType
     Keyword_new,
     Keyword_return,
 
-    Operator_Equals,
+    Operator_Equal,
     Operator_Plus,
     Operator_Minus,
     Operator_Mult,
     Operator_Div,
     Operator_Greater,
     Operator_Less,
+
     Operator_AND,
     Operator_OR,
-    Operator_EqualsEquals,
+    Operator_EqualEqual,
     Operator_Inequal,
     Operator_Invert,
+
+    Operator_PlusEqual,
+    Operator_MinusEqual,
+    Operator_MultEqual,
+    Operator_DivEqual,
 
     Punctuation_Comma,
     Punctuation_Dot,
@@ -85,16 +91,34 @@ class Lexer(string sourceCode)
             case ')': return MakeToken(TokenType.Punctuation_ParenthesisR, ")");
             case '{': return MakeToken(TokenType.Punctuation_BraceL, "{");
             case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
-            case '+': return MakeToken(TokenType.Operator_Plus, "+");
-            case '-': return MakeToken(TokenType.Operator_Minus, "-");
-            case '*': return MakeToken(TokenType.Operator_Mult, "*");
+            case '+':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_PlusEqual, "+=");
+                }
+                return MakeToken(TokenType.Operator_Plus, "+");
+            case '-':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_MinusEqual, "-=");
+                }
+                return MakeToken(TokenType.Operator_Minus, "-");
+            case '*':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_MultEqual, "*=");
+                }
+                return MakeToken(TokenType.Operator_Mult, "*");
             case '=':
                 if (Peek() == '=')
                 {
                     Advance();
-                    return MakeToken(TokenType.Operator_EqualsEquals, "==");
+                    return MakeToken(TokenType.Operator_EqualEqual, "==");
                 }
-                return MakeToken(TokenType.Operator_Equals, "=");
+                return MakeToken(TokenType.Operator_Equal, "=");
             case '>': return MakeToken(TokenType.Operator_Greater, ">");
             case '<': return MakeToken(TokenType.Operator_Less, "<");
             case '!': return MakeToken(TokenType.Operator_Invert, "!");
@@ -111,7 +135,7 @@ class Lexer(string sourceCode)
         string s = $"{c}{Peek()}";
         token = s switch
         {
-            "==" => MakeToken(TokenType.Operator_EqualsEquals, s),
+            "==" => MakeToken(TokenType.Operator_EqualEqual, s),
             "!=" => MakeToken(TokenType.Operator_Inequal, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
             "||" => MakeToken(TokenType.Operator_AND, s),

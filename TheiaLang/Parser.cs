@@ -224,7 +224,7 @@ public class Parser(List<Token> tokens)
             string varName = Advance().Lexeme;
 
             IExpression? init = null;
-            if (Match(TokenType.Operator_Equals))
+            if (Match(TokenType.Operator_Equal))
                 init = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
@@ -296,7 +296,7 @@ public class Parser(List<Token> tokens)
             Token typeToken = Advance();
             Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
             IExpression? init = null;
-            if (Match(TokenType.Operator_Equals))
+            if (Match(TokenType.Operator_Equal))
                 init = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
@@ -318,7 +318,7 @@ public class Parser(List<Token> tokens)
 
         // assignment: identifier '=' expr ';'
         if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Operator_Equals)
+            && PeekNext().TokenType == TokenType.Operator_Equal)
         {
             return ParseAssignment(requireSemicolon);
         }
@@ -329,10 +329,24 @@ public class Parser(List<Token> tokens)
             IExpression? lhs = ParseExpression();
             if (lhs.Assignable)
             {
-                Consume(TokenType.Operator_Equals, "expected '=' after expression");
+                BinaryOperator? op = null;
+                // Compound assignment
+                TokenType next = Peek().TokenType;
+                if (next == TokenType.Operator_PlusEqual
+                    || next == TokenType.Operator_MinusEqual
+                    || next == TokenType.Operator_MultEqual
+                    || next == TokenType.Operator_DivEqual)
+                {
+                    op = OperatorTypeToType(next);
+                    Consume(Peek().TokenType, "");
+                }
+                else
+                    Consume(TokenType.Operator_Equal, "expected '=' after expression");
                 IExpression? rhs = ParseExpression();
                 if (requireSemicolon)
                     Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
+                if (op != null)
+                    return new CompoundAssignmentStatement(lhs, rhs, (BinaryOperator)op);
                 return new AssignmentStatement(lhs, rhs);
             }
             else
@@ -400,7 +414,7 @@ public class Parser(List<Token> tokens)
     IExpression ParseEquality()
     {
         IExpression left = ParseComparison();
-        while (Match(TokenType.Operator_EqualsEquals) || Match(TokenType.Operator_Inequal))
+        while (Match(TokenType.Operator_EqualEqual) || Match(TokenType.Operator_Inequal))
         {
             Token op = Previous();
             BinaryOperator compOperatorType = OperatorTypeToType(op.TokenType);
@@ -557,11 +571,17 @@ public class Parser(List<Token> tokens)
         TokenType.Operator_Minus => BinaryOperator.Subtract,
         TokenType.Operator_Mult => BinaryOperator.Multiply,
         TokenType.Operator_Div => BinaryOperator.Divide,
-        TokenType.Operator_Equals => BinaryOperator.Equal,
+        TokenType.Operator_Equal => BinaryOperator.Equal,
         TokenType.Operator_Greater => BinaryOperator.Greater,
         TokenType.Operator_Less => BinaryOperator.Less,
-        TokenType.Operator_EqualsEquals => BinaryOperator.EqualEqual,
+
+        TokenType.Operator_EqualEqual => BinaryOperator.EqualEqual,
         TokenType.Operator_Inequal => BinaryOperator.NotEqual,
+
+        TokenType.Operator_PlusEqual => BinaryOperator.PlusEqual,
+        TokenType.Operator_MinusEqual => BinaryOperator.MinusEqual,
+        TokenType.Operator_MultEqual => BinaryOperator.MultEqual,
+        TokenType.Operator_DivEqual => BinaryOperator.DivEqual,
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 

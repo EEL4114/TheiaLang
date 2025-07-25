@@ -34,10 +34,15 @@ public enum BinaryOperator
     Greater,
     Less,
     Equal,
+
     EqualEqual,
     NotEqual,
     AND,
-    OR
+    OR,
+    PlusEqual,
+    MinusEqual,
+    MultEqual,
+    DivEqual
 }
 #endregion
 
@@ -136,6 +141,12 @@ public sealed record ExpressionStatement(
 public sealed record AssignmentStatement(
     IExpression Target,
     IExpression Expression
+) : IStatement;
+
+public sealed record CompoundAssignmentStatement(
+    IExpression Target,
+    IExpression Expression,
+    BinaryOperator Op
 ) : IStatement;
 
 public sealed record IfStatement(

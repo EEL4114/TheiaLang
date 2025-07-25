@@ -147,6 +147,23 @@ public static class SemanticAnalyser
                     throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName}" +
                                         $" and {assignment.Expression.ResolvedType.TypeName}");
                 break;
+            case CompoundAssignmentStatement compound:
+                AnalyseExpression(compound.Target);
+                AnalyseExpression(compound.Expression);
+
+                if (compound.Target is IdentifierExpression id)
+                    compound.Target.ResolvedType = GetTypeInfo(id.Name);
+                else if (compound.Target is MemberAccessExpression memberAccess)
+                    compound.Target.ResolvedType = memberAccess.ResolvedType;
+
+                compound.Expression.ResolvedType = PromoteIfLiteral(compound.Expression.ResolvedType,
+                                                                    compound.Target.ResolvedType.TypeName);
+
+                if (!CanImplicitlyCast(compound.Target.ResolvedType.TypeName,
+                       compound.Expression.ResolvedType.TypeName))
+                    throw new Exception($"Cannot implicitly convert between  {compound.Target.ResolvedType.TypeName}" +
+                                        $" and {compound.Expression.ResolvedType.TypeName}");
+                break;
             case ExpressionStatement expression:
                 AnalyseExpression(expression.Expression);
                 break;
