@@ -268,7 +268,7 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Keyword_for))
         {
-            EnterScope($"for_{Line()}");
+            EnterScope($"for_{pos}");
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after for keyword");
             IStatement initialiser = ParseStatement();
             IExpression condition = ParseExpression();

@@ -1,7 +1,7 @@
 Program: Example
-Generated at 25.07.2025 18:05:23
+Generated at 25.07.2025 18:22:21
 
-StructDeclaration: Vector3
+StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
         f32 x
         f32 y
@@ -11,7 +11,7 @@ UnionDeclaration: StringData
     s32 i
     f32 f
 
-FunctionDeclaration: s32 main
+FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
         Expression:
@@ -134,7 +134,7 @@ FunctionDeclaration: s32 main
         Return: 
             Identifier: c
 
-FunctionDeclaration: s32 Branchy
+FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
     Arguments:
         s32 value
     BlockSatement:
@@ -143,7 +143,7 @@ FunctionDeclaration: s32 Branchy
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int 0
-            Then:
+            Then: | Scope: 'if_then233' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -156,7 +156,7 @@ FunctionDeclaration: s32 Branchy
                             Operand:
                                 Literal: int 1
 
-            Else:
+            Else: | Scope: 'if_else249' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -169,7 +169,7 @@ FunctionDeclaration: s32 Branchy
         Return: 
             Identifier: value
 
-FunctionDeclaration: s32 Abs
+FunctionDeclaration: s32 Abs | Scope: 'Abs' 
     Arguments:
         s32 value
     BlockSatement:
@@ -178,7 +178,7 @@ FunctionDeclaration: s32 Abs
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int 0
-            Then:
+            Then: | Scope: 'if_then279' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -188,11 +188,11 @@ FunctionDeclaration: s32 Abs
         Return: 
             Identifier: value
 
-FunctionDeclaration: s32 Loopy
+FunctionDeclaration: s32 Loopy | Scope: 'Loopy' 
     Arguments:
         s32 value
     BlockSatement:
-        For:
+        For: | Scope: 'for_297' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: int 0
@@ -216,14 +216,14 @@ FunctionDeclaration: s32 Loopy
         Return: 
             Identifier: value
 
-FunctionDeclaration: bool n
+FunctionDeclaration: bool n | Scope: 'n' 
     Arguments:
         bool b
     BlockSatement:
         Return: 
             Identifier: b
 
-FunctionDeclaration: s32 m
+FunctionDeclaration: s32 m | Scope: 'm' 
     Arguments:
         s32 j
     BlockSatement:
@@ -239,11 +239,11 @@ FunctionDeclaration: s32 m
         Return: 
             Identifier: j
 
-StructDeclaration: Entity
+StructDeclaration: Entity | Scope: 'Entity' 
     Fields:
         f32 health
         f32 speed
-    FunctionDeclaration: bool IsAlive
+    FunctionDeclaration: bool IsAlive | Scope: 'IsAlive' 
         Arguments:
         BlockSatement:
             Return: 
