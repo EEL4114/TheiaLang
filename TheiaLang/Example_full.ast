@@ -1,5 +1,5 @@
 Program: Example
-Generated at 31.07.2025 16:15:38
+Generated at 31.07.2025 16:21:44
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -27,12 +27,22 @@ FunctionDeclaration: s32 main | Scope: 'main'
             UnaryExpression: @f32 AddressOf
                 Operand:
                     Identifier: f32 HP
+        Assign:
+            UnaryExpression: f32 Dereference
+                Operand:
+                    Identifier: @f32 healthPtr
+            Literal: f32 5
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: f32 Add
                 Literal: f32 1
                 MemberAccess: f32 entity.health
                     Target: Entity entity
                     Member: f32 health
+        Assign:
+            Identifier: @f32 healthPtr
+            UnaryExpression: @f32 AddressOf
+                Operand:
+                    Identifier: f32 moreHealth
         Compound Assignment: PlusEqual
             Identifier: f32 moreHealth
             Literal: f32 1
@@ -147,7 +157,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then242' 
+            Then: | Scope: 'if_then252' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -160,7 +170,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: f32 1
 
-            Else: | Scope: 'if_else258' 
+            Else: | Scope: 'if_else268' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -182,7 +192,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then288' 
+            Then: | Scope: 'if_then298' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -196,7 +206,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_306' 
+        For: | Scope: 'for_316' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0

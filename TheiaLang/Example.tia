@@ -8,8 +8,10 @@ int main()
 
     float HP = entity.health;
     @float healthPtr = @HP; 
-
+    healthPtr = 5;
+    
     float moreHealth = 1 + entity.health;
+    @healthPtr = @moreHealth;
 
     moreHealth += 1;
 
