@@ -25,7 +25,7 @@ static class AstPrinter
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}{PrintScope(structDeclaration.Scope)}");
+        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}{PrintScope(structDeclaration.Scope!)}");
         w.WriteLine($"{Indent(indent + tab)}Fields:");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
@@ -52,7 +52,7 @@ static class AstPrinter
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{PrintScope(function.Scope)}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{PrintScope(function.Scope!)}");
         w.WriteLine($"{Indent(indent + tab)}Arguments:");
         foreach (TypeNamePair typeNamePair in function.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
@@ -92,18 +92,18 @@ static class AstPrinter
                 PrintBlock(ifStatement.ThenBranch, w, indent + tab * 2);
                 if (ifStatement.ElseBranch != null)
                 {
-                    w.WriteLine($"{Indent(indent + tab)}Else:{PrintScope(ifStatement.ElseScope)}");
+                    w.WriteLine($"{Indent(indent + tab)}Else:{PrintScope(ifStatement.ElseScope!)}");
                     PrintBlock(ifStatement.ElseBranch, w, indent + tab * 2);
                 }
                 break;
             case ForStatement forStatement:
                 w.WriteLine($"{Indent(indent)}For:{PrintScope(forStatement.Scope)}");
                 w.WriteLine($"{Indent(indent + tab)}Initialiser:");
-                PrintStatement(forStatement.Initialiser, w, indent + tab * 2);
+                PrintStatement(forStatement.Initialiser!, w, indent + tab * 2);
                 w.WriteLine($"{Indent(indent + tab)}Condition:");
-                PrintExpression(forStatement.Condition, w, indent + tab * 2);
+                PrintExpression(forStatement.Condition!, w, indent + tab * 2);
                 w.WriteLine($"{Indent(indent + tab)}Iterator:");
-                PrintStatement(forStatement.Iterator, w, indent + tab * 2);
+                PrintStatement(forStatement.Iterator!, w, indent + tab * 2);
                 PrintBlock(forStatement.Body, w, indent + tab * 2);
                 break;
             case ReturnStatement r:

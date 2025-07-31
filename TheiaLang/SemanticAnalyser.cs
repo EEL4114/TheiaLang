@@ -2,7 +2,7 @@ namespace TheiaLang;
 
 public static class SemanticAnalyser
 {
-    static Scope currentScope;
+    static Scope currentScope = new Scope("", null, null);
     public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         currentScope = globalScope;
@@ -55,7 +55,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
-            currentScope.TryLookup(field.Name, out SymbolInfo fieldInfo, out _);
+            currentScope.TryLookup(field.Name, out SymbolInfo? fieldInfo, out _);
             fieldInfo.Type = GetTypeInfo(field.TypeName);
             field.ResolvedType = fieldInfo.Type;
         }
@@ -123,7 +123,7 @@ public static class SemanticAnalyser
                 if (variable.Init != null)
                 {
                     variable.Init = AnalyseExpression(variable.Init);
-                    variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType, variable.ResolvedType.TypeName);
+                    variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType!, variable.ResolvedType.TypeName);
 
                     if (!CanImplicitlyCast(variable.ResolvedType.TypeName,
                                            variable.Init.ResolvedType.TypeName))
@@ -148,8 +148,8 @@ public static class SemanticAnalyser
                 else if (assignment.Target is MemberAccessExpression memberAccess)
                     assignment.Target.ResolvedType = memberAccess.ResolvedType;
 
-                assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType,
-                                                                      assignment.Target.ResolvedType.TypeName);
+                assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType!,
+                                                                      assignment.Target.ResolvedType!.TypeName);
 
                 if (!CanImplicitlyCast(assignment.Target.ResolvedType.TypeName,
                        assignment.Expression.ResolvedType.TypeName))
@@ -166,8 +166,8 @@ public static class SemanticAnalyser
                 else if (compound.Target is MemberAccessExpression memberAccess)
                     compound.Target.ResolvedType = memberAccess.ResolvedType;
 
-                compound.Expression.ResolvedType = PromoteIfLiteral(compound.Expression.ResolvedType,
-                                                                    compound.Target.ResolvedType.TypeName);
+                compound.Expression.ResolvedType = PromoteIfLiteral(compound.Expression.ResolvedType!,
+                                                                    compound.Target.ResolvedType!.TypeName);
 
                 if (!CanImplicitlyCast(compound.Target.ResolvedType.TypeName,
                        compound.Expression.ResolvedType.TypeName))
@@ -180,7 +180,7 @@ public static class SemanticAnalyser
             case IfStatement ifStatement:
                 ifStatement.Condition = AnalyseExpression(ifStatement.Condition);
 
-                if (ifStatement.Condition.ResolvedType.TypeName != "bool")
+                if (ifStatement.Condition.ResolvedType!.TypeName != "bool")
                     throw new Exception($"Condition of if statement must resolve to type 'bool', got: {ifStatement.Condition.ResolvedType.TypeName}");
 
                 EnterScope(ifStatement.ThenScope);
@@ -198,13 +198,13 @@ public static class SemanticAnalyser
                 break;
             case ForStatement forStatement:
                 EnterScope(forStatement.Scope);
-                AnalyseStatement(forStatement.Initialiser);
-                forStatement.Condition = AnalyseExpression(forStatement.Condition);
+                AnalyseStatement(forStatement.Initialiser!);
+                forStatement.Condition = AnalyseExpression(forStatement.Condition!);
 
-                if (forStatement.Condition.ResolvedType.TypeName != "bool")
+                if (forStatement.Condition.ResolvedType!.TypeName != "bool")
                     throw new Exception($"Condition of for loop must resolve to type 'bool', got: {forStatement.Condition.ResolvedType.TypeName}");
 
-                AnalyseStatement(forStatement.Iterator);
+                AnalyseStatement(forStatement.Iterator!);
 
                 foreach (IStatement s in forStatement.Body)
                     AnalyseStatement(s);
@@ -216,7 +216,7 @@ public static class SemanticAnalyser
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
                 {
-                    returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType,
+                    returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType!,
                                                                                function.ResolvedType.TypeName);
                     if (!CanImplicitlyCast(function.ResolvedType.TypeName,
                                            returnStatement.Expression.ResolvedType.TypeName))
@@ -262,7 +262,7 @@ public static class SemanticAnalyser
                 {
                     string actual = call.Arguments[i].ResolvedType!.TypeName;
                     string expected = function.Parameters[i].ResolvedType!.TypeName;
-                    call.Arguments[i].ResolvedType = PromoteIfLiteral(call.Arguments[i].ResolvedType,
+                    call.Arguments[i].ResolvedType = PromoteIfLiteral(call.Arguments[i].ResolvedType!,
                                                                       function.Parameters[i].ResolvedType!.TypeName);
                     if (!CanImplicitlyCast(actual, expected))
                         throw new Exception(
@@ -303,7 +303,7 @@ public static class SemanticAnalyser
                     else
                     {
                         // Log.Info(unary.Operand.ResolvedType.TypeName + " " + unary.Operand.ToString());
-                        unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType.TypeName,
+                        unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                   null,
                                                   null,
                                                   unary.Operand.ResolvedType);
@@ -318,7 +318,7 @@ public static class SemanticAnalyser
                 binary.Left = AnalyseExpression(binary.Left);
                 binary.Right = AnalyseExpression(binary.Right);
 
-                binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType, binary.Right.ResolvedType.TypeName);
+                binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType!, binary.Right.ResolvedType!.TypeName);
                 binary.Right.ResolvedType = PromoteIfLiteral(binary.Right.ResolvedType, binary.Left.ResolvedType.TypeName);
 
                 binary.ResolvedType = GetTypeInfo(GetBinaryOpReturnType(binary.Op,
@@ -339,9 +339,9 @@ public static class SemanticAnalyser
                 {
                     instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
                     // check implicit cast from arg type → field type
-                    instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType,
+                    instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
                                                                                typeSymbolInfo.Parameters![i].TypeName);
-                    if (!CanImplicitlyCast(instantiation.Arguments[i].ResolvedType.TypeName!,
+                    if (!CanImplicitlyCast(instantiation.Arguments[i].ResolvedType!.TypeName!,
                         typeSymbolInfo.Parameters![i].TypeName))
                         throw new Exception("Type mismatch in ctor");
                 }

@@ -1,5 +1,5 @@
 Program: Example
-Generated at 31.07.2025 16:21:44
+Generated at 31.07.2025 21:02:35
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -43,6 +43,9 @@ FunctionDeclaration: s32 main | Scope: 'main'
             UnaryExpression: AddressOf
                 Operand:
                     Identifier: moreHealth
+        Assign:
+            Identifier: HP
+            Identifier: healthPtr
         Compound Assignment: PlusEqual
             Identifier: moreHealth
             Literal: int 1
@@ -157,7 +160,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then252' 
+            Then: | Scope: 'if_then256' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -170,7 +173,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int 1
 
-            Else: | Scope: 'if_else268' 
+            Else: | Scope: 'if_else272' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -192,7 +195,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then298' 
+            Then: | Scope: 'if_then302' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -206,7 +209,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_316' 
+        For: | Scope: 'for_320' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: int 0

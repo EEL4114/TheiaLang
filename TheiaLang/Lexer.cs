@@ -140,6 +140,7 @@ class Lexer(string sourceCode)
             "!=" => MakeToken(TokenType.Operator_Inequal, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
             "||" => MakeToken(TokenType.Operator_AND, s),
+            _ => throw new NotImplementedException(s.ToString()),
         };
 
         if (token != null)

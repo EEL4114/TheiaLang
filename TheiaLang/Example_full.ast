@@ -1,5 +1,5 @@
 Program: Example
-Generated at 31.07.2025 16:21:44
+Generated at 31.07.2025 21:02:35
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -43,6 +43,11 @@ FunctionDeclaration: s32 main | Scope: 'main'
             UnaryExpression: @f32 AddressOf
                 Operand:
                     Identifier: f32 moreHealth
+        Assign:
+            Identifier: f32 HP
+            UnaryExpression: f32 Dereference
+                Operand:
+                    Identifier: @f32 healthPtr
         Compound Assignment: PlusEqual
             Identifier: f32 moreHealth
             Literal: f32 1
@@ -157,7 +162,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then252' 
+            Then: | Scope: 'if_then256' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -170,7 +175,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: f32 1
 
-            Else: | Scope: 'if_else268' 
+            Else: | Scope: 'if_else272' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -192,7 +197,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then298' 
+            Then: | Scope: 'if_then302' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -206,7 +211,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_316' 
+        For: | Scope: 'for_320' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0

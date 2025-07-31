@@ -101,7 +101,7 @@ Console.WriteLine("]");
 
 #endregion
 
-#region  Log
+#region Log
 
 public static class Log
 {

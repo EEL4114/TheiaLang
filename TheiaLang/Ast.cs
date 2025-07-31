@@ -14,7 +14,7 @@ public interface IDeclaration : INode
 public interface IStatement : INode { }
 public interface IExpression : INode
 {
-    TypeInfo ResolvedType { get; set; }
+    TypeInfo? ResolvedType { get; set; }
     bool Assignable { get; }
 }
 

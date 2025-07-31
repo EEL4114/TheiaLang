@@ -28,7 +28,7 @@ public static class IRGenerator
     public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
     public static int BuiltinTypeIndex(string type) => BuiltinTypes.IndexOf(type);
 
-    // we won't deal with SSA optimisation for now but once we have control blocks we will
+    // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
     static ulong tmpCounter = 0;
@@ -105,7 +105,7 @@ public static class IRGenerator
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
 
-        TypeInfo ti = new TypeInfo
+        TypeInfo typeInfo = new TypeInfo
         (
             sd.Name,
             sd.Fields.Select(f => f.Name).ToList(),
@@ -113,7 +113,7 @@ public static class IRGenerator
             null
         );
 
-        varTypes.Peek()[sd.Name] = ti;
+        varTypes.Peek()[sd.Name] = typeInfo;
     }
 
     #region Functions
@@ -166,37 +166,23 @@ public static class IRGenerator
         sb.AppendLine();
         ExitScope();
     }
+
     #endregion
 
     #region Statements
+
     static void EmitStatement(IStatement statement, StringBuilder sb)
     {
         switch (statement)
         {
-            case VariableDeclaration variableDeclaration:
-                EmitVariableDeclaration(variableDeclaration, sb);
-                break;
-            case AssignmentStatement assignment:
-                EmitAssignmentStatement(assignment, sb);
-                break;
-            case CompoundAssignmentStatement compound:
-                EmitCompoundAssignmentStatement(compound, sb);
-                break;
-            case IfStatement ifStatement:
-                EmitIfStatement(ifStatement, sb);
-                break;
-            case ForStatement forStatement:
-                EmitForStatement(forStatement, sb);
-                break;
-            case ReturnStatement returnStatement:
-                EmitReturnStatement(returnStatement, sb);
-                break;
-            case ExpressionStatement expression:
-                EmitExpressionStatement(expression, sb);
-                break;
-
-            default:
-                throw new Exception($"Unknown Statement: {statement.GetType().Name}");
+            case VariableDeclaration v: EmitVariableDeclaration(v, sb); break;
+            case AssignmentStatement a: EmitAssignmentStatement(a, sb); break;
+            case CompoundAssignmentStatement c: EmitCompoundAssignmentStatement(c, sb); break;
+            case IfStatement i: EmitIfStatement(i, sb); break;
+            case ForStatement f: EmitForStatement(f, sb); break;
+            case ReturnStatement r: EmitReturnStatement(r, sb); break;
+            case ExpressionStatement e: EmitExpressionStatement(e, sb); break;
+            default: throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
 
@@ -224,7 +210,7 @@ public static class IRGenerator
                   $"  {gep} = getelementptr {LLVMType}, {LLVMType}* {slot}, i32 0, i32 {i}");
 
                 // store the argument into that field
-                string LLVMTypeArg = TypeToLLVM(inst.Arguments[i].ResolvedType)!;
+                string LLVMTypeArg = TypeToLLVM(inst.Arguments[i].ResolvedType!)!;
 
                 sb.AppendLine(
                   $"  store {LLVMTypeArg} {argReg}, {LLVMTypeArg}* {gep}");
@@ -339,7 +325,7 @@ public static class IRGenerator
     {
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
-        string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType)!;
+        string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType!)!;
 
         if (currentScope!.DeclaringNode is FunctionDeclaration)
             sb.AppendLine(
@@ -378,7 +364,7 @@ public static class IRGenerator
     }
     static (StringBuilder code, string name) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
-        TypeInfo typeInfo = unaryExpression.Operand.ResolvedType;
+        TypeInfo typeInfo = unaryExpression.Operand.ResolvedType!;
         switch (unaryExpression.Op)
         {
             case UnaryOperator.Negate:
@@ -403,6 +389,15 @@ public static class IRGenerator
             case UnaryOperator.AddressOf:
                 (code, string ptr, _) = EmitAddressOf(unaryExpression.Operand, code);
                 return (code, ptr);
+            case UnaryOperator.Dereference:
+                (cl, val) = EmitExpression(unaryExpression.Operand);
+                code.Append(cl);
+                TypeInfo pointee = unaryExpression.Operand.ResolvedType!.Pointee!;
+                llvmType = TypeToLLVM(pointee)!;
+                tmp = NewTempVar();
+                code.AppendLine($"  %{tmp} = load {llvmType}, {llvmType}* {val}");
+                return (code, $"%{tmp}");
+
             default: throw new NotSupportedException($"{unaryExpression.Op}");
         }
     }
@@ -480,7 +475,7 @@ public static class IRGenerator
         code.Append(cl);
         code.Append(cr);
 
-        TypeInfo typeInfo = binaryExpression.Left.ResolvedType;
+        TypeInfo typeInfo = binaryExpression.Left.ResolvedType!;
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
@@ -544,7 +539,7 @@ public static class IRGenerator
             code.AppendLine(
                 $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
 
-            string llvmType = TypeToLLVM(instantiation.Arguments[i].ResolvedType)!;
+            string llvmType = TypeToLLVM(instantiation.Arguments[i].ResolvedType!)!;
 
             code.AppendLine($"  store {llvmType} {argReg}, {llvmType}* {gep}");
         }
@@ -576,7 +571,7 @@ public static class IRGenerator
             code.Append(argCode);
 
             // infer the LLVM type of the argument
-            TypeInfo actualType = argument.ResolvedType;
+            TypeInfo actualType = argument.ResolvedType!;
             string actualLLVMType = TypeToLLVM(actualType)!;
             string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
 
