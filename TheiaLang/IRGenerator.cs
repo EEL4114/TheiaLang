@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Text;
 
 namespace TheiaLang;
@@ -110,7 +109,8 @@ public static class IRGenerator
         (
             sd.Name,
             sd.Fields.Select(f => f.Name).ToList(),
-            fieldTypes.ToList()
+            fieldTypes.ToList(),
+            null
         );
 
         varTypes.Peek()[sd.Name] = ti;
@@ -291,7 +291,6 @@ public static class IRGenerator
         sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
     }
 
-
     static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
     {
         (StringBuilder condCode, string condReg) = EmitExpression(ifStatement.Condition);
@@ -408,25 +407,33 @@ public static class IRGenerator
         string tmp = NewTempVar();
 
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType;
-
-        string instr = typeInfo.TypeName switch
+        switch (unaryExpression.Op)
         {
-            "s32" => "sub",
-            "f32" => "fsub",
-            _ => throw new NotSupportedException($"Unary - on {typeInfo.TypeName}")
-        };
+            case UnaryOperator.Negate:
+                string instr = typeInfo.TypeName switch
+                {
+                    "s32" => "sub",
+                    "f32" => "fsub",
+                    _ => throw new NotSupportedException($"Unary - on {typeInfo.TypeName}")
+                };
 
-        string zero = typeInfo.TypeName == "s32" ? "0" : "0.0";
+                string zero = typeInfo.TypeName == "s32" ? "0" : "0.0";
 
-        string llvmType = TypeToLLVM(typeInfo)!;
+                string llvmType = TypeToLLVM(typeInfo)!;
 
-        code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
+                code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
+                break;
+            case UnaryOperator.AddressOf:
+
+                break;
+            default: throw new NotSupportedException($"{unaryExpression.Op}");
+        }
         return (code, $"%{tmp}");
     }
 
     static (StringBuilder code, string name) EmitLiteralExpression(
-        LiteralExpression literalExpression,
-        StringBuilder code)
+    LiteralExpression literalExpression,
+    StringBuilder code)
     {
         // Make sure the semantic pass has filled in the type
         TypeInfo typeInfo = literalExpression.ResolvedType
@@ -597,7 +604,6 @@ public static class IRGenerator
             string actualLLVMType = TypeToLLVM(actualType)!;
             string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
 
-
             if (actualType.TypeName != calleeInfo.Type.TypeName)
                 Log.Error(12,
                     $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
@@ -702,16 +708,19 @@ public static class IRGenerator
         long hexMant = mant >> shift;           // top 13 bits
         string hex = hexMant.ToString("X");     // hex digits
         // split hex into a.b form (first digit, rest)
-        string a = hex.Substring(0, 1);
-        string b = hex.Substring(1);
+        string a = hex[..1];
+        string b = hex[1..];
 
         return (sign ? "-" : "") + $"0xL{a}{b}{exp}";
     }
 
     static string? TypeToLLVM(TypeInfo type)
     {
-        if (IsBuiltinType(type.TypeName))
-            return type.TypeName switch
+        if (type.Pointee != null)
+            return $"{TypeToLLVM(type.Pointee)}*";
+        string typeName = type.TypeName;
+        if (IsBuiltinType(typeName))
+            return typeName switch
             {
                 "bool" => "i1",
 
@@ -727,10 +736,10 @@ public static class IRGenerator
                 "f64" => "double",
                 "f128" => "fp128",
 
-                _ => throw new NotImplementedException(type.TypeName),
+                _ => throw new NotImplementedException(typeName),
             };
         else    // assume composite type
-            return $"%{type.TypeName}";
+            return $"%{typeName}";
 
         throw new Exception($"Unsupported type: '{type.TypeName}'");
     }

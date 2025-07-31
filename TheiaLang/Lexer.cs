@@ -25,7 +25,6 @@ public enum TokenType
     Keyword_struct,
     Keyword_union,
 
-
     Keyword_if,
     Keyword_else,
     Keyword_for,
@@ -51,6 +50,7 @@ public enum TokenType
     Operator_MultEqual,
     Operator_DivEqual,
 
+    Punctuation_At,
     Punctuation_Comma,
     Punctuation_Dot,
     Punctuation_Semicolon,
@@ -84,13 +84,6 @@ class Lexer(string sourceCode)
         //  single char punctuation
         switch (c)
         {
-            case ',': return MakeToken(TokenType.Punctuation_Comma, ",");
-            case '.': return MakeToken(TokenType.Punctuation_Dot, ".");
-            case ';': return MakeToken(TokenType.Punctuation_Semicolon, ";");
-            case '(': return MakeToken(TokenType.Punctuation_ParenthesisL, "(");
-            case ')': return MakeToken(TokenType.Punctuation_ParenthesisR, ")");
-            case '{': return MakeToken(TokenType.Punctuation_BraceL, "{");
-            case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
             case '+':
                 if (Peek() == '=')
                 {
@@ -122,6 +115,14 @@ class Lexer(string sourceCode)
             case '>': return MakeToken(TokenType.Operator_Greater, ">");
             case '<': return MakeToken(TokenType.Operator_Less, "<");
             case '!': return MakeToken(TokenType.Operator_Invert, "!");
+            case '@': return MakeToken(TokenType.Punctuation_At, "@");
+            case ',': return MakeToken(TokenType.Punctuation_Comma, ",");
+            case '.': return MakeToken(TokenType.Punctuation_Dot, ".");
+            case ';': return MakeToken(TokenType.Punctuation_Semicolon, ";");
+            case '(': return MakeToken(TokenType.Punctuation_ParenthesisL, "(");
+            case ')': return MakeToken(TokenType.Punctuation_ParenthesisR, ")");
+            case '{': return MakeToken(TokenType.Punctuation_BraceL, "{");
+            case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
         }
 
         if (char.IsDigit(c))

@@ -69,7 +69,7 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName, null, null);
+        TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName, null, null, null);
 
         currentScope.Declare(name,
                              new SymbolInfo(
@@ -111,7 +111,7 @@ public class Parser(List<Token> tokens)
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                TypeInfo typeInfo = new TypeInfo(fieldType, null, null);
+                TypeInfo typeInfo = new TypeInfo(fieldType, null, null, null);
                 currentScope.Declare(identifierToken.Lexeme,
                                      new SymbolInfo(
                                         identifierToken.Lexeme,
@@ -145,7 +145,8 @@ public class Parser(List<Token> tokens)
         structDeclaration.ResolvedType = new TypeInfo(
             name,
             fieldNames,
-            fieldTypes);
+            fieldTypes,
+            null);
 
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
@@ -185,9 +186,10 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_Semicolon, "Expected ';' after union declaration");
 
         TypeInfo unionInfo = new TypeInfo(
-                name,
-                fieldNames,
-                fieldTypes);
+            name,
+            fieldNames,
+            fieldTypes,
+            null);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo);
         currentScope!.Declare(name, new SymbolInfo(
@@ -230,7 +232,35 @@ public class Parser(List<Token> tokens)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
-            TypeInfo typeInfo = new TypeInfo(type, null, null);
+            TypeInfo typeInfo = new TypeInfo(type, null, null, null);
+
+            currentScope!.Declare(varName, new SymbolInfo(
+                varName,
+                typeInfo,
+                SymbolKind.Variable,
+                null
+            ));
+
+            return variableDeclaration;
+        }
+
+        if (Peek().TokenType == TokenType.Punctuation_At
+            && Peek().TokenType == TokenType.Identifier
+            && PeekNextNext().TokenType == TokenType.Identifier)
+        {
+            Token typeToken = Advance();
+            string type = typeToken.Lexeme;     // composite type
+            string varName = Advance().Lexeme;
+
+            IExpression? init = null;
+            if (Match(TokenType.Operator_Equal))
+                init = ParseExpression();
+            if (requireSemicolon)
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
+            VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, varName, init);
+
+            TypeInfo typeInfo = new TypeInfo("@" + type, null, null,
+                                             new TypeInfo(type, null, null, null));
 
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
@@ -304,7 +334,7 @@ public class Parser(List<Token> tokens)
             string type = TokenTypeToString(typeToken.TokenType);
 
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
-            TypeInfo typeInfo = new TypeInfo(type, null, null);
+            TypeInfo typeInfo = new TypeInfo(type, null, null, null);
             variableDeclaration.ResolvedType = typeInfo;
 
             currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
@@ -313,6 +343,36 @@ public class Parser(List<Token> tokens)
                 SymbolKind.Variable,
                 null
             ));
+            return variableDeclaration;
+        }
+
+        if (Peek().TokenType == TokenType.Punctuation_At
+            && IsTypeKeyword(PeekNext().TokenType))
+        {
+            Advance();  // '@'
+            Token typeToken = Advance();
+            Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
+            IExpression? init = null;
+            if (Match(TokenType.Operator_Equal))
+                init = ParseExpression();
+            if (requireSemicolon)
+                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
+
+            string type = TokenTypeToString(typeToken.TokenType);
+
+            VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, nameToken.Lexeme, init);
+            TypeInfo typeInfo = new TypeInfo("@" + type, null, null,
+                                             new TypeInfo(type, null, null, null));
+            variableDeclaration.ResolvedType = typeInfo;
+
+
+            currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
+                nameToken.Lexeme,
+                variableDeclaration.ResolvedType,
+                SymbolKind.Variable,
+                null
+            ));
+            // Log.Info(variableDeclaration.ResolvedType.TypeName + " " + variableDeclaration.Name);
             return variableDeclaration;
         }
 
@@ -366,9 +426,8 @@ public class Parser(List<Token> tokens)
             return new ExpressionStatement(expression);
         }
 
-        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos}");
-        Environment.Exit(1);
-        return null;
+        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos()}");
+        return null!;
     }
 
     AssignmentStatement ParseAssignment(bool requireSemicolon = true)
@@ -482,6 +541,13 @@ public class Parser(List<Token> tokens)
             IExpression operand = ParseUnary();
             return new UnaryExpression(UnaryOperator.Invert, operand);
         }
+
+        if (Match(TokenType.Punctuation_At))
+        {
+            IExpression operand = ParseUnary();
+            return new UnaryExpression(UnaryOperator.AddressOf, operand, assignable: true);
+        }
+
         return ParsePrimary();
     }
 
@@ -514,7 +580,7 @@ public class Parser(List<Token> tokens)
             };
 
             LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
-            literal.ResolvedType = new TypeInfo(lit.Type, null, null);
+            literal.ResolvedType = new TypeInfo(lit.Type, null, null, null);
             return literal;
         }
 
@@ -558,6 +624,8 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
             return inner;
         }
+
+
 
         Log.Error(2, $"Unexpected token {Peek().TokenType} in expression at: {Peek().Line}:{Peek().Column}");
         return null!;
@@ -631,7 +699,7 @@ public class Parser(List<Token> tokens)
     // 2 == Keyword_bool; 12 == Keyword_f128
     static bool IsTypeKeyword(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
 
-    int Line() => tokens[pos].Line;
+    int Line() => tokens[pos].Line + 1;
     int Column() => tokens[pos].Column;
     string PrintCurrentPos()
     {
@@ -648,6 +716,7 @@ public class Parser(List<Token> tokens)
     Token Peek() => tokens[pos];
 
     Token PeekNext() => pos + 1 < tokens.Count ? tokens[pos + 1] : tokens[^1];
+    Token PeekNextNext() => pos + 2 < tokens.Count ? tokens[pos + 2] : tokens[^1];
 
     Token Previous() => tokens[pos - 1];
 
@@ -665,17 +734,22 @@ public class Parser(List<Token> tokens)
 
     void DeclareBuiltin(string typeName)
     {
+        TypeInfo typeInfo = new TypeInfo(typeName, null, null, null);
         globalScope!.Declare(typeName,
             new SymbolInfo(
                 typeName,
-                new TypeInfo(
-                    typeName,
-                    null,
-                    null
-                ),
+                typeInfo,
+                SymbolKind.Type,
+                null
+            ));
+        globalScope!.Declare("@" + typeName,
+            new SymbolInfo(
+                "@" + typeName,
+                new TypeInfo("@" + typeName, null, null, typeInfo),
                 SymbolKind.Type,
                 null
             ));
     }
+
     #endregion
 }

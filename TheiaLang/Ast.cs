@@ -22,7 +22,9 @@ public interface IExpression : INode
 public enum UnaryOperator
 {
     Negate,     // -1
-    Invert      // !false
+    Invert,     // !false
+    AddressOf,
+    Dereference,
 }
 
 public enum BinaryOperator
@@ -73,7 +75,7 @@ public class FunctionDeclaration : IDeclaration
         Arguments = paramaters;
         Statements = statements;
 
-        ResolvedType = new TypeInfo(TypeName, null, null);
+        ResolvedType = new TypeInfo(TypeName, null, null, null);
     }
 }
 
@@ -94,28 +96,31 @@ public class StructDeclaration : IDeclaration
         Functions = functions;
 
         ResolvedType = new TypeInfo(name,
-                                 fields.Select(f => f.Name).ToList(),
-                                 fields.Select(f => f.TypeName).ToList());
+                                    fields.Select(f => f.Name).ToList(),
+                                    fields.Select(f => f.TypeName).ToList(),
+                                    null);
     }
 }
 
 public record UnionDeclaration(
     string Name,
     List<TypeNamePair> Variants,
-    TypeInfo resolvedType
+    TypeInfo ResolvedType
 ) : IDeclaration
 {
-    public TypeInfo ResolvedType { get; set; } = resolvedType;
+    public TypeInfo ResolvedType { get; set; } = ResolvedType;
 }
 
-public record VariableDeclaration(
+public sealed record VariableDeclaration(
     string TypeName,                  // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
 ) : IDeclaration, IStatement
 {
     public TypeInfo? ResolvedType { get; set; }
+    public IExpression? Init { get; set; } = Init;
 }
+
 #endregion
 public sealed record TypeNamePair(
     string TypeName,
@@ -136,18 +141,28 @@ public sealed record CallArgument(
 
 public sealed record ExpressionStatement(
     IExpression Expression
-) : IStatement;
+) : IStatement
+{ public IExpression Expression { get; set; } = Expression; }
 
 public sealed record AssignmentStatement(
     IExpression Target,
     IExpression Expression
-) : IStatement;
+) : IStatement
+{
+    public IExpression Target { get; set; } = Target;
+    public IExpression Expression { get; set; } = Expression;
+}
+
 
 public sealed record CompoundAssignmentStatement(
     IExpression Target,
     IExpression Expression,
     BinaryOperator Op
-) : IStatement;
+) : IStatement
+{
+    public IExpression Target { get; set; } = Target;
+    public IExpression Expression { get; set; } = Expression;
+}
 
 public sealed record IfStatement(
     IExpression Condition,
@@ -155,7 +170,9 @@ public sealed record IfStatement(
     List<IStatement>? ElseBranch,
     Scope ThenScope,
     Scope? ElseScope
-) : IStatement;
+) : IStatement
+{ public IExpression Condition { get; set; } = Condition; }
+
 
 public sealed record ForStatement(
     IStatement? Initialiser,
@@ -163,11 +180,16 @@ public sealed record ForStatement(
     IStatement? Iterator,
     List<IStatement> Body,
     Scope Scope
-) : IStatement;
+) : IStatement
+{ public IExpression? Condition { get; set; } = Condition; }
+
 
 public sealed record ReturnStatement(
     IExpression Expression
-) : IStatement;
+) : IStatement
+{
+    public IExpression Expression { get; set; } = Expression;
+}
 #endregion
 
 #region  Expressions
@@ -202,11 +224,12 @@ public sealed record InstantiationExpression(
 
 public sealed record UnaryExpression(
     UnaryOperator Op,
-    IExpression Operand
+    IExpression Operand,
+    bool assignable = false
 ) : IExpression
 {
-    public bool Assignable => false;
-
+    public bool Assignable => assignable;
+    public IExpression Operand = Operand;
     private TypeInfo? _resolvedType;
     public TypeInfo? ResolvedType
     {
@@ -229,6 +252,8 @@ public sealed record BinaryExpression(
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+    public IExpression Left { get; set; } = Left;
+    public IExpression Right { get; set; } = Right;
 }
 
 public sealed record LiteralExpression(

@@ -1,5 +1,5 @@
 Program: Example
-Generated at 25.07.2025 22:00:27
+Generated at 31.07.2025 13:26:58
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -14,6 +14,24 @@ UnionDeclaration: StringData
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
+        VariableDeclaration: Entity entity =
+            Instantiation: Entity
+                Arguments:
+                    Literal: f32 70
+                    Literal: f32 1.5
+        VariableDeclaration: f32 HP =
+            MemberAccess: f32 entity.health
+                Target: Entity entity
+                Member: f32 health
+        VariableDeclaration: f32 moreHealth =
+            BinaryExpression: f32 Add
+                Literal: f32 1
+                MemberAccess: f32 entity.health
+                    Target: Entity entity
+                    Member: f32 health
+        Compound Assignment: PlusEqual
+            Identifier: f32 moreHealth
+            Literal: f32 1
         Expression:
             Call: s32  m
                 Arguments:
@@ -41,22 +59,6 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Arguments:
                             Literal: s32 8
                 Literal: s32 9
-        VariableDeclaration: Entity entity =
-            Instantiation: Entity
-                Arguments: (
-                    Literal: f32 70
-                    Literal: f32 1.5
-                )
-        VariableDeclaration: f32 HP =
-            MemberAccess: f32 entity.health
-                Target: Entity entity
-                Member: f32 health
-        VariableDeclaration: f32 moreHealth =
-            BinaryExpression: f32 Add
-                Literal: f32 1
-                MemberAccess: f32 entity.health
-                    Target: Entity entity
-                    Member: f32 health
         VariableDeclaration: s32 defaultInt
         VariableDeclaration: f32 defaultFloat
         VariableDeclaration: bool defaultBool
@@ -141,7 +143,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then231' 
+            Then: | Scope: 'if_then235' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -154,7 +156,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: f32 1
 
-            Else: | Scope: 'if_else247' 
+            Else: | Scope: 'if_else251' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -176,7 +178,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then277' 
+            Then: | Scope: 'if_then281' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -190,7 +192,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_295' 
+        For: | Scope: 'for_299' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0
@@ -223,11 +225,9 @@ FunctionDeclaration: s32 m | Scope: 'm'
     BlockSatement:
         VariableDeclaration: s32 i =
             Literal: s32 3
-        Assign:
+        Compound Assignment: PlusEqual
             Identifier: s32 j
-            BinaryExpression: s32 Add
-                Identifier: s32 j
-                Literal: s32 4
+            Literal: s32 4
         VariableDeclaration: s32 health =
             Literal: s32 7
         Return: s32 

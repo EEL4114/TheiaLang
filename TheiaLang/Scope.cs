@@ -2,9 +2,9 @@ namespace TheiaLang;
 
 public enum SymbolKind
 {
-    Variable,
     Function,
-    Type
+    Type,
+    Variable,
 }
 
 public class SymbolInfo(string name,
@@ -20,9 +20,11 @@ public class SymbolInfo(string name,
 
 public class TypeInfo(string type,
                       List<string>? fieldNames,
-                      List<string>? fieldTypes)
+                      List<string>? fieldTypes,
+                      TypeInfo? pointee)
 {
     public string TypeName { get; init; } = type;
+    public TypeInfo? Pointee { get; init; } = pointee;
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<string>? FieldTypes { get; set; } = fieldTypes;
 }

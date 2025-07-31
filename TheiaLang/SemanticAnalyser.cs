@@ -116,26 +116,35 @@ public static class SemanticAnalyser
         {
             case VariableDeclaration variable:
                 currentScope.TryLookup(variable.Name, out SymbolInfo? symbolInfo, out _);
+                // Log.Info(symbolInfo.Type.TypeName + " " + variable.Name + " " + (symbolInfo.Type.Pointee != null).ToString());
                 symbolInfo.Type = GetTypeInfo(variable.TypeName);
                 variable.ResolvedType = symbolInfo.Type;
 
                 if (variable.Init != null)
                 {
-                    AnalyseExpression(variable.Init);
+                    variable.Init = AnalyseExpression(variable.Init);
                     variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType, variable.ResolvedType.TypeName);
 
                     if (!CanImplicitlyCast(variable.ResolvedType.TypeName,
                                            variable.Init.ResolvedType.TypeName))
-                        throw new Exception($"Cannot initialise variable '{variable.ResolvedType.TypeName} {variable.Name}'"
+                        throw new Exception($"Cannot initialise variable {variable.ResolvedType.TypeName} '{variable.Name}'"
                                             + $" with type '{variable.Init.ResolvedType.TypeName}'"
-                                            + "due to invompatible types or possible loss of information");
+                                            + " due to incompatible types or possible loss of information");
                 }
                 break;
             case AssignmentStatement assignment:
-                AnalyseExpression(assignment.Target);
-                AnalyseExpression(assignment.Expression);
+                assignment.Target = AnalyseExpression(assignment.Target);
+                assignment.Expression = AnalyseExpression(assignment.Expression);
+
+                /*Log.Info("A: " + assignment.Target.ResolvedType.TypeName + " "
+                         + assignment.Target.ToString() + "\nB: "
+                         + assignment.Expression.ResolvedType.TypeName
+                         + " " + assignment.Expression.ToString());*/
                 if (assignment.Target is IdentifierExpression identifier)
-                    assignment.Target.ResolvedType = GetTypeInfo(identifier.Name);
+                {
+                    TypeInfo targetInfo = GetTypeInfo(identifier.Name);
+                    assignment.Target.ResolvedType = targetInfo;
+                }
                 else if (assignment.Target is MemberAccessExpression memberAccess)
                     assignment.Target.ResolvedType = memberAccess.ResolvedType;
 
@@ -148,8 +157,9 @@ public static class SemanticAnalyser
                                         $" and {assignment.Expression.ResolvedType.TypeName}");
                 break;
             case CompoundAssignmentStatement compound:
-                AnalyseExpression(compound.Target);
-                AnalyseExpression(compound.Expression);
+                compound.Target = AnalyseExpression(compound.Target);
+                compound.Expression = AnalyseExpression(compound.Expression);
+
 
                 if (compound.Target is IdentifierExpression id)
                     compound.Target.ResolvedType = GetTypeInfo(id.Name);
@@ -165,10 +175,10 @@ public static class SemanticAnalyser
                                         $" and {compound.Expression.ResolvedType.TypeName}");
                 break;
             case ExpressionStatement expression:
-                AnalyseExpression(expression.Expression);
+                expression.Expression = AnalyseExpression(expression.Expression);
                 break;
             case IfStatement ifStatement:
-                AnalyseExpression(ifStatement.Condition);
+                ifStatement.Condition = AnalyseExpression(ifStatement.Condition);
 
                 if (ifStatement.Condition.ResolvedType.TypeName != "bool")
                     throw new Exception($"Condition of if statement must resolve to type 'bool', got: {ifStatement.Condition.ResolvedType.TypeName}");
@@ -189,7 +199,7 @@ public static class SemanticAnalyser
             case ForStatement forStatement:
                 EnterScope(forStatement.Scope);
                 AnalyseStatement(forStatement.Initialiser);
-                AnalyseExpression(forStatement.Condition);
+                forStatement.Condition = AnalyseExpression(forStatement.Condition);
 
                 if (forStatement.Condition.ResolvedType.TypeName != "bool")
                     throw new Exception($"Condition of for loop must resolve to type 'bool', got: {forStatement.Condition.ResolvedType.TypeName}");
@@ -202,7 +212,7 @@ public static class SemanticAnalyser
                 ExitScope();
                 break;
             case ReturnStatement returnStatement:
-                AnalyseExpression(returnStatement.Expression);
+                returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
                 {
@@ -223,7 +233,7 @@ public static class SemanticAnalyser
 
     #region  Expressions
 
-    static void AnalyseExpression(IExpression expression)
+    static IExpression AnalyseExpression(IExpression expression)
     {
         switch (expression)
         {
@@ -231,7 +241,10 @@ public static class SemanticAnalyser
                 // these have already been resolved in the Parser
                 break;
             case IdentifierExpression identifier:
-                identifier.ResolvedType = GetTypeInfo(identifier.Name);
+                TypeInfo identifierInfo = GetTypeInfo(identifier.Name);
+                identifier.ResolvedType = identifierInfo;
+                if (identifierInfo.Pointee != null)     // ptr variable: dereference is default
+                    expression = new UnaryExpression(UnaryOperator.Dereference, identifier, true) { ResolvedType = identifierInfo.Pointee };
                 break;
             case CallExpression call:
                 if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
@@ -274,12 +287,36 @@ public static class SemanticAnalyser
                 memberAccess.ResolvedType = memberInfo!.Type;
                 break;
             case UnaryExpression unary:
-                AnalyseExpression(unary.Operand);
-                unary.ResolvedType = unary.Operand.ResolvedType;
+                unary.Operand = AnalyseExpression(unary.Operand);
+                if (unary.Op == UnaryOperator.AddressOf)
+                {
+                    if (unary.Operand is UnaryExpression operandExpression      // reference of a dereference of a ptr
+                        && operandExpression.Op == UnaryOperator.Dereference)   // -> redundant
+                    {
+                        //Log.Info(operandExpression.Operand.ToString() + " " + operandExpression.Operand.ResolvedType.TypeName);
+                        expression = operandExpression.Operand;
+                        //expression.ResolvedType = operandExpression.Operand.ResolvedType;
+                        //Log.Info(expression.ResolvedType.TypeName);
+                        //unary.Operand = operandExpression.Operand;
+                        //unary.ResolvedType = operandExpression.Operand.ResolvedType;
+                    }
+                    else
+                    {
+                        // Log.Info(unary.Operand.ResolvedType.TypeName + " " + unary.Operand.ToString());
+                        unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType.TypeName,
+                                                  null,
+                                                  null,
+                                                  unary.Operand.ResolvedType);
+                    }
+                }
+                else
+                {
+                    unary.ResolvedType = unary.Operand.ResolvedType;
+                }
                 break;
             case BinaryExpression binary:
-                AnalyseExpression(binary.Left);
-                AnalyseExpression(binary.Right);
+                binary.Left = AnalyseExpression(binary.Left);
+                binary.Right = AnalyseExpression(binary.Right);
 
                 binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType, binary.Right.ResolvedType.TypeName);
                 binary.Right.ResolvedType = PromoteIfLiteral(binary.Right.ResolvedType, binary.Left.ResolvedType.TypeName);
@@ -300,7 +337,7 @@ public static class SemanticAnalyser
 
                 for (int i = 0; i < instantiation.Arguments.Count; i++)
                 {
-                    AnalyseExpression(instantiation.Arguments[i]);
+                    instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
                     // check implicit cast from arg type → field type
                     instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType,
                                                                                typeSymbolInfo.Parameters![i].TypeName);
@@ -311,6 +348,8 @@ public static class SemanticAnalyser
                 instantiation.ResolvedType = typeSymbolInfo.Type;
                 break;
         }
+
+        return expression;
     }
 
     #endregion
@@ -320,7 +359,7 @@ public static class SemanticAnalyser
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
-            throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
+            throw new Exception($"Type or Name '{typeOrName}' is gnot defined in {currentScope.FullName}");
 
         return symbolInfo!.Type;
     }
@@ -471,6 +510,9 @@ public static class SemanticAnalyser
 
     static TypeInfo PromoteIfLiteral(TypeInfo typeInfo, string expectedType)
     {
+        if (typeInfo.TypeName.StartsWith('@'))
+            return typeInfo;
+
         int builtinA = IRGenerator.BuiltinTypeIndex(typeInfo.TypeName);
         int builtinB = IRGenerator.BuiltinTypeIndex(expectedType);
 
@@ -479,7 +521,7 @@ public static class SemanticAnalyser
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {
-            TypeInfo type = new TypeInfo(expectedType, null, null);
+            TypeInfo type = new TypeInfo(expectedType, null, null, null);
             return type;    // literals always cast to the more concrete value
         }
 

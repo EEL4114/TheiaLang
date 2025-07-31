@@ -4,6 +4,14 @@ union StringData(int i, float f);
 
 int main()
 {
+    Entity entity = new Entity(70, 1.5);
+
+    float HP = entity.health;
+
+    float moreHealth = 1 + entity.health;
+
+    moreHealth += 1;
+
     m(7);
     n(true);
     n(false);
@@ -11,10 +19,6 @@ int main()
     int t = m(8);
     int u = 1 + m(8) + 9;
 
-    Entity entity = new Entity(70, 1.5);
-
-    float HP = entity.health;
-    float moreHealth = 1+ entity.health;
 
     int defaultInt;
     float defaultFloat;
