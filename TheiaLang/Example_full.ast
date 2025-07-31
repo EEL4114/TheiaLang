@@ -1,5 +1,5 @@
 Program: Example
-Generated at 31.07.2025 13:26:58
+Generated at 31.07.2025 16:15:38
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -23,6 +23,10 @@ FunctionDeclaration: s32 main | Scope: 'main'
             MemberAccess: f32 entity.health
                 Target: Entity entity
                 Member: f32 health
+        VariableDeclaration: @f32 healthPtr =
+            UnaryExpression: @f32 AddressOf
+                Operand:
+                    Identifier: f32 HP
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: f32 Add
                 Literal: f32 1
@@ -143,7 +147,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then235' 
+            Then: | Scope: 'if_then242' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -156,7 +160,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: f32 1
 
-            Else: | Scope: 'if_else251' 
+            Else: | Scope: 'if_else258' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -178,7 +182,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then281' 
+            Then: | Scope: 'if_then288' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -192,7 +196,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_299' 
+        For: | Scope: 'for_306' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0

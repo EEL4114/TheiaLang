@@ -21,6 +21,8 @@ entry:
   %tmp2 = getelementptr inbounds %Entity, %Entity* %entity_main, i32 0, i32 0
   %tmp3 = load float, float* %tmp2
   store float %tmp3, float* %HP_main
+  %healthPtr_main = alloca float*
+  store float* %HP_main, float** %healthPtr_main
   %moreHealth_main = alloca float
   %tmp4 = getelementptr inbounds %Entity, %Entity* %entity_main, i32 0, i32 0
   %tmp5 = load float, float* %tmp4
@@ -125,16 +127,16 @@ entry:
   br i1 %tmp42, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, i32* %tmp40
-  %f_if_then235 = alloca float
-  store float 0.0, float* %f_if_then235
+  %f_if_then242 = alloca float
+  store float 0.0, float* %f_if_then242
   %tmp43 = fsub float 0.0, 1.0
-  store float %tmp43, float* %f_if_then235
+  store float %tmp43, float* %f_if_then242
   br label %if_end_0
 if_else_0:
   %tmp44 = sub i32 0, 42
   store i32 %tmp44, i32* %tmp40
-  %f_if_else251 = alloca float
-  store float 78.0, float* %f_if_else251
+  %f_if_else258 = alloca float
+  store float 78.0, float* %f_if_else258
   br label %if_end_0
 if_end_0:
   %tmp45 = load i32, i32* %tmp40

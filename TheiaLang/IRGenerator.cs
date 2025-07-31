@@ -140,7 +140,7 @@ public static class IRGenerator
         }
         paramList = string.Join(", ", args);
 
-        sb.AppendLine($"@.fn_{currentScope.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
+        sb.AppendLine($"@.fn_{currentScope!.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
@@ -204,7 +204,7 @@ public static class IRGenerator
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
 
-        string slot = $"%{variableDeclaration.Name}_{currentScope.Name}";
+        string slot = $"%{variableDeclaration.Name}_{currentScope!.Name}";
         sb.AppendLine($"  {slot} = alloca {LLVMType}");
 
         allocas.Peek()[variableDeclaration.Name] = (slot, null);
@@ -242,19 +242,7 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        string? ptr = null;
-        string? LLVMType = null;
-        if (assignment.Target is IdentifierExpression identifier)
-        {
-            if (!TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
-                throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
-                $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
-            ptr = alloc.ptr;
-            LLVMType = TypeToLLVM(typeInfo)!;
-        }
-        else if (assignment.Target is MemberAccessExpression memberAccess)
-            (sb, ptr, LLVMType) = EmitAddressOf(memberAccess, sb);
-
+        (sb, string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
@@ -263,18 +251,7 @@ public static class IRGenerator
 
     static void EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
     {
-        string? ptr = null;
-        string? LLVMType = null;
-        if (assignment.Target is IdentifierExpression identifier)
-        {
-            if (!TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
-                throw new Exception($"Undefined Identifier '{assignment.Target}' in AssignmentStatement: \n" +
-                $"{assignment.Target} = {assignment.Expression.ResolvedType} {assignment.Expression}");
-            ptr = alloc.ptr;
-            LLVMType = TypeToLLVM(typeInfo)!;
-        }
-        else if (assignment.Target is MemberAccessExpression memberAccess)
-            (sb, ptr, LLVMType) = EmitAddressOf(memberAccess, sb);
+        (sb, string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
         BinaryOperator op = assignment.Op switch
         {
@@ -364,7 +341,7 @@ public static class IRGenerator
         sb.Append(code);
         string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType)!;
 
-        if (currentScope.DeclaringNode is FunctionDeclaration)
+        if (currentScope!.DeclaringNode is FunctionDeclaration)
             sb.AppendLine(
                 $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
             $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
@@ -401,15 +378,15 @@ public static class IRGenerator
     }
     static (StringBuilder code, string name) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
-        (StringBuilder cl, string val) = EmitExpression(unaryExpression.Operand);
-        code.Append(cl);
-
-        string tmp = NewTempVar();
-
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType;
         switch (unaryExpression.Op)
         {
             case UnaryOperator.Negate:
+                (StringBuilder cl, string val) = EmitExpression(unaryExpression.Operand);
+                code.Append(cl);
+
+                string tmp = NewTempVar();
+
                 string instr = typeInfo.TypeName switch
                 {
                     "s32" => "sub",
@@ -422,13 +399,12 @@ public static class IRGenerator
                 string llvmType = TypeToLLVM(typeInfo)!;
 
                 code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
-                break;
+                return (code, $"%{tmp}");
             case UnaryOperator.AddressOf:
-
-                break;
+                (code, string ptr, _) = EmitAddressOf(unaryExpression.Operand, code);
+                return (code, ptr);
             default: throw new NotSupportedException($"{unaryExpression.Op}");
         }
-        return (code, $"%{tmp}");
     }
 
     static (StringBuilder code, string name) EmitLiteralExpression(
@@ -627,47 +603,67 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-    static (StringBuilder code, string ptr, string llvmType) EmitAddressOf(MemberAccessExpression memberAccess, StringBuilder code)
-    {
-        string targetName = memberAccess.Target.Name;
-        string memberName = memberAccess.Member.Name;
-
-        if (!TryResolveSlot(targetName, out (string ptr, string? ssa) alloc, out TypeInfo? structInfo))
-            throw new Exception($"Undefined variable '{targetName}'");
-
-        if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
-            throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
-
-        if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
-            throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
-
-        // the scope the target *defines*
-        Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
-
-        if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
-            throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
-
-        if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
-            throw new Exception($"Variable {targetName} does not define any fields");
-
-        int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Name == memberName);
-        if (memberIndex < 0)
-            throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
-
-        string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
-        string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
-
-        string gep = $"%{NewTempVar()}";
-
-        code.AppendLine(
-            $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
-
-        return (code, gep, memberLLVMType);
-    }
-
     #endregion
 
     #region  Helpers
+
+    static (StringBuilder code, string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
+    {
+        switch (target)
+        {
+            case IdentifierExpression identifier:
+                if (!TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
+                    throw new Exception($"Undefined Identifier '{identifier.Name}'");
+                string ptr = alloc.ptr;
+                string llvmType = TypeToLLVM(typeInfo)!;
+                return (code, ptr, llvmType);
+            case UnaryExpression u when u.Op == UnaryOperator.AddressOf:
+                // treat @foo exactly like foo itself for address-of
+                return EmitAddressOf(u.Operand, code);
+            case UnaryExpression u when u.Op == UnaryOperator.Dereference:
+                (StringBuilder? ptrCode, string? reg) = EmitExpression(u.Operand);
+                code.Append(ptrCode);
+                TypeInfo ti = u.Operand.ResolvedType!;
+                string irElemTy = TypeToLLVM(ti.Pointee!)!;
+                return (code, reg, irElemTy);
+            case MemberAccessExpression memberAccess:
+                string targetName = memberAccess.Target.Name;
+                string memberName = memberAccess.Member.Name;
+
+                if (!TryResolveSlot(targetName, out alloc, out TypeInfo? structInfo))
+                    throw new Exception($"Undefined variable '{targetName}'");
+
+                if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
+                    throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
+
+                if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
+                    throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
+
+                // the scope the target *defines*
+                Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
+
+                if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
+                    throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
+
+                if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
+                    throw new Exception($"Variable {targetName} does not define any fields");
+
+                int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Name == memberName);
+                if (memberIndex < 0)
+                    throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
+
+                string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
+                string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
+
+                string gep = $"%{NewTempVar()}";
+
+                code.AppendLine(
+                    $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
+
+                return (code, gep, memberLLVMType);
+            default: throw new NotSupportedException(target.ToString());
+        }
+    }
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
 

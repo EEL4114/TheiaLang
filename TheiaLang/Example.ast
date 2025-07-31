@@ -1,5 +1,5 @@
 Program: Example
-Generated at 31.07.2025 13:26:58
+Generated at 31.07.2025 16:15:38
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -23,6 +23,10 @@ FunctionDeclaration: s32 main | Scope: 'main'
             MemberAccess: entity.health
                 Target: entity
                 Member: health
+        VariableDeclaration: @f32 healthPtr =
+            UnaryExpression: AddressOf
+                Operand:
+                    Identifier: HP
         VariableDeclaration: f32 moreHealth =
             BinaryExpression: Add
                 Literal: int 1
@@ -143,7 +147,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then235' 
+            Then: | Scope: 'if_then242' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -156,7 +160,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int 1
 
-            Else: | Scope: 'if_else251' 
+            Else: | Scope: 'if_else258' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -178,7 +182,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then281' 
+            Then: | Scope: 'if_then288' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -192,7 +196,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_299' 
+        For: | Scope: 'for_306' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: int 0
