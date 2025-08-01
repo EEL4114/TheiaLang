@@ -9,7 +9,7 @@ public class Parser(List<Token> tokens)
 
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
-        globalScope = new Scope("", null, null);
+        globalScope = new Scope("");
         currentScope = globalScope;   // global scope
 
         foreach (string builtinType in IRGenerator.BuiltinTypes)
@@ -69,7 +69,7 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName, null, null, null);
+        TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName);
 
         currentScope.Declare(name,
                              new SymbolInfo(
@@ -111,7 +111,7 @@ public class Parser(List<Token> tokens)
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                TypeInfo typeInfo = new TypeInfo(fieldType, null, null, null);
+                TypeInfo typeInfo = new TypeInfo(fieldType);
                 currentScope.Declare(identifierToken.Lexeme,
                                      new SymbolInfo(
                                         identifierToken.Lexeme,
@@ -144,9 +144,8 @@ public class Parser(List<Token> tokens)
         ExitScope();
         structDeclaration.ResolvedType = new TypeInfo(
             name,
-            fieldNames,
-            fieldTypes,
-            null);
+            fieldNames: fieldNames,
+            fieldTypes: fieldTypes);
 
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
@@ -187,9 +186,8 @@ public class Parser(List<Token> tokens)
 
         TypeInfo unionInfo = new TypeInfo(
             name,
-            fieldNames,
-            fieldTypes,
-            null);
+            fieldNames: fieldNames,
+            fieldTypes: fieldTypes);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo);
         currentScope!.Declare(name, new SymbolInfo(
@@ -232,7 +230,7 @@ public class Parser(List<Token> tokens)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
-            TypeInfo typeInfo = new TypeInfo(type, null, null, null);
+            TypeInfo typeInfo = new TypeInfo(type);
 
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
@@ -259,8 +257,8 @@ public class Parser(List<Token> tokens)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, varName, init);
 
-            TypeInfo typeInfo = new TypeInfo("@" + type, null, null,
-                                             new TypeInfo(type, null, null, null));
+            TypeInfo typeInfo = new TypeInfo("@" + type,
+                                             pointee: new TypeInfo(type));
 
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
@@ -323,8 +321,10 @@ public class Parser(List<Token> tokens)
         // variable declaration?
         if (IsTypeKeyword(Peek().TokenType))
         {
+            Token nameToken;
+            VariableDeclaration variableDeclaration;
             Token typeToken = Advance();
-            Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
+            nameToken = Consume(TokenType.Identifier, "Expected variable name");
             IExpression? init = null;
             if (Match(TokenType.Operator_Equal))
                 init = ParseExpression();
@@ -333,8 +333,8 @@ public class Parser(List<Token> tokens)
 
             string type = TokenTypeToString(typeToken.TokenType);
 
-            VariableDeclaration variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
-            TypeInfo typeInfo = new TypeInfo(type, null, null, null);
+            variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
+            TypeInfo typeInfo = new TypeInfo(type);
             variableDeclaration.ResolvedType = typeInfo;
 
             currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
@@ -361,8 +361,8 @@ public class Parser(List<Token> tokens)
             string type = TokenTypeToString(typeToken.TokenType);
 
             VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, nameToken.Lexeme, init);
-            TypeInfo typeInfo = new TypeInfo("@" + type, null, null,
-                                             new TypeInfo(type, null, null, null));
+            TypeInfo typeInfo = new TypeInfo("@" + type,
+                                             pointee: new TypeInfo(type));
             variableDeclaration.ResolvedType = typeInfo;
 
 
@@ -437,7 +437,7 @@ public class Parser(List<Token> tokens)
 
         IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme);
 
-        Advance(); // consume '='
+        Advance();  // consume '='
         IExpression expr = ParseExpression();
         if (requireSemicolon)
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
@@ -580,7 +580,7 @@ public class Parser(List<Token> tokens)
             };
 
             LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
-            literal.ResolvedType = new TypeInfo(lit.Type, null, null, null);
+            literal.ResolvedType = new TypeInfo(lit.Type);
             return literal;
         }
 
@@ -625,9 +625,7 @@ public class Parser(List<Token> tokens)
             return inner;
         }
 
-
-
-        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression at: {Peek().Line}:{Peek().Column}");
+        Log.Error(2, $"Unexpected token {Peek().TokenType} in expression {PrintCurrentPos()}");
         return null!;
     }
     #endregion
@@ -734,7 +732,7 @@ public class Parser(List<Token> tokens)
 
     void DeclareBuiltin(string typeName)
     {
-        TypeInfo typeInfo = new TypeInfo(typeName, null, null, null);
+        TypeInfo typeInfo = new TypeInfo(typeName);
         globalScope!.Declare(typeName,
             new SymbolInfo(
                 typeName,
@@ -745,7 +743,7 @@ public class Parser(List<Token> tokens)
         globalScope!.Declare("@" + typeName,
             new SymbolInfo(
                 "@" + typeName,
-                new TypeInfo("@" + typeName, null, null, typeInfo),
+                new TypeInfo("@" + typeName, pointee: typeInfo),
                 SymbolKind.Type,
                 null
             ));

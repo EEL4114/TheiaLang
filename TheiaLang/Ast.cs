@@ -75,7 +75,7 @@ public class FunctionDeclaration : IDeclaration
         Arguments = paramaters;
         Statements = statements;
 
-        ResolvedType = new TypeInfo(TypeName, null, null, null);
+        ResolvedType = new TypeInfo(TypeName);
     }
 }
 
@@ -96,9 +96,8 @@ public class StructDeclaration : IDeclaration
         Functions = functions;
 
         ResolvedType = new TypeInfo(name,
-                                    fields.Select(f => f.Name).ToList(),
-                                    fields.Select(f => f.TypeName).ToList(),
-                                    null);
+                                    fieldNames: fields.Select(f => f.Name).ToList(),
+                                    fieldTypes: fields.Select(f => f.TypeName).ToList());
     }
 }
 

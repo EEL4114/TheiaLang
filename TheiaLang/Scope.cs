@@ -19,12 +19,19 @@ public class SymbolInfo(string name,
 }
 
 public class TypeInfo(string type,
-                      List<string>? fieldNames,
-                      List<string>? fieldTypes,
-                      TypeInfo? pointee)
+                      TypeInfo? pointee = null,
+                      TypeInfo? elementType = null,
+                      List<int>? arrayLengths = null,
+                      List<string>? fieldNames = null,
+                      List<string>? fieldTypes = null)
 {
     public string TypeName { get; init; } = type;
+
     public TypeInfo? Pointee { get; init; } = pointee;
+
+    public TypeInfo? ElementType { get; set; } = elementType;
+    public List<int>? ArrayLengths { get; set; } = arrayLengths;    // non-null for static arrays
+
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<string>? FieldTypes { get; set; } = fieldTypes;
 }
@@ -41,7 +48,7 @@ public class Scope : INode
     public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
     public Dictionary<string, SymbolInfo> Symbols { get; } = new Dictionary<string, SymbolInfo>();
 
-    public Scope(string name, INode? declaringNode, Scope? parent)
+    public Scope(string name, INode? declaringNode = null, Scope? parent = null)
     {
         Name = name;
         DeclaringNode = declaringNode;

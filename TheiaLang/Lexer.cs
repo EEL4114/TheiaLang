@@ -58,6 +58,8 @@ public enum TokenType
     Punctuation_ParenthesisR,
     Punctuation_BraceL,
     Punctuation_BraceR,
+    Punctuation_BracketL,
+    Punctuation_BracketR,
 
     EOF
 }
@@ -81,7 +83,8 @@ class Lexer(string sourceCode)
             return new Token(TokenType.EOF, "", line, col);
 
         char c = Advance();
-        //  single char punctuation
+        // single char punctuation
+        // TODO: this looks like it could be done in a more compact way
         switch (c)
         {
             case '+':
@@ -123,6 +126,8 @@ class Lexer(string sourceCode)
             case ')': return MakeToken(TokenType.Punctuation_ParenthesisR, ")");
             case '{': return MakeToken(TokenType.Punctuation_BraceL, "{");
             case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
+            case '[': return MakeToken(TokenType.Punctuation_BracketL, "[");
+            case ']': return MakeToken(TokenType.Punctuation_BracketR, "]");
         }
 
         if (char.IsDigit(c))
@@ -140,7 +145,7 @@ class Lexer(string sourceCode)
             "!=" => MakeToken(TokenType.Operator_Inequal, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
             "||" => MakeToken(TokenType.Operator_AND, s),
-            _ => throw new NotImplementedException(s.ToString()),
+            _ => throw new NotImplementedException($"Unexpected character '{c}' at {line + 1}:{col - 1}"),
         };
 
         if (token != null)

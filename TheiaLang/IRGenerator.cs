@@ -105,12 +105,12 @@ public static class IRGenerator
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
 
+        // TODO this seems unnecessary?
         TypeInfo typeInfo = new TypeInfo
         (
             sd.Name,
-            sd.Fields.Select(f => f.Name).ToList(),
-            fieldTypes.ToList(),
-            null
+            fieldNames: sd.Fields.Select(f => f.Name).ToList(),
+            fieldTypes: fieldTypes.ToList()
         );
 
         varTypes.Peek()[sd.Name] = typeInfo;

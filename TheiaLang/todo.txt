@@ -1,0 +1,22 @@
+execution                               done
+structs                                 done
+struct functions                        done
+basic scope                             done
+unions                                  partial
+basic function calls                    done
+instantiation                           done
+member access                           done
+basic semantic analysis                 done
+basic if statements                     done
+basic for loops                         done
+basic ptrs                              done
+arrays
+lambdas
+scope annotations
+strucural typing
+hex literals
+strings
+owning ptrs
+named parameters
+comptime execution
+array ops

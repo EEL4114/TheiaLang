@@ -2,7 +2,7 @@ namespace TheiaLang;
 
 public static class SemanticAnalyser
 {
-    static Scope currentScope = new Scope("", null, null);
+    static Scope currentScope = new Scope("");
     public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         currentScope = globalScope;
@@ -304,9 +304,7 @@ public static class SemanticAnalyser
                     {
                         // Log.Info(unary.Operand.ResolvedType.TypeName + " " + unary.Operand.ToString());
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
-                                                  null,
-                                                  null,
-                                                  unary.Operand.ResolvedType);
+                                                          pointee: unary.Operand.ResolvedType);
                     }
                 }
                 else
@@ -521,7 +519,7 @@ public static class SemanticAnalyser
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {
-            TypeInfo type = new TypeInfo(expectedType, null, null, null);
+            TypeInfo type = new TypeInfo(expectedType);
             return type;    // literals always cast to the more concrete value
         }
 

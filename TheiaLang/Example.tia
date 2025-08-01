@@ -23,7 +23,6 @@ int main()
     int t = m(8);
     int u = 1 + m(8) + 9;
 
-
     int defaultInt;
     float defaultFloat;
     bool defaultBool;
