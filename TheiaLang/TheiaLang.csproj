@@ -11,4 +11,8 @@
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="LLVMSharp" Version="20.1.2" />
+  </ItemGroup>
+
 </Project>

@@ -18,8 +18,7 @@ Stopwatch LLVMTimer = new Stopwatch();
 List<string> programNames = [];
 if (args.Length == 0)
 {
-    Log.Info("Usage: ");
-    Log.Info("  <path>        compile the specified file or all .tia files in the target folder");
+    Log.Usage();
     return;
 }
 
@@ -33,20 +32,34 @@ if (args[0].EndsWith(".tia"))
 }
 else    // folder
 {
-    string folder = args[0];
-    if (!Directory.Exists(folder))
-        Log.Error(15, $"Folder '{folder}' could not be found");
-
-    IOrderedEnumerable<string> allTia = Directory.EnumerateFiles(folder, "*.tia", SearchOption.TopDirectoryOnly)
-                                            .OrderBy(f => f);
-    int failures = 0;
-    foreach (string tiaFile in allTia)
+    if (args[0].StartsWith("--test") && args.Length > 1)
     {
-        Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
-        if (CompileFile(tiaFile[0..tiaFile.IndexOf('.')]) != 0)
-            failures++;
+        string folder = args[1];
+        if (!Directory.Exists(folder))
+            Log.Error(15, $"Folder '{folder}' could not be found");
+
+        IOrderedEnumerable<string> allTia = Directory.EnumerateFiles(folder, "*.tia", SearchOption.TopDirectoryOnly)
+                                                .OrderBy(f => f);
+        int failures = 0;
+        foreach (string tiaFile in allTia)
+        {
+            Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
+
+            try { CompileFile(tiaFile[0..tiaFile.IndexOf('.')]); }
+            catch (Exception ex)
+            {
+                Log.Error(99, ex.Message);
+                failures++;
+            }
+        }
+        Log.Info($"\n{allTia.Count()} files tested, {failures} failures.");
     }
-    Log.Info($"\n{allTia.Count()} files tested, {failures} failures.");
+    else
+    {
+        Log.Error(16, $"Invalid argument: '{args[0]}'", false);
+        Log.Usage();
+        return;
+    }
 }
 
 int CompileFile(string programName)
@@ -111,20 +124,16 @@ int CompileFile(string programName)
 }
 
 int lexerTime = (int)lexTimer.Elapsed.TotalMilliseconds;
-Log.Time("Lexer took", lexerTime, LEXER_COL);
-
 int parserTime = (int)parseTimer.Elapsed.TotalMilliseconds;
-Log.Time("Parser took", parserTime, PARSER_COL);
-
 int semTime = (int)analysisTimer.Elapsed.TotalMilliseconds;
-Log.Time("Semantic Analysis took", semTime, SEM_COL);
-
-Console.WriteLine($"AST printing took {printTimer.ElapsedMilliseconds} ms");
-
 int IRgenTime = (int)IRGenTimer.Elapsed.TotalMilliseconds;
-Log.Time("IR Generation took", IRgenTime, IRGEN_COL);
-
 int LLVMTime = (int)LLVMTimer.Elapsed.TotalMilliseconds;
+
+Log.Time("Lexer took", lexerTime, LEXER_COL);
+Log.Time("Parser took", parserTime, PARSER_COL);
+Log.Time("Semantic Analysis took", semTime, SEM_COL);
+Console.WriteLine($"AST printing took {printTimer.ElapsedMilliseconds} ms");
+Log.Time("IR Generation took", IRgenTime, IRGEN_COL);
 Log.Time("LLVM took", LLVMTime, LLVM_COL);
 
 Console.WriteLine($"All Processes finished in {compileTimer.ElapsedMilliseconds} ms");
@@ -160,13 +169,14 @@ Console.WriteLine("]");
 
 public static class Log
 {
-    public static void Error(uint code, string message)
+    public static void Error(uint code, string message, bool exit = true)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Error.Write($"Error #{code}: ");
         Console.ResetColor();
         Console.Error.WriteLine(message);
-        Environment.Exit(1);
+        if (exit)
+            Environment.Exit(1);
     }
 
     public static void Info(string text)
@@ -184,6 +194,13 @@ public static class Log
             Console.WriteLine($"  -  {linesPerS} lines/s");
         else
             Console.WriteLine();
+    }
+
+    public static void Usage()
+    {
+        Info("Usage: ");
+        Info("  <path>.tia                       compile the specified file");
+        Info("  --test <path>                    test all files in the specified folder");
     }
 }
 

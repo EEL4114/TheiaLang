@@ -385,7 +385,7 @@ public static class IRGenerator
                     "f32" => "fsub",
                     "f64" => "fsub",
                     "f128" => "fsub",
-                    _ => throw new NotSupportedException($"Unary - on {typeInfo.TypeName}")
+                    _ => throw new NotSupportedException($"Unary '-' on {typeInfo.TypeName}")
                 };
 
                 string zero = typeInfo.TypeName.StartsWith('f') ? "0.0" : "0";
