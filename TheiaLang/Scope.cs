@@ -34,6 +34,33 @@ public class TypeInfo(string type,
 
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<string>? FieldTypes { get; set; } = fieldTypes;
+
+    public override string ToString()
+    {
+        string s = $"{TypeName}";
+        if (Pointee != null)
+            s += $", Pointee = {Pointee}";
+        if (ElementType != null)
+            s += $", ElementType = {ElementType}";
+        if (ArrayLengths != null && ArrayLengths.Count != 0)
+        {
+            s += ", ArrayLengths = {";
+            s += ArrayLengths[0];
+            for (int i = 1; i < ArrayLengths.Count; i++)
+                s += ", " + ArrayLengths[i];
+            s += "}";
+        }
+        // @Robust
+        if (FieldNames != null && FieldNames.Count != 0)
+        {
+            s += ", FieldNames = {";
+            s += FieldTypes![0] + " " + FieldNames[0];
+            for (int i = 1; i < FieldNames.Count; i++)
+                s += ", " + FieldTypes![i] + " " + FieldNames[i];
+            s += "}";
+        }
+        return s;
+    }
 }
 
 public class Scope : INode
@@ -71,6 +98,7 @@ public class Scope : INode
         Symbols[name] = symbolInfo;
     }
 
+    // TODO it may be useful to have a version of this function that always returns or errors
     public bool TryLookup(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
         if (Symbols.TryGetValue(name, out symbolInfo))

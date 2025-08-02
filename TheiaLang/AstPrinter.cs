@@ -171,7 +171,13 @@ static class AstPrinter
                 foreach (IExpression arument in isnt.Arguments)
                     PrintExpression(arument, w, indent + tab * 2);
                 break;
-
+            case IndexExpression index:
+                w.WriteLine($"{Indent(indent)}IndexExpression: {TryType(index.ResolvedType)}");
+                w.WriteLine($"{Indent(indent + tab)}Target:");
+                PrintExpression(index.Target, w, indent + tab * 2);
+                w.WriteLine($"{Indent(indent + tab)}Index:");
+                PrintExpression(index.Index, w, indent + tab * 2);
+                break;
             default:
                 w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>");
                 w.WriteLine($"{Indent(indent + tab)}<{expr}>");

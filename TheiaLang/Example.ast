@@ -1,5 +1,5 @@
 Program: Example
-Generated at 01.08.2025 03:02:08
+Generated at 02.08.2025 13:44:02
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -14,6 +14,20 @@ UnionDeclaration: StringData
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
+        VariableDeclaration: f32[4] Vec4
+        Assign:
+            IndexExpression: 
+                Target:
+                    Identifier: Vec4
+                Index:
+                    Literal: int 1
+            Literal: int 3
+        VariableDeclaration: f32 z =
+            IndexExpression: 
+                Target:
+                    Identifier: Vec4
+                Index:
+                    Literal: int 2
         VariableDeclaration: Entity entity =
             Instantiation: Entity
                 Arguments:
@@ -160,7 +174,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then256' 
+            Then: | Scope: 'if_then277' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -173,7 +187,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int 1
 
-            Else: | Scope: 'if_else272' 
+            Else: | Scope: 'if_else293' 
                 BlockSatement:
                     Assign:
                         Identifier: value
@@ -195,7 +209,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int 0
-            Then: | Scope: 'if_then302' 
+            Then: | Scope: 'if_then323' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -209,7 +223,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_320' 
+        For: | Scope: 'for_341' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: int 0

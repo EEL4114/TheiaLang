@@ -56,6 +56,8 @@ public static class SemanticAnalyser
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
             currentScope.TryLookup(field.Name, out SymbolInfo? fieldInfo, out _);
+            if (fieldInfo == null)
+                throw new Exception($"Could not find struct field '{field.Name}' in {currentScope.FullName}");
             fieldInfo.Type = GetTypeInfo(field.TypeName);
             field.ResolvedType = fieldInfo.Type;
         }
@@ -117,7 +119,12 @@ public static class SemanticAnalyser
             case VariableDeclaration variable:
                 currentScope.TryLookup(variable.Name, out SymbolInfo? symbolInfo, out _);
                 // Log.Info(symbolInfo.Type.TypeName + " " + variable.Name + " " + (symbolInfo.Type.Pointee != null).ToString());
-                symbolInfo.Type = GetTypeInfo(variable.TypeName);
+                if (symbolInfo == null)
+                    throw new Exception($"Could not find variable '{variable.Name}' in {currentScope.FullName}");
+                if (variable.ResolvedType != null)
+                    symbolInfo.Type = UpdateTypeInfo(variable.ResolvedType);
+                else
+                    symbolInfo.Type = GetTypeInfo(variable.TypeName);
                 variable.ResolvedType = symbolInfo.Type;
 
                 if (variable.Init != null)
@@ -140,6 +147,7 @@ public static class SemanticAnalyser
                          + assignment.Target.ToString() + "\nB: "
                          + assignment.Expression.ResolvedType.TypeName
                          + " " + assignment.Expression.ToString());*/
+                // TODO turn this into a switch statement
                 if (assignment.Target is IdentifierExpression identifier)
                 {
                     TypeInfo targetInfo = GetTypeInfo(identifier.Name);
@@ -147,6 +155,9 @@ public static class SemanticAnalyser
                 }
                 else if (assignment.Target is MemberAccessExpression memberAccess)
                     assignment.Target.ResolvedType = memberAccess.ResolvedType;
+                else if (assignment.Target is IndexExpression index)
+                    assignment.Target.ResolvedType = index.ResolvedType;
+
 
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType!,
                                                                       assignment.Target.ResolvedType!.TypeName);
@@ -286,7 +297,7 @@ public static class SemanticAnalyser
                 memberAccess.Member.ResolvedType = memberInfo!.Type;
                 memberAccess.ResolvedType = memberInfo!.Type;
                 break;
-            case UnaryExpression unary:
+            case UnaryExpression unary:     // TODO get rid of some of the comments?
                 unary.Operand = AnalyseExpression(unary.Operand);
                 if (unary.Op == UnaryOperator.AddressOf)
                 {
@@ -345,6 +356,20 @@ public static class SemanticAnalyser
                 }
                 instantiation.ResolvedType = typeSymbolInfo.Type;
                 break;
+            case IndexExpression indexExpression:
+                indexExpression.Target = AnalyseExpression(indexExpression.Target);
+                indexExpression.Index = AnalyseExpression(indexExpression.Index);
+                // TODO this is kinda unsafe
+                indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s32");
+
+                if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
+                    throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
+                if (indexExpression.Target.ResolvedType!.ArrayLengths == null)
+                    throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
+
+                indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
+                break;
+            default: throw new Exception($"Unsupported expression: {expression.GetType()}");
         }
 
         return expression;
@@ -354,11 +379,21 @@ public static class SemanticAnalyser
 
     #region Helpers
 
+    static TypeInfo UpdateTypeInfo(TypeInfo type)
+    {
+        if (type.ArrayLengths != null)
+        {
+            type.ElementType = GetTypeInfo(type.ElementType!.TypeName);
+            return type;
+        }
+        else
+            return GetTypeInfo(type.TypeName);
+    }
+
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
-            throw new Exception($"Type or Name '{typeOrName}' is gnot defined in {currentScope.FullName}");
-
+            throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
         return symbolInfo!.Type;
     }
 

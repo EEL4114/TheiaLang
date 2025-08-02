@@ -221,6 +221,17 @@ public class Parser(List<Token> tokens)
         {
             Token typeToken = Advance();
             string type = typeToken.Lexeme;     // composite type
+
+            List<int> lengths = new List<int>();
+            while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
+            {
+                Advance();  // '['
+                // TODO adapt this for n-Dimensional arrays
+                Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
+                lengths.Add(int.Parse(lengthToken.Lexeme));
+                Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
+            }
+
             string varName = Advance().Lexeme;
 
             IExpression? init = null;
@@ -228,9 +239,19 @@ public class Parser(List<Token> tokens)
                 init = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
-            VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
             TypeInfo typeInfo = new TypeInfo(type);
+            if (lengths != null)
+            {
+                foreach (int length in lengths)
+                    type += $"[{length}]";
+
+                typeInfo = new TypeInfo($"{typeInfo.TypeName}{type}",
+                                           elementType: typeInfo,
+                                           arrayLengths: lengths);
+            }
+
+            VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
 
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
@@ -256,6 +277,7 @@ public class Parser(List<Token> tokens)
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
             VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, varName, init);
+
 
             TypeInfo typeInfo = new TypeInfo("@" + type,
                                              pointee: new TypeInfo(type));
@@ -324,6 +346,17 @@ public class Parser(List<Token> tokens)
             Token nameToken;
             VariableDeclaration variableDeclaration;
             Token typeToken = Advance();
+
+            List<int> lengths = new List<int>();
+            while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
+            {
+                Advance();  // '['
+                // TODO adapt this for n-Dimensional arrays
+                Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
+                lengths.Add(int.Parse(lengthToken.Lexeme));
+                Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
+            }
+
             nameToken = Consume(TokenType.Identifier, "Expected variable name");
             IExpression? init = null;
             if (Match(TokenType.Operator_Equal))
@@ -333,8 +366,18 @@ public class Parser(List<Token> tokens)
 
             string type = TokenTypeToString(typeToken.TokenType);
 
-            variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
             TypeInfo typeInfo = new TypeInfo(type);
+            if (lengths != null)
+            {
+                foreach (int length in lengths)
+                    type += $"[{length}]";
+
+                typeInfo = new TypeInfo($"{type}",
+                                        elementType: typeInfo,
+                                        arrayLengths: lengths);
+            }
+            variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
+
             variableDeclaration.ResolvedType = typeInfo;
 
             currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
@@ -553,6 +596,7 @@ public class Parser(List<Token> tokens)
 
     IExpression ParsePrimary()
     {
+        IExpression expression = null!;
         if (Match(TokenType.Keyword_new))
         {
             Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
@@ -566,10 +610,9 @@ public class Parser(List<Token> tokens)
                     arguments.Add(ParseExpression());
                 } while (Match(TokenType.Punctuation_Comma));
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-            return new InstantiationExpression(type, arguments);
+            expression = new InstantiationExpression(type, arguments);
         }
-
-        if (Match(TokenType.Literal))
+        else if (Match(TokenType.Literal))
         {
             (object Value, string Type) lit = Previous().Lexeme switch
             {
@@ -581,10 +624,9 @@ public class Parser(List<Token> tokens)
 
             LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
             literal.ResolvedType = new TypeInfo(lit.Type);
-            return literal;
+            expression = literal;
         }
-
-        if (Peek().TokenType == TokenType.Identifier
+        else if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
             Token nameToken = Advance();
@@ -598,32 +640,39 @@ public class Parser(List<Token> tokens)
                 } while (Match(TokenType.Punctuation_Comma));
 
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-            return new CallExpression(nameToken.Lexeme, arguments);
+            expression = new CallExpression(nameToken.Lexeme, arguments);
         }
-
-        if (Peek().TokenType == TokenType.Identifier
+        else if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Punctuation_Dot)
         {
             IdentifierExpression target = new IdentifierExpression(Advance().Lexeme);
             Consume(TokenType.Punctuation_Dot, "Expected '.' after member access target");
             IdentifierExpression member = new IdentifierExpression(Advance().Lexeme);
-            return new MemberAccessExpression(target, member);
+            expression = new MemberAccessExpression(target, member);
         }
-
-        if (Match(TokenType.Identifier))
+        else if (Match(TokenType.Identifier))
         {
             string name = Previous().Lexeme;
             IdentifierExpression identifierExpression = new IdentifierExpression(name);
 
-            return identifierExpression;
+            expression = identifierExpression;
         }
-
-        if (Match(TokenType.Punctuation_ParenthesisL))
+        else if (Match(TokenType.Punctuation_ParenthesisL))
         {
             IExpression inner = ParseExpression();
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
-            return inner;
+            expression = inner;
         }
+
+        while (Match(TokenType.Punctuation_BracketL))
+        {
+            IExpression index = ParseExpression();
+            Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
+            expression = new IndexExpression(expression, index);
+        }
+
+        if (expression != null)
+            return expression;
 
         Log.Error(2, $"Unexpected token {Peek().TokenType} in expression {PrintCurrentPos()}");
         return null!;

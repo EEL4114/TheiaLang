@@ -11,12 +11,16 @@ basic if statements                     done
 basic for loops                         done
 basic ptrs                              done
 arrays
+comments
+operator overloading
+strings
+scope annotations for functions
 lambdas
-scope annotations
 strucural typing
 hex literals
-strings
 owning ptrs
 named parameters
 comptime execution
 array ops
+const
+nullability

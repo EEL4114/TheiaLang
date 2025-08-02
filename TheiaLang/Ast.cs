@@ -11,6 +11,7 @@ public interface IDeclaration : INode
     string Name { get; }
     TypeInfo ResolvedType { get; set; }
 }
+
 public interface IStatement : INode { }
 public interface IExpression : INode
 {
@@ -111,7 +112,7 @@ public record UnionDeclaration(
 }
 
 public sealed record VariableDeclaration(
-    string TypeName,                  // "int", "float", "bool"
+    string TypeName,            // "int", "float", "bool"
     string Name,
     IExpression? Init           // null if no initializer
 ) : IDeclaration, IStatement
@@ -271,4 +272,16 @@ public sealed record IdentifierExpression(
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
 }
+
+public sealed record IndexExpression(
+    IExpression Target,
+    IExpression Index                   // TODO: expand this to allow for more complex indexing
+) : IExpression
+{
+    public IExpression Target { get; set; } = Target;
+    public IExpression Index { get; set; } = Index;
+    public TypeInfo? ResolvedType { get; set; }
+    public bool Assignable => true;
+}
+
 #endregion

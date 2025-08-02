@@ -204,12 +204,10 @@ public static class IRGenerator
                 (StringBuilder argCode, string argReg) = EmitExpression(inst.Arguments[i]);
                 sb.Append(argCode);
 
-                // get the pointer to field `i` of our *variable* slot
                 string gep = $"%{NewTempVar()}";
                 sb.AppendLine(
                   $"  {gep} = getelementptr {LLVMType}, {LLVMType}* {slot}, i32 0, i32 {i}");
 
-                // store the argument into that field
                 string LLVMTypeArg = TypeToLLVM(inst.Arguments[i].ResolvedType!)!;
 
                 sb.AppendLine(
@@ -359,6 +357,7 @@ public static class IRGenerator
             InstantiationExpression instantiation => EmitInstantiationExpression(instantiation, code),
             CallExpression call => EmitCallExpression(call, code),
             MemberAccessExpression memberAccess => EmitMemberAccessExpression(memberAccess, code),
+            IndexExpression index => EmitIndexExpression(index, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
@@ -598,6 +597,16 @@ public static class IRGenerator
         return (code, tmp);
     }
 
+    static (StringBuilder code, string name) EmitIndexExpression(IndexExpression index, StringBuilder code)
+    {
+        (code, string ptr, string llvmType) = EmitAddressOf(index, code);
+
+        string tmp = $"%{NewTempVar()}";
+        code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
+        return (code, tmp);
+    }
+
+
     #endregion
 
     #region  Helpers
@@ -656,7 +665,23 @@ public static class IRGenerator
                     $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
 
                 return (code, gep, memberLLVMType);
-            default: throw new NotSupportedException(target.ToString());
+            case IndexExpression index:
+                // TODO make AddressOf not return the StringBuilder for clarity
+                (StringBuilder targetCode, string targetPtr, string arrayTypeLLVM) = EmitAddressOf(index.Target, code);
+
+                (StringBuilder indexCode, string indexReg) = EmitExpression(index.Index);
+                code.Append(indexCode);
+
+                string elementType = TypeToLLVM(index.Target.ResolvedType!.ElementType!)!;
+                string indexType = TypeToLLVM(index.Index.ResolvedType!)!;
+
+                gep = $"%{NewTempVar()}";
+
+                code.AppendLine(
+                    $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, {arrayTypeLLVM}* {targetPtr}, i32 0, i32 {indexReg}");
+                return (code, gep, elementType);
+
+            default: throw new Exception($"Unsupported expression type: {target.GetType()}");
         }
     }
 
@@ -709,6 +734,11 @@ public static class IRGenerator
     {
         if (type.Pointee != null)
             return $"{TypeToLLVM(type.Pointee)}*";
+
+        // TODO make this work with n-Dimensional arrays
+        if (type.ArrayLengths != null && type.ArrayLengths.Count > 0)
+            return $"[{type.ArrayLengths[0]} x {TypeToLLVM(type.ElementType!)}]";
+
         string typeName = type.TypeName;
         if (IsBuiltinType(typeName))
             return typeName switch
