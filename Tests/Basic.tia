@@ -1,0 +1,20 @@
+int main()
+{
+    s8      default_a;
+    s16     default_b;
+    short   default_c;
+    s32     default_d;
+    int     default_e;
+    s64     default_f;
+    long    default_g;
+    s128    default_h;
+    s256    default_i;
+    f16     default_j;
+    half    default_k;
+    f32     default_l;
+    float   default_m;
+    f64     default_n;
+    f64     default_o;
+
+    return 0;
+}

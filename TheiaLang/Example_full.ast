@@ -1,5 +1,5 @@
 Program: Example
-Generated at 02.08.2025 13:53:21
+Generated at 02.08.2025 18:33:10
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -165,7 +165,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Identifier: s32 c
                 Literal: s32 5
         Return: s32 
-            Identifier: s32 c
+            Literal: s32 0
 
 FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
     Arguments:

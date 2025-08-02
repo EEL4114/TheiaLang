@@ -15,7 +15,7 @@ public class Parser(List<Token> tokens)
         foreach (string builtinType in IRGenerator.BuiltinTypes)
             DeclareBuiltin(builtinType);
 
-        List<INode> nodes = new List<INode>();
+        List<INode> nodes = [];
         while (!IsAtEnd())
             if (Match(TokenType.Keyword_struct))
                 nodes.Add(ParseStructDeclaration());
@@ -37,8 +37,8 @@ public class Parser(List<Token> tokens)
         string name = nameToken.Lexeme;
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after function name");
-        List<TypeNamePair> parameters = new List<TypeNamePair>();
-        List<IStatement> body = new List<IStatement>();
+        List<TypeNamePair> parameters = [];
+        List<IStatement> body = [];
 
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnType, name, parameters, body);
 
@@ -90,10 +90,10 @@ public class Parser(List<Token> tokens)
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after struct name");
 
-        List<TypeNamePair> fields = new List<TypeNamePair>();
-        List<string> fieldNames = new List<string>();
-        List<string> fieldTypes = new List<string>();
-        List<FunctionDeclaration> methods = new List<FunctionDeclaration>();
+        List<TypeNamePair> fields = [];
+        List<string> fieldNames = [];
+        List<string> fieldTypes = [];
+        List<FunctionDeclaration> methods = [];
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
 
@@ -163,9 +163,9 @@ public class Parser(List<Token> tokens)
         string name = nameTok.Lexeme;
 
         Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after union name");
-        List<string> fieldNames = new List<string>();
-        List<string> fieldTypes = new List<string>();
-        List<TypeNamePair> variants = new List<TypeNamePair>();
+        List<string> fieldNames = [];
+        List<string> fieldTypes = [];
+        List<TypeNamePair> variants = [];
 
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
@@ -205,7 +205,7 @@ public class Parser(List<Token> tokens)
     List<IStatement> ParseBlock()
     {
         Consume(TokenType.Punctuation_BraceL, "Expected '{' to start block");
-        List<IStatement> statements = new List<IStatement>();
+        List<IStatement> statements = [];
 
         while (!Check(TokenType.Punctuation_BraceR) && !IsAtEnd())
             statements.Add(ParseStatement());
@@ -222,7 +222,7 @@ public class Parser(List<Token> tokens)
             Token typeToken = Advance();
             string type = typeToken.Lexeme;     // composite type
 
-            List<int> lengths = new List<int>();
+            List<int> lengths = [];
             while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
             {
                 Advance();  // '['
@@ -347,7 +347,7 @@ public class Parser(List<Token> tokens)
             VariableDeclaration variableDeclaration;
             Token typeToken = Advance();
 
-            List<int> lengths = new List<int>();
+            List<int> lengths = [];
             while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
             {
                 Advance();  // '['
@@ -603,7 +603,7 @@ public class Parser(List<Token> tokens)
             string type = typeToken.Lexeme;   // composite type
 
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after type name");
-            List<IExpression> arguments = new List<IExpression>();
+            List<IExpression> arguments = [];
             if (!Check(TokenType.Punctuation_ParenthesisR))
                 do
                 {
@@ -632,7 +632,7 @@ public class Parser(List<Token> tokens)
             Token nameToken = Advance();
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
 
-            List<IExpression> arguments = new List<IExpression>();
+            List<IExpression> arguments = [];
             if (!Check(TokenType.Punctuation_ParenthesisR))
                 do
                 {

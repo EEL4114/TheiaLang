@@ -1,0 +1,24 @@
+Program: Basic
+Generated at 02.08.2025 18:33:14
+
+FunctionDeclaration: s32 main | Scope: 'main' 
+    Arguments:
+    BlockSatement:
+        VariableDeclaration: s8 default_a
+        VariableDeclaration: s16 default_b
+        VariableDeclaration: s16 default_c
+        VariableDeclaration: s32 default_d
+        VariableDeclaration: s32 default_e
+        VariableDeclaration: s64 default_f
+        VariableDeclaration: s64 default_g
+        VariableDeclaration: s128 default_h
+        VariableDeclaration: s256 default_i
+        VariableDeclaration: f16 default_j
+        VariableDeclaration: f16 default_k
+        VariableDeclaration: f32 default_l
+        VariableDeclaration: f32 default_m
+        VariableDeclaration: f64 default_n
+        VariableDeclaration: f64 default_o
+        Return: s32 
+            Literal: s32 0
+

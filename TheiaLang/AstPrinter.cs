@@ -193,5 +193,6 @@ static class AstPrinter
 
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ";
     static string PrintScope(Scope scope) => $" | Scope: '{scope.Name}' ";
+
     #endregion
 }

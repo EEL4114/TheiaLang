@@ -4,8 +4,8 @@ namespace TheiaLang;
 
 public static class IRGenerator
 {
-    public static readonly List<string> BuiltinTypes = new List<string>
-    {
+    public static readonly List<string> BuiltinTypes =
+    [
         "bool",
 
         "int",      // literals only
@@ -23,7 +23,7 @@ public static class IRGenerator
         "f128",
 
         // "void",
-    };
+    ];
 
     public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
     public static int BuiltinTypeIndex(string type) => BuiltinTypes.IndexOf(type);
@@ -40,8 +40,8 @@ public static class IRGenerator
         allocas.Clear();
         varTypes.Clear();
 
-        allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
-        varTypes.Push(new Dictionary<string, TypeInfo>());
+        allocas.Push([]);
+        varTypes.Push([]);
 
         currentScope = globalScope;
         StringBuilder sb = new StringBuilder();
@@ -89,7 +89,7 @@ public static class IRGenerator
 
     static void EmitStructType(StructDeclaration sd, StringBuilder sb)
     {
-        List<string> fieldLLVMTypes = new List<string>();
+        List<string> fieldLLVMTypes = [];
         foreach (TypeNamePair field in sd.Fields)
             fieldLLVMTypes.Add(TypeToLLVM(field.ResolvedType!)!);
 
@@ -123,7 +123,7 @@ public static class IRGenerator
 
         string returnTypeLLVM = TypeToLLVM(fn.ResolvedType)!;
 
-        List<string> args = new List<string>();
+        List<string> args = [];
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
         {
             string structPtrType = $"%{parentStruct.Name}*";
@@ -560,7 +560,7 @@ public static class IRGenerator
                 $"but got {call.Arguments.Count}");
         string retTy = TypeToLLVM(calleeInfo.Type)!;
 
-        List<string> argumentList = new List<string>();
+        List<string> argumentList = [];
 
         for (int i = 0; i < call.Arguments.Count; i++)
         {
@@ -605,7 +605,6 @@ public static class IRGenerator
         code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
         return (code, tmp);
     }
-
 
     #endregion
 
@@ -783,8 +782,8 @@ public static class IRGenerator
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
             Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
 
-        allocas.Push(new Dictionary<string, (string ptr, string? ssa)>());
-        varTypes.Push(new Dictionary<string, TypeInfo>());
+        allocas.Push([]);
+        varTypes.Push([]);
 
         currentScope = scope;
     }

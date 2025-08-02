@@ -64,7 +64,7 @@ int main()
     float h = f - g;
 
     bool ok = c > 5;
-    return c;
+    return 0;
 }
 
 int Branchy(int value)

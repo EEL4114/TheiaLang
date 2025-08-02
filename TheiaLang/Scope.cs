@@ -72,8 +72,8 @@ public class Scope : INode
             : $"{Parent.FullName}.{Name}";
     public INode? DeclaringNode;
     public Scope? Parent { get; }
-    public Dictionary<string, Scope> Children { get; } = new Dictionary<string, Scope>();
-    public Dictionary<string, SymbolInfo> Symbols { get; } = new Dictionary<string, SymbolInfo>();
+    public Dictionary<string, Scope> Children { get; } = [];
+    public Dictionary<string, SymbolInfo> Symbols { get; } = [];
 
     public Scope(string name, INode? declaringNode = null, Scope? parent = null)
     {

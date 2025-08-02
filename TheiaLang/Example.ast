@@ -1,5 +1,5 @@
 Program: Example
-Generated at 02.08.2025 13:53:21
+Generated at 02.08.2025 18:33:10
 
 StructDeclaration: Vector3 | Scope: 'Vector3' 
     Fields:
@@ -162,8 +162,8 @@ FunctionDeclaration: s32 main | Scope: 'main'
             BinaryExpression: Greater
                 Identifier: c
                 Literal: int 5
-        Return: 
-            Identifier: c
+        Return: int 
+            Literal: int 0
 
 FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
     Arguments:

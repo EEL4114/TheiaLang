@@ -7,72 +7,127 @@ const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
 const ConsoleColor IRGEN_COL = ConsoleColor.Green;
 const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
 
-string programName = "Example";
-string code = File.ReadAllText(programName + ".tia");
-Stopwatch sw = new Stopwatch();
-Stopwatch sw2 = new Stopwatch();
-sw2.Start();
-sw.Start();
-Lexer lexer = new Lexer(code);
-List<Token> tokens = new List<Token>();
-Token token;
+Stopwatch compileTimer = new Stopwatch();
+Stopwatch lexTimer = new Stopwatch();
+Stopwatch parseTimer = new Stopwatch();
+Stopwatch printTimer = new Stopwatch();
+Stopwatch analysisTimer = new Stopwatch();
+Stopwatch IRGenTimer = new Stopwatch();
+Stopwatch LLVMTimer = new Stopwatch();
 
-do
+List<string> programNames = [];
+if (args.Length == 0)
 {
-    token = lexer.NextToken();
-    tokens.Add(token);
-    // Log.Info(token.ToString());
-} while (token.TokenType != TokenType.EOF);
+    Log.Info("Usage: ");
+    Log.Info("  <path>        compile the specified file or all .tia files in the target folder");
+    return;
+}
 
-int lexerTime = (int)sw2.Elapsed.TotalMilliseconds;
+if (args[0].EndsWith(".tia"))
+{
+    if (!File.Exists(args[0]))
+        Log.Error(15, $"File '{args[0]}' could not be found");
 
+    programNames = [args[0][0..args[0].IndexOf('.')]];
+    CompileFile(programNames[0]);
+}
+else    // folder
+{
+    string folder = args[0];
+    if (!Directory.Exists(folder))
+        Log.Error(15, $"Folder '{folder}' could not be found");
+
+    IOrderedEnumerable<string> allTia = Directory.EnumerateFiles(folder, "*.tia", SearchOption.TopDirectoryOnly)
+                                            .OrderBy(f => f);
+    int failures = 0;
+    foreach (string tiaFile in allTia)
+    {
+        Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
+        if (CompileFile(tiaFile[0..tiaFile.IndexOf('.')]) != 0)
+            failures++;
+    }
+    Log.Info($"\n{allTia.Count()} files tested, {failures} failures.");
+}
+
+int CompileFile(string programName)
+{
+    string code = File.ReadAllText(programName + ".tia");
+
+    compileTimer.Start();
+    lexTimer.Start();
+    Lexer lexer = new Lexer(code);
+    List<Token> tokens = [];
+    Token token;
+
+    do
+    {
+        token = lexer.NextToken();
+        tokens.Add(token);
+        // Log.Info(token.ToString());
+        // Log.Info(token.TokenType.ToString());
+    } while (token.TokenType != TokenType.EOF);
+
+    lexTimer.Stop();
+    parseTimer.Start();
+
+    Parser parser = new Parser(tokens);
+
+    (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName[(1 + programName.LastIndexOf('\\'))..]);
+
+    parseTimer.Stop();
+    compileTimer.Stop();
+    printTimer.Start();
+
+    using StreamWriter writer = new StreamWriter($"{programName}.ast");
+    AstPrinter.Print(ast, writer);
+
+    printTimer.Stop();
+    compileTimer.Start();
+    analysisTimer.Start();
+
+    (ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
+
+    analysisTimer.Stop();
+    compileTimer.Stop();
+    printTimer.Start();
+
+    using StreamWriter writer2 = new StreamWriter($"{programName}_full.ast");
+    AstPrinter.Print(ast, writer2);
+
+    compileTimer.Start();
+    IRGenTimer.Start();
+
+    IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
+
+    IRGenTimer.Stop();
+    LLVMTimer.Start();
+
+    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
+
+    LLVMTimer.Stop();
+    compileTimer.Stop();
+
+    return 0;
+}
+
+int lexerTime = (int)lexTimer.Elapsed.TotalMilliseconds;
 Log.Time("Lexer took", lexerTime, LEXER_COL);
-sw2.Restart();
 
-Parser parser = new Parser(tokens);
-(ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
-int parserTime = (int)sw2.Elapsed.TotalMilliseconds;
-
+int parserTime = (int)parseTimer.Elapsed.TotalMilliseconds;
 Log.Time("Parser took", parserTime, PARSER_COL);
-sw2.Stop();
 
-sw.Stop();
-using StreamWriter writer = new StreamWriter($"{programName}.ast");
-sw2.Restart();
-AstPrinter.Print(ast, writer);
-int printTime = (int)sw2.ElapsedMilliseconds;
-sw.Start();
-sw2.Restart();
-
-(ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
-int semTime = (int)sw2.Elapsed.TotalMilliseconds;
+int semTime = (int)analysisTimer.Elapsed.TotalMilliseconds;
 Log.Time("Semantic Analysis took", semTime, SEM_COL);
-sw2.Stop();
 
-sw.Stop();
-using StreamWriter writer2 = new StreamWriter($"{programName}_full.ast");
-sw2.Restart();
-AstPrinter.Print(ast, writer2);
-Console.WriteLine($"AST printing took {sw2.ElapsedMilliseconds + printTime} ms");
-sw.Start();
-sw2.Restart();
+Console.WriteLine($"AST printing took {printTimer.ElapsedMilliseconds} ms");
 
-IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
-int IRgenTime = (int)sw2.Elapsed.TotalMilliseconds;
+int IRgenTime = (int)IRGenTimer.Elapsed.TotalMilliseconds;
 Log.Time("IR Generation took", IRgenTime, IRGEN_COL);
-sw2.Restart();
 
-Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
+int LLVMTime = (int)LLVMTimer.Elapsed.TotalMilliseconds;
+Log.Time("LLVM took", LLVMTime, LLVM_COL);
 
-int LLVMTime = (int)sw2.Elapsed.TotalMilliseconds;
-
-Console.Write($"LLVM took ");
-Console.ForegroundColor = LLVM_COL;
-Console.WriteLine($"{LLVMTime} ms");
-Console.ResetColor();
-sw2.Stop();
-
-Console.WriteLine($"All Processes finished in {sw.ElapsedMilliseconds} ms");
+Console.WriteLine($"All Processes finished in {compileTimer.ElapsedMilliseconds} ms");
 
 double totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
