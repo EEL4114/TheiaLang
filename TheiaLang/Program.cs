@@ -15,6 +15,7 @@ Stopwatch analysisTimer = new Stopwatch();
 Stopwatch IRGenTimer = new Stopwatch();
 Stopwatch LLVMTimer = new Stopwatch();
 
+
 List<string> programNames = [];
 if (args.Length == 0)
 {
@@ -110,7 +111,7 @@ int CompileFile(string programName)
     compileTimer.Start();
     IRGenTimer.Start();
 
-    IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
+    IRGenerator_old.Emit(ast, globalScope, $"{programName}.ll");
 
     IRGenTimer.Stop();
     LLVMTimer.Start();

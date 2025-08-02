@@ -454,7 +454,7 @@ public static class SemanticAnalyser
             || binaryOperator == BinaryOperator.OR)
             return "bool";
 
-        if (shared != "bool" && IRGenerator.IsBuiltinType(shared))
+        if (shared != "bool" && IRGenerator_old.IsBuiltinType(shared))
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
                 return "bool";
             else
@@ -465,8 +465,8 @@ public static class SemanticAnalyser
 
     static bool CanTypesInteropScalar(string typeA, string typeB)  // a + b; a * b;
     {
-        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
-        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
+        int indexA = IRGenerator_old.BuiltinTypeIndex(typeA);
+        int indexB = IRGenerator_old.BuiltinTypeIndex(typeB);
 
         if (indexA < 0 || indexB < 0)   // scalar math only allowed for built in types
             return false;
@@ -476,8 +476,8 @@ public static class SemanticAnalyser
 
     static bool CanImplicitlyCast(string typeA, string typeB)  // a + b; a * b;
     {
-        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
-        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
+        int indexA = IRGenerator_old.BuiltinTypeIndex(typeA);
+        int indexB = IRGenerator_old.BuiltinTypeIndex(typeB);
 
         if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
             return typeA == typeB;
@@ -487,8 +487,8 @@ public static class SemanticAnalyser
 
     static string? GetImplicitPromotionType(string typeA, string typeB)
     {
-        int i = IRGenerator.BuiltinTypeIndex(typeA);
-        int j = IRGenerator.BuiltinTypeIndex(typeB);
+        int i = IRGenerator_old.BuiltinTypeIndex(typeA);
+        int j = IRGenerator_old.BuiltinTypeIndex(typeB);
 
         string? result = null;
 
@@ -514,8 +514,8 @@ public static class SemanticAnalyser
         if (typeInfo.TypeName.StartsWith('@'))
             return typeInfo;
 
-        int builtinA = IRGenerator.BuiltinTypeIndex(typeInfo.TypeName);
-        int builtinB = IRGenerator.BuiltinTypeIndex(expectedType);
+        int builtinA = IRGenerator_old.BuiltinTypeIndex(typeInfo.TypeName);
+        int builtinB = IRGenerator_old.BuiltinTypeIndex(expectedType);
 
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;

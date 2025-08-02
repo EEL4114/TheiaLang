@@ -12,7 +12,7 @@ public class Parser(List<Token> tokens)
         globalScope = new Scope("");
         currentScope = globalScope;   // global scope
 
-        foreach (string builtinType in IRGenerator.BuiltinTypes)
+        foreach (string builtinType in IRGenerator_old.BuiltinTypes)
             DeclareBuiltin(builtinType);
 
         List<INode> nodes = [];
