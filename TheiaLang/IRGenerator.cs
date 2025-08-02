@@ -226,7 +226,7 @@ public static class IRGenerator
 
     static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
-        (sb, string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
+        (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
@@ -235,7 +235,7 @@ public static class IRGenerator
 
     static void EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
     {
-        (sb, string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
+        (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
         BinaryOperator op = assignment.Op switch
         {
@@ -386,7 +386,7 @@ public static class IRGenerator
                 code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
                 return (code, $"%{tmp}");
             case UnaryOperator.AddressOf:
-                (code, string ptr, _) = EmitAddressOf(unaryExpression.Operand, code);
+                (string ptr, _) = EmitAddressOf(unaryExpression.Operand, code);
                 return (code, ptr);
             case UnaryOperator.Dereference:
                 (cl, val) = EmitExpression(unaryExpression.Operand);
@@ -590,7 +590,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
-        (code, string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
+        (string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
@@ -599,7 +599,7 @@ public static class IRGenerator
 
     static (StringBuilder code, string name) EmitIndexExpression(IndexExpression index, StringBuilder code)
     {
-        (code, string ptr, string llvmType) = EmitAddressOf(index, code);
+        (string ptr, string llvmType) = EmitAddressOf(index, code);
 
         string tmp = $"%{NewTempVar()}";
         code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
@@ -611,7 +611,7 @@ public static class IRGenerator
 
     #region  Helpers
 
-    static (StringBuilder code, string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
+    static (string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
     {
         switch (target)
         {
@@ -620,7 +620,7 @@ public static class IRGenerator
                     throw new Exception($"Undefined Identifier '{identifier.Name}'");
                 string ptr = alloc.ptr;
                 string llvmType = TypeToLLVM(typeInfo)!;
-                return (code, ptr, llvmType);
+                return (ptr, llvmType);
             case UnaryExpression u when u.Op == UnaryOperator.AddressOf:
                 // treat @foo exactly like foo itself for address-of
                 return EmitAddressOf(u.Operand, code);
@@ -629,7 +629,7 @@ public static class IRGenerator
                 code.Append(ptrCode);
                 TypeInfo ti = u.Operand.ResolvedType!;
                 string irElemTy = TypeToLLVM(ti.Pointee!)!;
-                return (code, reg, irElemTy);
+                return (reg, irElemTy);
             case MemberAccessExpression memberAccess:
                 string targetName = memberAccess.Target.Name;
                 string memberName = memberAccess.Member.Name;
@@ -664,10 +664,9 @@ public static class IRGenerator
                 code.AppendLine(
                     $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
 
-                return (code, gep, memberLLVMType);
+                return (gep, memberLLVMType);
             case IndexExpression index:
-                // TODO make AddressOf not return the StringBuilder for clarity
-                (StringBuilder targetCode, string targetPtr, string arrayTypeLLVM) = EmitAddressOf(index.Target, code);
+                (string targetPtr, string arrayTypeLLVM) = EmitAddressOf(index.Target, code);
 
                 (StringBuilder indexCode, string indexReg) = EmitExpression(index.Index);
                 code.Append(indexCode);
@@ -679,7 +678,7 @@ public static class IRGenerator
 
                 code.AppendLine(
                     $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, {arrayTypeLLVM}* {targetPtr}, i32 0, i32 {indexReg}");
-                return (code, gep, elementType);
+                return (gep, elementType);
 
             default: throw new Exception($"Unsupported expression type: {target.GetType()}");
         }

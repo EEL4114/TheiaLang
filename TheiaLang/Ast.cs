@@ -275,7 +275,7 @@ public sealed record IdentifierExpression(
 
 public sealed record IndexExpression(
     IExpression Target,
-    IExpression Index                   // TODO: expand this to allow for more complex indexing
+    IExpression Index
 ) : IExpression
 {
     public IExpression Target { get; set; } = Target;

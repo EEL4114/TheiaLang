@@ -143,22 +143,6 @@ public static class SemanticAnalyser
                 assignment.Target = AnalyseExpression(assignment.Target);
                 assignment.Expression = AnalyseExpression(assignment.Expression);
 
-                /*Log.Info("A: " + assignment.Target.ResolvedType.TypeName + " "
-                         + assignment.Target.ToString() + "\nB: "
-                         + assignment.Expression.ResolvedType.TypeName
-                         + " " + assignment.Expression.ToString());*/
-                // TODO turn this into a switch statement
-                if (assignment.Target is IdentifierExpression identifier)
-                {
-                    TypeInfo targetInfo = GetTypeInfo(identifier.Name);
-                    assignment.Target.ResolvedType = targetInfo;
-                }
-                else if (assignment.Target is MemberAccessExpression memberAccess)
-                    assignment.Target.ResolvedType = memberAccess.ResolvedType;
-                else if (assignment.Target is IndexExpression index)
-                    assignment.Target.ResolvedType = index.ResolvedType;
-
-
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType!,
                                                                       assignment.Target.ResolvedType!.TypeName);
 
@@ -170,12 +154,6 @@ public static class SemanticAnalyser
             case CompoundAssignmentStatement compound:
                 compound.Target = AnalyseExpression(compound.Target);
                 compound.Expression = AnalyseExpression(compound.Expression);
-
-
-                if (compound.Target is IdentifierExpression id)
-                    compound.Target.ResolvedType = GetTypeInfo(id.Name);
-                else if (compound.Target is MemberAccessExpression memberAccess)
-                    compound.Target.ResolvedType = memberAccess.ResolvedType;
 
                 compound.Expression.ResolvedType = PromoteIfLiteral(compound.Expression.ResolvedType!,
                                                                     compound.Target.ResolvedType!.TypeName);
@@ -297,26 +275,16 @@ public static class SemanticAnalyser
                 memberAccess.Member.ResolvedType = memberInfo!.Type;
                 memberAccess.ResolvedType = memberInfo!.Type;
                 break;
-            case UnaryExpression unary:     // TODO get rid of some of the comments?
+            case UnaryExpression unary:
                 unary.Operand = AnalyseExpression(unary.Operand);
                 if (unary.Op == UnaryOperator.AddressOf)
                 {
                     if (unary.Operand is UnaryExpression operandExpression      // reference of a dereference of a ptr
                         && operandExpression.Op == UnaryOperator.Dereference)   // -> redundant
-                    {
-                        //Log.Info(operandExpression.Operand.ToString() + " " + operandExpression.Operand.ResolvedType.TypeName);
                         expression = operandExpression.Operand;
-                        //expression.ResolvedType = operandExpression.Operand.ResolvedType;
-                        //Log.Info(expression.ResolvedType.TypeName);
-                        //unary.Operand = operandExpression.Operand;
-                        //unary.ResolvedType = operandExpression.Operand.ResolvedType;
-                    }
                     else
-                    {
-                        // Log.Info(unary.Operand.ResolvedType.TypeName + " " + unary.Operand.ToString());
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           pointee: unary.Operand.ResolvedType);
-                    }
                 }
                 else
                 {
