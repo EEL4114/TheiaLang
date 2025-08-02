@@ -1,5 +1,5 @@
 Program: Basic
-Generated at 02.08.2025 18:33:14
+Generated at 02.08.2025 18:35:00
 
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
@@ -19,6 +19,171 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: f32 default_m
         VariableDeclaration: f64 default_n
         VariableDeclaration: f64 default_o
+        Assign:
+            Identifier: s8 default_a
+            Literal: s8 0
+        Assign:
+            Identifier: s16 default_b
+            Literal: s16 0
+        Assign:
+            Identifier: s16 default_c
+            Literal: s16 0
+        Assign:
+            Identifier: s32 default_d
+            Literal: s32 0
+        Assign:
+            Identifier: s32 default_e
+            Literal: s32 0
+        Assign:
+            Identifier: s64 default_f
+            Literal: s64 0
+        Assign:
+            Identifier: s64 default_g
+            Literal: s64 0
+        Assign:
+            Identifier: s128 default_h
+            Literal: s128 0
+        Assign:
+            Identifier: s256 default_i
+            Literal: s256 0
+        Assign:
+            Identifier: f16 default_j
+            Literal: f16 0
+        Assign:
+            Identifier: f16 default_k
+            Literal: f16 0
+        Assign:
+            Identifier: f32 default_l
+            Literal: f32 0
+        Assign:
+            Identifier: f32 default_m
+            Literal: f32 0
+        Assign:
+            Identifier: f64 default_n
+            Literal: f64 0
+        Assign:
+            Identifier: f64 default_o
+            Literal: f64 0
+        Assign:
+            Identifier: s8 default_a
+            UnaryExpression: s8 Negate
+                Operand:
+                    Literal: s8 1
+        Assign:
+            Identifier: s16 default_b
+            UnaryExpression: s16 Negate
+                Operand:
+                    Literal: s16 1
+        Assign:
+            Identifier: s16 default_c
+            UnaryExpression: s16 Negate
+                Operand:
+                    Literal: s16 1
+        Assign:
+            Identifier: s32 default_d
+            UnaryExpression: s32 Negate
+                Operand:
+                    Literal: s32 1
+        Assign:
+            Identifier: s32 default_e
+            UnaryExpression: s32 Negate
+                Operand:
+                    Literal: s32 1
+        Assign:
+            Identifier: s64 default_f
+            UnaryExpression: s64 Negate
+                Operand:
+                    Literal: s64 1
+        Assign:
+            Identifier: s64 default_g
+            UnaryExpression: s64 Negate
+                Operand:
+                    Literal: s64 1
+        Assign:
+            Identifier: s128 default_h
+            UnaryExpression: s128 Negate
+                Operand:
+                    Literal: s128 1
+        Assign:
+            Identifier: s256 default_i
+            UnaryExpression: s256 Negate
+                Operand:
+                    Literal: s256 1
+        Assign:
+            Identifier: f16 default_j
+            UnaryExpression: f16 Negate
+                Operand:
+                    Literal: f16 1
+        Assign:
+            Identifier: f16 default_k
+            UnaryExpression: f16 Negate
+                Operand:
+                    Literal: f16 1
+        Assign:
+            Identifier: f32 default_l
+            UnaryExpression: f32 Negate
+                Operand:
+                    Literal: f32 1
+        Assign:
+            Identifier: f32 default_m
+            UnaryExpression: f32 Negate
+                Operand:
+                    Literal: f32 1
+        Assign:
+            Identifier: f64 default_n
+            UnaryExpression: f64 Negate
+                Operand:
+                    Literal: f64 1
+        Assign:
+            Identifier: f64 default_o
+            UnaryExpression: f64 Negate
+                Operand:
+                    Literal: f64 1
+        Assign:
+            Identifier: s8 default_a
+            Literal: s8 1
+        Assign:
+            Identifier: s16 default_b
+            Literal: s16 1
+        Assign:
+            Identifier: s16 default_c
+            Literal: s16 1
+        Assign:
+            Identifier: s32 default_d
+            Literal: s32 1
+        Assign:
+            Identifier: s32 default_e
+            Literal: s32 1
+        Assign:
+            Identifier: s64 default_f
+            Literal: s64 1
+        Assign:
+            Identifier: s64 default_g
+            Literal: s64 1
+        Assign:
+            Identifier: s128 default_h
+            Literal: s128 1
+        Assign:
+            Identifier: s256 default_i
+            Literal: s256 1
+        Assign:
+            Identifier: f16 default_j
+            Literal: f16 1
+        Assign:
+            Identifier: f16 default_k
+            Literal: f16 1
+        Assign:
+            Identifier: f32 default_l
+            Literal: f32 1
+        Assign:
+            Identifier: f32 default_m
+            Literal: f32 1
+        Assign:
+            Identifier: f64 default_n
+            Literal: f64 1
+        Assign:
+            Identifier: f64 default_o
+            Literal: f64 1
         Return: s32 
             Literal: s32 0
 

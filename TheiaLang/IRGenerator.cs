@@ -374,12 +374,21 @@ public static class IRGenerator
 
                 string instr = typeInfo.TypeName switch
                 {
+                    "s8" => "sub",
+                    "s16" => "sub",
                     "s32" => "sub",
+                    "s64" => "sub",
+                    "s128" => "sub",
+                    "s256" => "sub",
+
+                    "f16" => "fsub",
                     "f32" => "fsub",
+                    "f64" => "fsub",
+                    "f128" => "fsub",
                     _ => throw new NotSupportedException($"Unary - on {typeInfo.TypeName}")
                 };
 
-                string zero = typeInfo.TypeName == "s32" ? "0" : "0.0";
+                string zero = typeInfo.TypeName.StartsWith('f') ? "0.0" : "0";
 
                 string llvmType = TypeToLLVM(typeInfo)!;
 
