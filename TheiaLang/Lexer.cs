@@ -242,6 +242,46 @@ class Lexer(string sourceCode)
                 continue;
             }
 
+            if (c == '/' && PeekNext() == '/')  // comments
+            {
+                Advance();
+                Advance();
+                while (!IsAtEnd() && Peek() != '\n')
+                    Advance();
+                continue;
+            }
+
+            if (c == '/' && PeekNext() == '*')  // block comments
+            {
+                Advance();
+                Advance();
+                int depth = 1;                  // we support nested block comments
+                while (depth > 0 && !IsAtEnd())
+                {
+                    if (Peek() == '/' && PeekNext() == '*')
+                    {
+                        depth++;
+                        Advance(); Advance();
+                    }
+                    else if (Peek() == '*' && PeekNext() == '/')
+                    {
+                        depth--;
+                        Advance(); Advance();
+                    }
+                    else
+                    {
+                        // track newlines inside comments so token positions remain accurate
+                        if (Peek() == '\n')
+                        {
+                            line++;
+                            col = 1;
+                        }
+                        Advance();
+                    }
+                }
+                continue;
+            }
+
             if (c == '\n')
             {
                 Advance();      // consume '\n'

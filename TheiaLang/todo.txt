@@ -11,8 +11,8 @@ basic if statements                     done
 basic for loops                         done
 basic ptrs                              done
 basic arrays                            done
-testing
-comments
+testing                                 done
+comments                                done
 operator overloading
 strings
 scope annotations for functions
