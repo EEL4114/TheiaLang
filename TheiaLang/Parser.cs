@@ -343,7 +343,7 @@ public class Parser(List<Token> tokens)
         }
 
         // variable declaration?
-        if (IsTypeKeyword(Peek().TokenType))
+        if (IsBuiltinTypeKeyword(Peek().TokenType))
         {
             Token nameToken;
             VariableDeclaration variableDeclaration;
@@ -392,7 +392,7 @@ public class Parser(List<Token> tokens)
         }
 
         if (Peek().TokenType == TokenType.Punctuation_At
-            && IsTypeKeyword(PeekNext().TokenType))
+            && IsBuiltinTypeKeyword(PeekNext().TokenType))
         {
             Advance();  // '@'
             Token typeToken = Advance();
@@ -702,7 +702,7 @@ public class Parser(List<Token> tokens)
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 
-    static string TokenTypeToString(TokenType tokenType) => tokenType switch
+    string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
         TokenType.Keyword_bool => "bool",
 
@@ -718,7 +718,9 @@ public class Parser(List<Token> tokens)
         TokenType.Keyword_f64 => "f64",
         TokenType.Keyword_f128 => "f128",
 
-        _ => throw new Exception($"Unsupported Type '{tokenType}'"),
+        TokenType.Identifier => Previous().Lexeme,
+
+        _ => throw new Exception($"Unsupported Type '{Previous().Lexeme}' at {PrintCurrentPos()}"),
     };
     #endregion
 
@@ -740,13 +742,13 @@ public class Parser(List<Token> tokens)
     Token ConsumeTypeKeyword()
     {
         Token t = Peek();
-        if (IsTypeKeyword(t.TokenType)) return Advance();
+        if (IsBuiltinTypeKeyword(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
         Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {t.Line}:{t.Column}");
         return null!;
     }
 
     // 2 == Keyword_bool; 12 == Keyword_f128
-    static bool IsTypeKeyword(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
+    static bool IsBuiltinTypeKeyword(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
 
     int Line() => tokens[pos].Line + 1;
     int Column() => tokens[pos].Column;

@@ -15,8 +15,7 @@ Stopwatch analysisTimer = new Stopwatch();
 Stopwatch IRGenTimer = new Stopwatch();
 Stopwatch LLVMTimer = new Stopwatch();
 
-
-List<string> programNames = [];
+#region Args
 if (args.Length == 0)
 {
     Log.Usage();
@@ -28,8 +27,7 @@ if (args[0].EndsWith(".tia"))
     if (!File.Exists(args[0]))
         Log.Error(15, $"File '{args[0]}' could not be found");
 
-    programNames = [args[0][0..args[0].IndexOf('.')]];
-    CompileFile(programNames[0]);
+    CompileFile(args[0][0..args[0].IndexOf('.')]);
 }
 else    // folder
 {
@@ -41,18 +39,23 @@ else    // folder
 
         IOrderedEnumerable<string> allTia = Directory.EnumerateFiles(folder, "*.tia", SearchOption.TopDirectoryOnly)
                                                 .OrderBy(f => f);
+
         int failures = 0;
         foreach (string tiaFile in allTia)
         {
-            Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
-
-            try { CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false); }
+            try
+            {
+                CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false);
+            }
             catch (Exception ex)
             {
-                Log.Error(99, ex.Message);
                 failures++;
+                Log.Error(99, ex.Message, false);
             }
+
+            Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
         }
+
         Log.Info($"\n{allTia.Count()} files tested, {failures} failures.");
     }
     else
@@ -62,6 +65,10 @@ else    // folder
         return;
     }
 }
+
+#endregion
+
+#region  Compilation
 
 int CompileFile(string programName, bool insertLogs = true)
 {
@@ -123,6 +130,8 @@ int CompileFile(string programName, bool insertLogs = true)
 
     return 0;
 }
+
+#endregion
 
 int lexerTime = (int)lexTimer.Elapsed.TotalMilliseconds;
 int parserTime = (int)parseTimer.Elapsed.TotalMilliseconds;

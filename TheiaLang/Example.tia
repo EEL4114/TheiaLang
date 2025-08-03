@@ -1,5 +1,3 @@
-struct Vector3(float x, float y, float z);
-
 union StringData(int i, float f);
 
 int main()
@@ -121,3 +119,10 @@ struct Entity(float health, float speed)
         return health > 0;
     }
 }
+
+struct Transform(
+    Vector3 position, 
+    Vector3 rotation, 
+    Vector3 scale);
+
+struct Vector3(f32 x, f32 y, f32 z);

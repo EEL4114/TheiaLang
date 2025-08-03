@@ -1,11 +1,5 @@
 Program: Example
-Generated at 03.08.2025 15:38:21
-
-StructDeclaration: Vector3 | Scope: 'Vector3' 
-    Fields:
-        f32 x
-        f32 y
-        f32 z
+Generated at 03.08.2025 19:25:45
 
 UnionDeclaration: StringData
     s32 i
@@ -172,7 +166,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool EqualEqual
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then277' 
+            Then: | Scope: 'if_then264' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -183,7 +177,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 f
                         Literal: f32 -1
 
-            Else: | Scope: 'if_else293' 
+            Else: | Scope: 'if_else280' 
                 BlockSatement:
                     Assign:
                         Identifier: s32 value
@@ -203,7 +197,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool Less
                     Identifier: s32 value
                     Literal: s32 0
-            Then: | Scope: 'if_then323' 
+            Then: | Scope: 'if_then310' 
                 BlockSatement:
                     Return: s32 
                         UnaryExpression: s32 Negate
@@ -217,7 +211,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_341' 
+        For: | Scope: 'for_328' 
             Initialiser:
                 VariableDeclaration: s32 i =
                     Literal: s32 0
@@ -269,4 +263,16 @@ StructDeclaration: Entity | Scope: 'Entity'
                 BinaryExpression: bool Greater
                     Identifier: f32 health
                     Literal: f32 0
+
+StructDeclaration: Transform | Scope: 'Transform' 
+    Fields:
+        Vector3 position
+        Vector3 rotation
+        Vector3 scale
+
+StructDeclaration: Vector3 | Scope: 'Vector3' 
+    Fields:
+        f32 x
+        f32 y
+        f32 z
 

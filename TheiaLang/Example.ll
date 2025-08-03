@@ -5,8 +5,9 @@ declare i32 @puts(i8*, ...)
 declare i32 @printf(i8*, ...)
 @.print_ret_fmt = private constant [16 x i8] c"%s returned %d\0A\00"
 
-%Vector3 = type { float, float, float }
 %Entity = type { float, float }
+%Transform = type { %Vector3, %Vector3, %Vector3 }
+%Vector3 = type { float, float, float }
 
 @.fn_main_str = private constant [5 x i8] c"main\00"
 define i32 @main() {
@@ -137,14 +138,14 @@ entry:
   br i1 %tmp45, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, i32* %tmp43
-  %f_if_then277 = alloca float
-  store float 0.0, float* %f_if_then277
-  store float -1.0, float* %f_if_then277
+  %f_if_then264 = alloca float
+  store float 0.0, float* %f_if_then264
+  store float -1.0, float* %f_if_then264
   br label %if_end_0
 if_else_0:
   store i32 -42, i32* %tmp43
-  %f_if_else293 = alloca float
-  store float 78.0, float* %f_if_else293
+  %f_if_else280 = alloca float
+  store float 78.0, float* %f_if_else280
   br label %if_end_0
 if_end_0:
   %tmp46 = load i32, i32* %tmp43

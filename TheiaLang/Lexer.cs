@@ -2,6 +2,7 @@ using System.Text;
 
 namespace TheiaLang;
 
+// TODO handle single char tokens by their ASCII value?
 public enum TokenType
 {
     Identifier,
@@ -243,9 +244,9 @@ class Lexer(string sourceCode)
 
             if (c == '\n')
             {
-                Advance();    // consume '\n'
+                Advance();      // consume '\n'
                 line++;
-                col = 1;     // reset column at new line
+                col = 1;        // reset column at new line
                 continue;
             }
 
