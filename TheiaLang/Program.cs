@@ -46,7 +46,7 @@ else    // folder
         {
             Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
 
-            try { CompileFile(tiaFile[0..tiaFile.IndexOf('.')]); }
+            try { CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false); }
             catch (Exception ex)
             {
                 Log.Error(99, ex.Message);
@@ -63,7 +63,7 @@ else    // folder
     }
 }
 
-int CompileFile(string programName)
+int CompileFile(string programName, bool insertLogs = true)
 {
     string code = File.ReadAllText(programName + ".tia");
 
@@ -111,7 +111,7 @@ int CompileFile(string programName)
     compileTimer.Start();
     IRGenTimer.Start();
 
-    IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
+    IRGenerator.Emit(ast, globalScope, $"{programName}.ll", insertLogs);
 
     IRGenTimer.Stop();
     LLVMTimer.Start();

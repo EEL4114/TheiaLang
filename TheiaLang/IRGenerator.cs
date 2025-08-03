@@ -35,8 +35,11 @@ public static class IRGenerator
     static Scope? currentScope;
     static ulong labelCounter = 0;
 
-    public static void Emit(ProgramNode program, Scope globalScope, string pathLl)
+    static bool AutoLog;
+
+    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
     {
+        AutoLog = autoLog;
         allocas.Clear();
         varTypes.Clear();
 
@@ -48,12 +51,14 @@ public static class IRGenerator
 
         sb.AppendLine("; ModuleID = 'theia_module'");
         sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
-        sb.AppendLine("declare i32 @puts(i8*, ...)");
-        sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
 
-        sb.AppendLine("declare i32 @printf(i8*, ...)");
-        sb.AppendLine("@.print_ret_fmt = private constant [16 x i8] c\"%s returned %d\\0A\\00\"");
-
+        if (AutoLog)
+        {
+            sb.AppendLine("declare i32 @puts(i8*, ...)");
+            sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
+            sb.AppendLine("declare i32 @printf(i8*, ...)");
+            sb.AppendLine("@.print_ret_fmt = private constant [16 x i8] c\"%s returned %d\\0A\\00\"");
+        }
         sb.AppendLine();
 
         foreach (INode decl in program.Nodes)
@@ -139,8 +144,8 @@ public static class IRGenerator
             args.Add($"{parameterLLVMType} %{parameter.Name}");
         }
         paramList = string.Join(", ", args);
-
-        sb.AppendLine($"@.fn_{currentScope!.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
+        if (AutoLog)
+            sb.AppendLine($"@.fn_{currentScope!.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
@@ -325,7 +330,7 @@ public static class IRGenerator
         sb.Append(code);
         string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType!)!;
 
-        if (currentScope!.DeclaringNode is FunctionDeclaration)
+        if (AutoLog && currentScope!.DeclaringNode is FunctionDeclaration)
             sb.AppendLine(
                 $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
             $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
@@ -583,7 +588,7 @@ public static class IRGenerator
             string actualLLVMType = TypeToLLVM(actualType)!;
             string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
 
-            if (actualType.TypeName != calleeInfo.Type.TypeName)
+            if (actualType.TypeName != calleeInfo.Type.TypeName && AutoLog)
                 Log.Error(12,
                     $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
                     $"expected {calleeInfo.Type.TypeName}, got {actualType.TypeName}");
@@ -774,11 +779,13 @@ public static class IRGenerator
 
     static void EnterScope(string scopeName)
     {
+#if DEBUG   // this can only fail if there is a bug in the IRGen itself
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsKey(scopeName))  // verify that we can enter that scope
             Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope.FullName}'");
+#endif
 
         allocas.Push([]);
         varTypes.Push([]);
@@ -788,12 +795,13 @@ public static class IRGenerator
 
     static void EnterScope(Scope scope)
     {
+#if DEBUG   // this can only fail if there is a bug in the IRGen itself
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
             Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
-
+#endif
         allocas.Push([]);
         varTypes.Push([]);
 
@@ -802,17 +810,15 @@ public static class IRGenerator
 
     static void ExitScope()
     {
+#if DEBUG   // this can only fail if there is a bug in the IRGen itself
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
         if (currentScope.Parent == null)
             Log.Error(9, $"Can't exit out of scope '{currentScope.FullName}'");
-
-        if (currentScope.DeclaringNode != null)
-        {
-            allocas.Pop();
-            varTypes.Pop();
-        }
+#endif
+        allocas.Pop();
+        varTypes.Pop();
 
         currentScope = currentScope.Parent;
     }

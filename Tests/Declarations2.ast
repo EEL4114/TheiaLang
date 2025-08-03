@@ -1,0 +1,87 @@
+Program: Declarations2
+Generated at 03.08.2025 15:38:25
+
+StructDeclaration: Vector3 | Scope: 'Vector3' 
+    Fields:
+        f32 x
+        f32 y
+        f32 z
+
+FunctionDeclaration: s32 main | Scope: 'main' 
+    Arguments:
+    BlockSatement:
+        VariableDeclaration: Vector3 position =
+            Instantiation: Vector3
+                Arguments:
+                    UnaryExpression: Negate
+                        Operand:
+                            Literal: int 1
+                    UnaryExpression: Negate
+                        Operand:
+                            Literal: int 1
+                    UnaryExpression: Negate
+                        Operand:
+                            Literal: int 1
+        VariableDeclaration: f32 z =
+            MemberAccess: position.z
+                Target: position
+                Member: z
+        VariableDeclaration: f32[3] arr
+        Assign:
+            IndexExpression: 
+                Target:
+                    Identifier: arr
+                Index:
+                    Literal: int 1
+            MemberAccess: position.x
+                Target: position
+                Member: x
+        Assign:
+            IndexExpression: 
+                Target:
+                    Identifier: arr
+                Index:
+                    Literal: int 2
+            MemberAccess: position.y
+                Target: position
+                Member: y
+        Assign:
+            IndexExpression: 
+                Target:
+                    Identifier: arr
+                Index:
+                    Literal: int 3
+            IndexExpression: 
+                Target:
+                    Identifier: arr
+                Index:
+                    Literal: int 1
+        VariableDeclaration: f32 negY =
+            UnaryExpression: Negate
+                Operand:
+                    IndexExpression: 
+                        Target:
+                            Identifier: arr
+                        Index:
+                            Literal: int 2
+        VariableDeclaration: Vector3 position2 =
+            Instantiation: Vector3
+                Arguments:
+                    IndexExpression: 
+                        Target:
+                            Identifier: arr
+                        Index:
+                            Literal: int 1
+                    UnaryExpression: Negate
+                        Operand:
+                            IndexExpression: 
+                                Target:
+                                    Identifier: arr
+                                Index:
+                                    Literal: int 2
+                    MemberAccess: position.z
+                        Target: position
+                        Member: z
+        Return: int 
+            Literal: int 0
+

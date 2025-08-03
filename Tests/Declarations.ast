@@ -1,5 +1,5 @@
-Program: Basic
-Generated at 03.08.2025 15:19:39
+Program: Declarations
+Generated at 03.08.2025 15:38:25
 
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
@@ -66,124 +66,124 @@ FunctionDeclaration: s32 main | Scope: 'main'
             Literal: int 0
         Assign:
             Identifier: default_a
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_b
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_c
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_d
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_e
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_f
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_g
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_h
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_i
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_j
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_k
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_l
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_m
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_n
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_o
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int 1
+            Literal: int 1
         Assign:
             Identifier: default_a
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_b
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_c
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_d
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_e
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_f
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_g
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_h
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_i
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_j
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_k
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_l
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_m
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_n
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Assign:
             Identifier: default_o
-            Literal: int 1
+            UnaryExpression: Negate
+                Operand:
+                    Literal: int 1
         Return: int 
             Literal: int 0
 

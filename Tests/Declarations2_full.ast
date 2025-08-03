@@ -1,0 +1,81 @@
+Program: Declarations2
+Generated at 03.08.2025 15:38:25
+
+StructDeclaration: Vector3 | Scope: 'Vector3' 
+    Fields:
+        f32 x
+        f32 y
+        f32 z
+
+FunctionDeclaration: s32 main | Scope: 'main' 
+    Arguments:
+    BlockSatement:
+        VariableDeclaration: Vector3 position =
+            Instantiation: Vector3
+                Arguments:
+                    Literal: f32 -1
+                    Literal: f32 -1
+                    Literal: f32 -1
+        VariableDeclaration: f32 z =
+            MemberAccess: f32 position.z
+                Target: Vector3 position
+                Member: f32 z
+        VariableDeclaration: f32[3] arr
+        Assign:
+            IndexExpression: f32 
+                Target:
+                    Identifier: f32[3] arr
+                Index:
+                    Literal: s32 1
+            MemberAccess: f32 position.x
+                Target: Vector3 position
+                Member: f32 x
+        Assign:
+            IndexExpression: f32 
+                Target:
+                    Identifier: f32[3] arr
+                Index:
+                    Literal: s32 2
+            MemberAccess: f32 position.y
+                Target: Vector3 position
+                Member: f32 y
+        Assign:
+            IndexExpression: f32 
+                Target:
+                    Identifier: f32[3] arr
+                Index:
+                    Literal: s32 3
+            IndexExpression: f32 
+                Target:
+                    Identifier: f32[3] arr
+                Index:
+                    Literal: s32 1
+        VariableDeclaration: f32 negY =
+            UnaryExpression: f32 Negate
+                Operand:
+                    IndexExpression: f32 
+                        Target:
+                            Identifier: f32[3] arr
+                        Index:
+                            Literal: s32 2
+        VariableDeclaration: Vector3 position2 =
+            Instantiation: Vector3
+                Arguments:
+                    IndexExpression: f32 
+                        Target:
+                            Identifier: f32[3] arr
+                        Index:
+                            Literal: s32 1
+                    UnaryExpression: f32 Negate
+                        Operand:
+                            IndexExpression: f32 
+                                Target:
+                                    Identifier: f32[3] arr
+                                Index:
+                                    Literal: s32 2
+                    MemberAccess: f32 position.z
+                        Target: Vector3 position
+                        Member: f32 z
+        Return: s32 
+            Literal: s32 0
+

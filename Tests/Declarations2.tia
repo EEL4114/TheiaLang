@@ -1,0 +1,15 @@
+struct Vector3(float x, float y, float z);
+
+int main()
+{
+    Vector3 position = new Vector3(-1, -1, -1);
+    f32 z = position.z;
+    f32[3] arr;
+    arr[1] = position.x;
+    arr[2] = position.y;
+    arr[3] = arr[1];
+    f32 negY = -arr[2];
+    Vector3 position2 = new Vector3(arr[1], -arr[2], position.z);
+
+    return 0;
+}
