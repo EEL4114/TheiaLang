@@ -3,13 +3,14 @@ using TheiaLang;
 static class AstPrinter
 {
     const int tab = 4;
-    public static void Print(ProgramNode program, TextWriter w)
-        => PrintProgram(program, w, 0);
+    public static void Print(ProgramNode program, TextWriter w, bool includeTimestamp = true)
+        => PrintProgram(program, w, 0, includeTimestamp);
 
-    static void PrintProgram(ProgramNode p, TextWriter w, int indent)
+    static void PrintProgram(ProgramNode p, TextWriter w, int indent, bool includeTimestamp = true)
     {
         w.WriteLine($"Program: {p.Name}");
-        w.WriteLine($"Generated at {DateTime.Now}");
+        if (includeTimestamp)
+            w.WriteLine($"Generated at {DateTime.Now}");
         w.WriteLine();
 
         foreach (INode node in p.Nodes)

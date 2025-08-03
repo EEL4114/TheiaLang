@@ -16,6 +16,7 @@ Stopwatch IRGenTimer = new Stopwatch();
 Stopwatch LLVMTimer = new Stopwatch();
 
 #region Args
+
 if (args.Length == 0)
 {
     Log.Usage();
@@ -38,14 +39,14 @@ else    // folder
             Log.Error(15, $"Folder '{folder}' could not be found");
 
         IOrderedEnumerable<string> allTia = Directory.EnumerateFiles(folder, "*.tia", SearchOption.TopDirectoryOnly)
-                                                .OrderBy(f => f);
+                                                     .OrderBy(f => f);
 
         int failures = 0;
         foreach (string tiaFile in allTia)
         {
             try
             {
-                CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false);
+                CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false, timestamps: false);
             }
             catch (Exception ex)
             {
@@ -70,7 +71,7 @@ else    // folder
 
 #region  Compilation
 
-int CompileFile(string programName, bool insertLogs = true)
+int CompileFile(string programName, bool insertLogs = true, bool timestamps = true)
 {
     string code = File.ReadAllText(programName + ".tia");
 
@@ -100,7 +101,7 @@ int CompileFile(string programName, bool insertLogs = true)
     printTimer.Start();
 
     using StreamWriter writer = new StreamWriter($"{programName}.ast");
-    AstPrinter.Print(ast, writer);
+    AstPrinter.Print(ast, writer, timestamps);
 
     printTimer.Stop();
     compileTimer.Start();
@@ -113,7 +114,7 @@ int CompileFile(string programName, bool insertLogs = true)
     printTimer.Start();
 
     using StreamWriter writer2 = new StreamWriter($"{programName}_full.ast");
-    AstPrinter.Print(ast, writer2);
+    AstPrinter.Print(ast, writer2, timestamps);
 
     compileTimer.Start();
     IRGenTimer.Start();
