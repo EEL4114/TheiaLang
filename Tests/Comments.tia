@@ -1,0 +1,7 @@
+
+// this is the entry point to the program
+/* function */ int main(/* no args */)
+{   // body
+    /*number*/ int a = /* nasty /* nested /*comment*/ */ */17;
+    return a - 17;
+}

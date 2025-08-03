@@ -1,0 +1,13 @@
+Program: Comments
+Generated at 03.08.2025 19:44:18
+
+FunctionDeclaration: s32 main | Scope: 'main' 
+    Arguments:
+    BlockSatement:
+        VariableDeclaration: s32 a =
+            Literal: s32 17
+        Return: s32 
+            BinaryExpression: s32 Subtract
+                Identifier: s32 a
+                Literal: s32 17
+

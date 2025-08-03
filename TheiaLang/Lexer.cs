@@ -109,6 +109,13 @@ class Lexer(string sourceCode)
                     return MakeToken(TokenType.Operator_MultEqual, "*=");
                 }
                 return MakeToken(TokenType.Operator_Mult, "*");
+            case '/':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_DivEqual, "/=");
+                }
+                return MakeToken(TokenType.Operator_Div, "/");
             case '=':
                 if (Peek() == '=')
                 {
