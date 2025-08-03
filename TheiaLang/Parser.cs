@@ -1,3 +1,5 @@
+using LLVMSharp.Interop;
+
 namespace TheiaLang;
 
 public class Parser(List<Token> tokens)

@@ -20,7 +20,104 @@ int main()
 
     moreHealth += 1;
 
+    m(7);
+    n(true);
+    n(false);
+
+    int t = m(8);
+    int u = 1 + m(8) + 9;
+
+    int defaultInt;
+    float defaultFloat;
+    bool defaultBool;
+
+    entity.health = 4;
+
+    s32 default_s32;
+    f32 default_f32;
+    bool default_bool;
+
+    f128 quad = 14;
+
+    int i = -1;
+    Abs(i);
+    Abs(-i);
+
+    float j = -1;
+    
+    bool fg = false;
+    bool ffg = true;
+    int a = 5;
+    int b = 10;
+    int c = a + b;
+
+    int d = 4;
+
+    d = a + c;
+
+    d = d + 42;
+
+    float f = 2.5;
+    f *= 2;
+
+    float g = 3;
+    float h = f - g;
+
+    bool ok = c > 5;
     return 0;
 }
 
-struct Entity(float health, float speed);
+int Branchy(int value)
+{
+    if(value == 0)
+    {
+        value = 42;
+        float f = 0;
+        f = -1;
+    }
+    else
+    {
+        value = -42;
+        float f = 78;
+    }
+    return value;
+}
+
+int Abs(int value)
+{
+    if(value < 0)
+    {
+        return -value;
+    }
+    return value;
+}
+
+int Loopy(int value)
+{
+    for(int i = 0; i < value; i -= 3)
+    {
+        value += i;
+    }
+    return value;
+}
+
+bool n(bool b)
+{
+    return b;
+}
+
+int m(int j)
+{
+    int i = 3;
+    j += 4;
+    int health = 7;
+    return j;
+}
+
+struct Entity(float health, float speed)
+{
+    bool IsAlive()
+    {
+        return health > 0;
+    }
+}

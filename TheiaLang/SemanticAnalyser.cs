@@ -1,3 +1,6 @@
+using System.Globalization;
+using LLVMSharp.Interop;
+
 namespace TheiaLang;
 
 public static class SemanticAnalyser
@@ -277,6 +280,31 @@ public static class SemanticAnalyser
                 break;
             case UnaryExpression unary:
                 unary.Operand = AnalyseExpression(unary.Operand);
+                if (unary.Op == UnaryOperator.Negate && unary.Operand is LiteralExpression literal)
+                {
+                    if (unary.Operand.ResolvedType!.TypeName == "bool")
+                        Log.Info("Invalid operation '-' on type 'bool'");
+                    else
+                    {
+                        object v;
+                        string lexeme = "-" + literal.Lexeme;
+                        if (literal.ResolvedType.TypeName == "int")
+                        {
+                            int.TryParse(lexeme, out int j);
+                            v = j;
+                        }
+                        else
+                        {
+                            double.TryParse(lexeme, out double j);
+                            v = j;
+                        }
+
+                        LiteralExpression literalExpression = new LiteralExpression(v, lexeme);
+                        literalExpression.ResolvedType = literal.ResolvedType;
+                        expression = literalExpression;
+                        AnalyseExpression(expression);
+                    }
+                }
                 if (unary.Op == UnaryOperator.AddressOf)
                 {
                     if (unary.Operand is UnaryExpression operandExpression      // reference of a dereference of a ptr

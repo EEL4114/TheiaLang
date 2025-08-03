@@ -1,5 +1,5 @@
 Program: Basic
-Generated at 03.08.2025 03:21:46
+Generated at 03.08.2025 15:19:39
 
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
@@ -66,79 +66,49 @@ FunctionDeclaration: s32 main | Scope: 'main'
             Literal: f64 0
         Assign:
             Identifier: s8 default_a
-            UnaryExpression: s8 Negate
-                Operand:
-                    Literal: s8 1
+            Literal: s8 -1
         Assign:
             Identifier: s16 default_b
-            UnaryExpression: s16 Negate
-                Operand:
-                    Literal: s16 1
+            Literal: s16 -1
         Assign:
             Identifier: s16 default_c
-            UnaryExpression: s16 Negate
-                Operand:
-                    Literal: s16 1
+            Literal: s16 -1
         Assign:
             Identifier: s32 default_d
-            UnaryExpression: s32 Negate
-                Operand:
-                    Literal: s32 1
+            Literal: s32 -1
         Assign:
             Identifier: s32 default_e
-            UnaryExpression: s32 Negate
-                Operand:
-                    Literal: s32 1
+            Literal: s32 -1
         Assign:
             Identifier: s64 default_f
-            UnaryExpression: s64 Negate
-                Operand:
-                    Literal: s64 1
+            Literal: s64 -1
         Assign:
             Identifier: s64 default_g
-            UnaryExpression: s64 Negate
-                Operand:
-                    Literal: s64 1
+            Literal: s64 -1
         Assign:
             Identifier: s128 default_h
-            UnaryExpression: s128 Negate
-                Operand:
-                    Literal: s128 1
+            Literal: s128 -1
         Assign:
             Identifier: s256 default_i
-            UnaryExpression: s256 Negate
-                Operand:
-                    Literal: s256 1
+            Literal: s256 -1
         Assign:
             Identifier: f16 default_j
-            UnaryExpression: f16 Negate
-                Operand:
-                    Literal: f16 1
+            Literal: f16 -1
         Assign:
             Identifier: f16 default_k
-            UnaryExpression: f16 Negate
-                Operand:
-                    Literal: f16 1
+            Literal: f16 -1
         Assign:
             Identifier: f32 default_l
-            UnaryExpression: f32 Negate
-                Operand:
-                    Literal: f32 1
+            Literal: f32 -1
         Assign:
             Identifier: f32 default_m
-            UnaryExpression: f32 Negate
-                Operand:
-                    Literal: f32 1
+            Literal: f32 -1
         Assign:
             Identifier: f64 default_n
-            UnaryExpression: f64 Negate
-                Operand:
-                    Literal: f64 1
+            Literal: f64 -1
         Assign:
             Identifier: f64 default_o
-            UnaryExpression: f64 Negate
-                Operand:
-                    Literal: f64 1
+            Literal: f64 -1
         Assign:
             Identifier: s8 default_a
             Literal: s8 1
