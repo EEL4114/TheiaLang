@@ -111,7 +111,7 @@ int CompileFile(string programName)
     compileTimer.Start();
     IRGenTimer.Start();
 
-    IRGenerator_old.Emit(ast, globalScope, $"{programName}.ll");
+    IRGenerator.Emit(ast, globalScope, $"{programName}.ll");
 
     IRGenTimer.Stop();
     LLVMTimer.Start();
