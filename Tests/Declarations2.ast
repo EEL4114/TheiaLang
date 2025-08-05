@@ -3,29 +3,29 @@ Program: Declarations2
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: Vector3 position =
+        VariableDeclaration:  position =
             Instantiation: Vector3
                 Arguments:
                     UnaryExpression: Negate
                         Operand:
-                            Literal: int 1
+                            Literal: int (0 B) 1
                     UnaryExpression: Negate
                         Operand:
-                            Literal: int 1
+                            Literal: int (0 B) 1
                     UnaryExpression: Negate
                         Operand:
-                            Literal: int 1
-        VariableDeclaration: f32 z =
+                            Literal: int (0 B) 1
+        VariableDeclaration: f32 (0 B)  z =
             MemberAccess: position.z
                 Target: position
                 Member: z
-        VariableDeclaration: f32[3] arr
+        VariableDeclaration: f32[3] (0 B)  arr
         Assign:
             IndexExpression: 
                 Target:
                     Identifier: arr
                 Index:
-                    Literal: int 1
+                    Literal: int (0 B) 1
             MemberAccess: position.x
                 Target: position
                 Member: x
@@ -34,7 +34,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Target:
                     Identifier: arr
                 Index:
-                    Literal: int 2
+                    Literal: int (0 B) 2
             MemberAccess: position.y
                 Target: position
                 Member: y
@@ -43,48 +43,48 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Target:
                     Identifier: arr
                 Index:
-                    Literal: int 3
+                    Literal: int (0 B) 3
             IndexExpression: 
                 Target:
                     Identifier: arr
                 Index:
-                    Literal: int 1
-        VariableDeclaration: f32 negY =
+                    Literal: int (0 B) 1
+        VariableDeclaration: f32 (0 B)  negY =
             UnaryExpression: Negate
                 Operand:
                     IndexExpression: 
                         Target:
                             Identifier: arr
                         Index:
-                            Literal: int 2
-        VariableDeclaration: Vector3 position2 =
+                            Literal: int (0 B) 2
+        VariableDeclaration:  position2 =
             Instantiation: Vector3
                 Arguments:
                     IndexExpression: 
                         Target:
                             Identifier: arr
                         Index:
-                            Literal: int 1
+                            Literal: int (0 B) 1
                     UnaryExpression: Negate
                         Operand:
                             IndexExpression: 
                                 Target:
                                     Identifier: arr
                                 Index:
-                                    Literal: int 2
+                                    Literal: int (0 B) 2
                     MemberAccess: position.z
                         Target: position
                         Member: z
-        Return: int 
-            Literal: int 0
+        Return: int (0 B) 
+            Literal: int (0 B) 0
 
-StructDeclaration: Transform | Scope: 'Transform' 
+StructDeclaration: Transform (0 B) | Scope: 'Transform' 
     Fields:
         Vector3 position
         Vector3 rotation
         Vector3 scale
 
-StructDeclaration: Vector3 | Scope: 'Vector3' 
+StructDeclaration: Vector3 (0 B) | Scope: 'Vector3' 
     Fields:
         f32 x
         f32 y

@@ -3,10 +3,10 @@ Program: Comments
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: s32 a =
-            Literal: s32 17
-        Return: s32 
-            BinaryExpression: s32 Subtract
-                Identifier: s32 a
-                Literal: s32 17
+        VariableDeclaration: s32 (4 B)  a =
+            Literal: s32 (4 B) 17
+        Return: s32 (4 B) 
+            BinaryExpression: s32 (4 B) Subtract
+                Identifier: s32 (4 B) a
+                Literal: s32 (4 B) 17
 

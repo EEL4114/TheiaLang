@@ -3,82 +3,82 @@ Program: Declarations2
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: Vector3 position =
+        VariableDeclaration: Vector3 (12 B)  position =
             Instantiation: Vector3
                 Arguments:
-                    Literal: f32 -1
-                    Literal: f32 -1
-                    Literal: f32 -1
-        VariableDeclaration: f32 z =
-            MemberAccess: f32 position.z
-                Target: Vector3 position
-                Member: f32 z
-        VariableDeclaration: f32[3] arr
+                    Literal: f32 (4 B) -1
+                    Literal: f32 (4 B) -1
+                    Literal: f32 (4 B) -1
+        VariableDeclaration: f32 (4 B)  z =
+            MemberAccess: f32 (4 B) position.z
+                Target: Vector3 (12 B) position
+                Member: f32 (4 B) z
+        VariableDeclaration: f32[3] (12 B)  arr
         Assign:
-            IndexExpression: f32 
+            IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[3] arr
+                    Identifier: f32[3] (12 B) arr
                 Index:
-                    Literal: s32 1
-            MemberAccess: f32 position.x
-                Target: Vector3 position
-                Member: f32 x
+                    Literal: s32 (4 B) 1
+            MemberAccess: f32 (4 B) position.x
+                Target: Vector3 (12 B) position
+                Member: f32 (4 B) x
         Assign:
-            IndexExpression: f32 
+            IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[3] arr
+                    Identifier: f32[3] (12 B) arr
                 Index:
-                    Literal: s32 2
-            MemberAccess: f32 position.y
-                Target: Vector3 position
-                Member: f32 y
+                    Literal: s32 (4 B) 2
+            MemberAccess: f32 (4 B) position.y
+                Target: Vector3 (12 B) position
+                Member: f32 (4 B) y
         Assign:
-            IndexExpression: f32 
+            IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[3] arr
+                    Identifier: f32[3] (12 B) arr
                 Index:
-                    Literal: s32 3
-            IndexExpression: f32 
+                    Literal: s32 (4 B) 3
+            IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[3] arr
+                    Identifier: f32[3] (12 B) arr
                 Index:
-                    Literal: s32 1
-        VariableDeclaration: f32 negY =
-            UnaryExpression: f32 Negate
+                    Literal: s32 (4 B) 1
+        VariableDeclaration: f32 (4 B)  negY =
+            UnaryExpression: f32 (4 B) Negate
                 Operand:
-                    IndexExpression: f32 
+                    IndexExpression: f32 (4 B) 
                         Target:
-                            Identifier: f32[3] arr
+                            Identifier: f32[3] (12 B) arr
                         Index:
-                            Literal: s32 2
-        VariableDeclaration: Vector3 position2 =
+                            Literal: s32 (4 B) 2
+        VariableDeclaration: Vector3 (12 B)  position2 =
             Instantiation: Vector3
                 Arguments:
-                    IndexExpression: f32 
+                    IndexExpression: f32 (4 B) 
                         Target:
-                            Identifier: f32[3] arr
+                            Identifier: f32[3] (12 B) arr
                         Index:
-                            Literal: s32 1
-                    UnaryExpression: f32 Negate
+                            Literal: s32 (4 B) 1
+                    UnaryExpression: f32 (4 B) Negate
                         Operand:
-                            IndexExpression: f32 
+                            IndexExpression: f32 (4 B) 
                                 Target:
-                                    Identifier: f32[3] arr
+                                    Identifier: f32[3] (12 B) arr
                                 Index:
-                                    Literal: s32 2
-                    MemberAccess: f32 position.z
-                        Target: Vector3 position
-                        Member: f32 z
-        Return: s32 
-            Literal: s32 0
+                                    Literal: s32 (4 B) 2
+                    MemberAccess: f32 (4 B) position.z
+                        Target: Vector3 (12 B) position
+                        Member: f32 (4 B) z
+        Return: s32 (4 B) 
+            Literal: s32 (4 B) 0
 
-StructDeclaration: Transform | Scope: 'Transform' 
+StructDeclaration: Transform (36 B) | Scope: 'Transform' 
     Fields:
         Vector3 position
         Vector3 rotation
         Vector3 scale
 
-StructDeclaration: Vector3 | Scope: 'Vector3' 
+StructDeclaration: Vector3 (12 B) | Scope: 'Vector3' 
     Fields:
         f32 x
         f32 y

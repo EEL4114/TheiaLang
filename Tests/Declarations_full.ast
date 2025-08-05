@@ -3,156 +3,156 @@ Program: Declarations
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: s8 default_a
-        VariableDeclaration: s16 default_b
-        VariableDeclaration: s16 default_c
-        VariableDeclaration: s32 default_d
-        VariableDeclaration: s32 default_e
-        VariableDeclaration: s64 default_f
-        VariableDeclaration: s64 default_g
-        VariableDeclaration: s128 default_h
-        VariableDeclaration: s256 default_i
-        VariableDeclaration: f16 default_j
-        VariableDeclaration: f16 default_k
-        VariableDeclaration: f32 default_l
-        VariableDeclaration: f32 default_m
-        VariableDeclaration: f64 default_n
-        VariableDeclaration: f64 default_o
+        VariableDeclaration: s8 (1 B)  default_a
+        VariableDeclaration: s16 (2 B)  default_b
+        VariableDeclaration: s16 (2 B)  default_c
+        VariableDeclaration: s32 (4 B)  default_d
+        VariableDeclaration: s32 (4 B)  default_e
+        VariableDeclaration: s64 (8 B)  default_f
+        VariableDeclaration: s64 (8 B)  default_g
+        VariableDeclaration: s128 (16 B)  default_h
+        VariableDeclaration: s256 (32 B)  default_i
+        VariableDeclaration: f16 (2 B)  default_j
+        VariableDeclaration: f16 (2 B)  default_k
+        VariableDeclaration: f32 (4 B)  default_l
+        VariableDeclaration: f32 (4 B)  default_m
+        VariableDeclaration: f64 (8 B)  default_n
+        VariableDeclaration: f64 (8 B)  default_o
         Assign:
-            Identifier: s8 default_a
-            Literal: s8 0
+            Identifier: s8 (1 B) default_a
+            Literal: s8 (1 B) 0
         Assign:
-            Identifier: s16 default_b
-            Literal: s16 0
+            Identifier: s16 (2 B) default_b
+            Literal: s16 (2 B) 0
         Assign:
-            Identifier: s16 default_c
-            Literal: s16 0
+            Identifier: s16 (2 B) default_c
+            Literal: s16 (2 B) 0
         Assign:
-            Identifier: s32 default_d
-            Literal: s32 0
+            Identifier: s32 (4 B) default_d
+            Literal: s32 (4 B) 0
         Assign:
-            Identifier: s32 default_e
-            Literal: s32 0
+            Identifier: s32 (4 B) default_e
+            Literal: s32 (4 B) 0
         Assign:
-            Identifier: s64 default_f
-            Literal: s64 0
+            Identifier: s64 (8 B) default_f
+            Literal: s64 (8 B) 0
         Assign:
-            Identifier: s64 default_g
-            Literal: s64 0
+            Identifier: s64 (8 B) default_g
+            Literal: s64 (8 B) 0
         Assign:
-            Identifier: s128 default_h
-            Literal: s128 0
+            Identifier: s128 (16 B) default_h
+            Literal: s128 (16 B) 0
         Assign:
-            Identifier: s256 default_i
-            Literal: s256 0
+            Identifier: s256 (32 B) default_i
+            Literal: s256 (32 B) 0
         Assign:
-            Identifier: f16 default_j
-            Literal: f16 0
+            Identifier: f16 (2 B) default_j
+            Literal: f16 (2 B) 0
         Assign:
-            Identifier: f16 default_k
-            Literal: f16 0
+            Identifier: f16 (2 B) default_k
+            Literal: f16 (2 B) 0
         Assign:
-            Identifier: f32 default_l
-            Literal: f32 0
+            Identifier: f32 (4 B) default_l
+            Literal: f32 (4 B) 0
         Assign:
-            Identifier: f32 default_m
-            Literal: f32 0
+            Identifier: f32 (4 B) default_m
+            Literal: f32 (4 B) 0
         Assign:
-            Identifier: f64 default_n
-            Literal: f64 0
+            Identifier: f64 (8 B) default_n
+            Literal: f64 (8 B) 0
         Assign:
-            Identifier: f64 default_o
-            Literal: f64 0
+            Identifier: f64 (8 B) default_o
+            Literal: f64 (8 B) 0
         Assign:
-            Identifier: s8 default_a
-            Literal: s8 1
+            Identifier: s8 (1 B) default_a
+            Literal: s8 (1 B) 1
         Assign:
-            Identifier: s16 default_b
-            Literal: s16 1
+            Identifier: s16 (2 B) default_b
+            Literal: s16 (2 B) 1
         Assign:
-            Identifier: s16 default_c
-            Literal: s16 1
+            Identifier: s16 (2 B) default_c
+            Literal: s16 (2 B) 1
         Assign:
-            Identifier: s32 default_d
-            Literal: s32 1
+            Identifier: s32 (4 B) default_d
+            Literal: s32 (4 B) 1
         Assign:
-            Identifier: s32 default_e
-            Literal: s32 1
+            Identifier: s32 (4 B) default_e
+            Literal: s32 (4 B) 1
         Assign:
-            Identifier: s64 default_f
-            Literal: s64 1
+            Identifier: s64 (8 B) default_f
+            Literal: s64 (8 B) 1
         Assign:
-            Identifier: s64 default_g
-            Literal: s64 1
+            Identifier: s64 (8 B) default_g
+            Literal: s64 (8 B) 1
         Assign:
-            Identifier: s128 default_h
-            Literal: s128 1
+            Identifier: s128 (16 B) default_h
+            Literal: s128 (16 B) 1
         Assign:
-            Identifier: s256 default_i
-            Literal: s256 1
+            Identifier: s256 (32 B) default_i
+            Literal: s256 (32 B) 1
         Assign:
-            Identifier: f16 default_j
-            Literal: f16 1
+            Identifier: f16 (2 B) default_j
+            Literal: f16 (2 B) 1
         Assign:
-            Identifier: f16 default_k
-            Literal: f16 1
+            Identifier: f16 (2 B) default_k
+            Literal: f16 (2 B) 1
         Assign:
-            Identifier: f32 default_l
-            Literal: f32 1
+            Identifier: f32 (4 B) default_l
+            Literal: f32 (4 B) 1
         Assign:
-            Identifier: f32 default_m
-            Literal: f32 1
+            Identifier: f32 (4 B) default_m
+            Literal: f32 (4 B) 1
         Assign:
-            Identifier: f64 default_n
-            Literal: f64 1
+            Identifier: f64 (8 B) default_n
+            Literal: f64 (8 B) 1
         Assign:
-            Identifier: f64 default_o
-            Literal: f64 1
+            Identifier: f64 (8 B) default_o
+            Literal: f64 (8 B) 1
         Assign:
-            Identifier: s8 default_a
-            Literal: s8 -1
+            Identifier: s8 (1 B) default_a
+            Literal: s8 (1 B) -1
         Assign:
-            Identifier: s16 default_b
-            Literal: s16 -1
+            Identifier: s16 (2 B) default_b
+            Literal: s16 (2 B) -1
         Assign:
-            Identifier: s16 default_c
-            Literal: s16 -1
+            Identifier: s16 (2 B) default_c
+            Literal: s16 (2 B) -1
         Assign:
-            Identifier: s32 default_d
-            Literal: s32 -1
+            Identifier: s32 (4 B) default_d
+            Literal: s32 (4 B) -1
         Assign:
-            Identifier: s32 default_e
-            Literal: s32 -1
+            Identifier: s32 (4 B) default_e
+            Literal: s32 (4 B) -1
         Assign:
-            Identifier: s64 default_f
-            Literal: s64 -1
+            Identifier: s64 (8 B) default_f
+            Literal: s64 (8 B) -1
         Assign:
-            Identifier: s64 default_g
-            Literal: s64 -1
+            Identifier: s64 (8 B) default_g
+            Literal: s64 (8 B) -1
         Assign:
-            Identifier: s128 default_h
-            Literal: s128 -1
+            Identifier: s128 (16 B) default_h
+            Literal: s128 (16 B) -1
         Assign:
-            Identifier: s256 default_i
-            Literal: s256 -1
+            Identifier: s256 (32 B) default_i
+            Literal: s256 (32 B) -1
         Assign:
-            Identifier: f16 default_j
-            Literal: f16 -1
+            Identifier: f16 (2 B) default_j
+            Literal: f16 (2 B) -1
         Assign:
-            Identifier: f16 default_k
-            Literal: f16 -1
+            Identifier: f16 (2 B) default_k
+            Literal: f16 (2 B) -1
         Assign:
-            Identifier: f32 default_l
-            Literal: f32 -1
+            Identifier: f32 (4 B) default_l
+            Literal: f32 (4 B) -1
         Assign:
-            Identifier: f32 default_m
-            Literal: f32 -1
+            Identifier: f32 (4 B) default_m
+            Literal: f32 (4 B) -1
         Assign:
-            Identifier: f64 default_n
-            Literal: f64 -1
+            Identifier: f64 (8 B) default_n
+            Literal: f64 (8 B) -1
         Assign:
-            Identifier: f64 default_o
-            Literal: f64 -1
-        Return: s32 
-            Literal: s32 0
+            Identifier: f64 (8 B) default_o
+            Literal: f64 (8 B) -1
+        Return: s32 (4 B) 
+            Literal: s32 (4 B) 0
 

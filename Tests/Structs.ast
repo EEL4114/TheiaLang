@@ -1,12 +1,12 @@
 Program: Structs
 
-StructDeclaration: Transform | Scope: 'Transform' 
+StructDeclaration: Transform (0 B) | Scope: 'Transform' 
     Fields:
         Vector3 position
         Vector3 rotation
         Vector3 scale
 
-StructDeclaration: Vector3 | Scope: 'Vector3' 
+StructDeclaration: Vector3 (0 B) | Scope: 'Vector3' 
     Fields:
         f32 x
         f32 y
@@ -44,18 +44,18 @@ StructDeclaration: Vector3 | Scope: 'Vector3'
 FunctionDeclaration: Vector3 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: Vector3 a =
+        VariableDeclaration:  a =
             Instantiation: Vector3
                 Arguments:
-                    Literal: int 1
-                    Literal: int 2
-                    Literal: int 3
-        VariableDeclaration: Vector3 b =
+                    Literal: int (0 B) 1
+                    Literal: int (0 B) 2
+                    Literal: int (0 B) 3
+        VariableDeclaration:  b =
             Instantiation: Vector3
                 Arguments:
-                    Literal: int 4
-                    Literal: int 5
-                    Literal: int 6
-        Return: int 
-            Literal: int 0
+                    Literal: int (0 B) 4
+                    Literal: int (0 B) 5
+                    Literal: int (0 B) 6
+        Return: int (0 B) 
+            Literal: int (0 B) 0
 
