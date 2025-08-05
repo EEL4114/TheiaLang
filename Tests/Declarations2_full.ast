@@ -1,11 +1,5 @@
 Program: Declarations2
 
-StructDeclaration: Vector3 | Scope: 'Vector3' 
-    Fields:
-        f32 x
-        f32 y
-        f32 z
-
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
@@ -77,4 +71,16 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Member: f32 z
         Return: s32 
             Literal: s32 0
+
+StructDeclaration: Transform | Scope: 'Transform' 
+    Fields:
+        Vector3 position
+        Vector3 rotation
+        Vector3 scale
+
+StructDeclaration: Vector3 | Scope: 'Vector3' 
+    Fields:
+        f32 x
+        f32 y
+        f32 z
 

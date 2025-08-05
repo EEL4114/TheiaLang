@@ -11,10 +11,51 @@ StructDeclaration: Vector3 | Scope: 'Vector3'
         f32 x
         f32 y
         f32 z
+    FunctionDeclaration: Vector3 Add | Scope: 'Add' 
+        Arguments:
+            Vector3 a
+            Vector3 b
+        BlockSatement:
+            Return: 
+                Instantiation: Vector3
+                    Arguments:
+                        BinaryExpression: Add
+                            MemberAccess: a.x
+                                Target: a
+                                Member: x
+                            MemberAccess: b.x
+                                Target: b
+                                Member: x
+                        BinaryExpression: Add
+                            MemberAccess: a.y
+                                Target: a
+                                Member: y
+                            MemberAccess: b.x
+                                Target: b
+                                Member: x
+                        BinaryExpression: Add
+                            MemberAccess: a.z
+                                Target: a
+                                Member: z
+                            MemberAccess: b.z
+                                Target: b
+                                Member: z
 
-FunctionDeclaration: s32 main | Scope: 'main' 
+FunctionDeclaration: Vector3 main | Scope: 'main' 
     Arguments:
     BlockSatement:
+        VariableDeclaration: Vector3 a =
+            Instantiation: Vector3
+                Arguments:
+                    Literal: int 1
+                    Literal: int 2
+                    Literal: int 3
+        VariableDeclaration: Vector3 b =
+            Instantiation: Vector3
+                Arguments:
+                    Literal: int 4
+                    Literal: int 5
+                    Literal: int 6
         Return: int 
             Literal: int 0
 

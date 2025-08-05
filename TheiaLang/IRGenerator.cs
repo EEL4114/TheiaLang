@@ -122,6 +122,7 @@ public static class IRGenerator
     }
 
     #region Functions
+
     static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
     {
         EnterScope(fn.Scope!);
@@ -429,7 +430,7 @@ public static class IRGenerator
             return typeInfo.TypeName switch
             {
                 "f16" or "f32" or "f64" => (code, $"{i}.0"),// decimal is fine
-                "f128" => (code, ToHexFp128(i)),
+                "f128" => (code, ToHexFP128(i)),
                 _ => (code, literalExpression.Lexeme),
             };
         }
@@ -439,8 +440,8 @@ public static class IRGenerator
         {
             return typeInfo.TypeName switch
             {
-                "f128" => (code, ToHexFp128(d)),// the original Lexeme is decimal; convert to hex‐float
-                _ => (code, literalExpression.Lexeme),// leave as written for f32/f64
+                "f128" => (code, ToHexFP128(d)),        // the original Lexeme is decimal; convert to hex‐float
+                _ => (code, literalExpression.Lexeme),  // leave as written for f32/f64
             };
         }
 
@@ -502,7 +503,7 @@ public static class IRGenerator
             BinaryOperator.NotEqual => "icmp ne",
             BinaryOperator.AND => "and",
             BinaryOperator.OR => "or",
-            _ => throw new Exception($"Op {binaryExpression.Op}")
+            _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type 'bool'")
         };
         else if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
         {
@@ -513,7 +514,7 @@ public static class IRGenerator
             BinaryOperator.Less => "icmp slt",
             BinaryOperator.EqualEqual => "icmp eq",
             BinaryOperator.NotEqual => "icmp ne",
-            _ => throw new Exception($"Op {binaryExpression.Op}")
+            _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type {typeInfo.TypeName}")
         };
         else if (typeInfo.TypeName.StartsWith('f')) op = binaryExpression.Op switch
         {
@@ -526,8 +527,7 @@ public static class IRGenerator
             BinaryOperator.NotEqual => "fcmp one",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
-
-        else throw new Exception($"Unsupported type '{typeInfo.TypeName}'");
+        else throw new Exception($"Unsupported operation '{typeInfo.TypeName}' for type {typeInfo.TypeName}");
 
         string LLVMType = TypeToLLVM(typeInfo)!;
 
@@ -569,7 +569,7 @@ public static class IRGenerator
             throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
 
         if (call.Arguments.Count != calleeInfo.Parameters!.Count)
-            Log.Error(11,  // pick an unused code
+            Log.Error(11,
                 $"Function '{call.CalleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
                 $"but got {call.Arguments.Count}");
         string retTy = TypeToLLVM(calleeInfo.Type)!;
@@ -590,7 +590,7 @@ public static class IRGenerator
 
             if (actualType.TypeName != calleeInfo.Type.TypeName && AutoLog)
                 Log.Error(12,
-                    $"Type mismatch in call to '{call.CalleeName}': parameter '{calleeInfo.Parameters[i].Name}' " +
+                    $"Type mismatch in call to '{call.CalleeName}.{calleeInfo.Parameters[i].Name}' " +
                     $"expected {calleeInfo.Type.TypeName}, got {actualType.TypeName}");
 
             argumentList.Add($"{actualLLVMType} {argReg}");
@@ -718,7 +718,7 @@ public static class IRGenerator
         return false;
     }
 
-    static string ToHexFp128(double v)
+    static string ToHexFP128(double v)
     {
         if (v == 0.0) return "0xL00";
 

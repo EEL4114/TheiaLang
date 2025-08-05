@@ -3,9 +3,20 @@ struct Transform(
     Vector3 rotation, 
     Vector3 scale);
 
-struct Vector3(f32 x, f32 y, f32 z);
-
-int main()
+struct Vector3(f32 x, f32 y, f32 z)
 {
+    Vector3 Add(Vector3 a, Vector3 b)
+    {
+        return new Vector3(a.x + b.x,
+                           a.y + b.x,
+                           a.z + b.z);
+    }
+}
+
+Vector3 main()
+{
+    Vector3 a = new Vector3(1, 2, 3);
+    Vector3 b = new Vector3(4, 5, 6);
+
     return 0;
 }

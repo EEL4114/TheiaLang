@@ -19,9 +19,10 @@ public class SymbolInfo(string name,
 }
 
 public class TypeInfo(string type,
+                      uint size = 0,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
-                      List<int>? arrayLengths = null,
+                      List<uint>? arrayLengths = null,
                       List<string>? fieldNames = null,
                       List<string>? fieldTypes = null)
 {
@@ -30,14 +31,15 @@ public class TypeInfo(string type,
     public TypeInfo? Pointee { get; init; } = pointee;
 
     public TypeInfo? ElementType { get; set; } = elementType;
-    public List<int>? ArrayLengths { get; set; } = arrayLengths;    // non-null for static arrays
+    public List<uint>? ArrayLengths { get; set; } = arrayLengths;    // non-null for static arrays
 
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<string>? FieldTypes { get; set; } = fieldTypes;
-
+    public uint Size { get; set; } = size;
     public override string ToString()
     {
-        string s = $"{TypeName}";
+        string s = $"{TypeName}: Size = {Size} B";
+
         if (Pointee != null)
             s += $", Pointee = {Pointee}";
         if (ElementType != null)
@@ -53,7 +55,7 @@ public class TypeInfo(string type,
         // @Robust
         if (FieldNames != null && FieldNames.Count != 0)
         {
-            s += ", FieldNames = {";
+            s += ", Fields = {";
             s += FieldTypes![0] + " " + FieldNames[0];
             for (int i = 1; i < FieldNames.Count; i++)
                 s += ", " + FieldTypes![i] + " " + FieldNames[i];

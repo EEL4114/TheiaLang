@@ -1,5 +1,3 @@
-using LLVMSharp.Interop;
-
 namespace TheiaLang;
 
 public class Parser(List<Token> tokens)
@@ -51,7 +49,6 @@ public class Parser(List<Token> tokens)
             {
                 Token typeToken = ConsumeTypeKeyword();
                 string fieldType = TokenTypeToString(typeToken.TokenType);
-
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
@@ -224,13 +221,13 @@ public class Parser(List<Token> tokens)
             Token typeToken = Advance();
             string type = typeToken.Lexeme;     // composite type
 
-            List<int> lengths = [];
+            List<uint> lengths = [];
             while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
             {
                 Advance();  // '['
                 // TODO adapt this for n-Dimensional arrays
                 Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
-                lengths.Add(int.Parse(lengthToken.Lexeme));
+                lengths.Add(uint.Parse(lengthToken.Lexeme));
                 Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
             }
 
@@ -245,7 +242,7 @@ public class Parser(List<Token> tokens)
             TypeInfo typeInfo = new TypeInfo(type);
             if (lengths != null)
             {
-                foreach (int length in lengths)
+                foreach (uint length in lengths)
                     type += $"[{length}]";
 
                 typeInfo = new TypeInfo($"{typeInfo.TypeName}{type}",
@@ -349,13 +346,13 @@ public class Parser(List<Token> tokens)
             VariableDeclaration variableDeclaration;
             Token typeToken = Advance();
 
-            List<int> lengths = [];
+            List<uint> lengths = [];
             while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
             {
                 Advance();  // '['
                 // TODO adapt this for n-Dimensional arrays
                 Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
-                lengths.Add(int.Parse(lengthToken.Lexeme));
+                lengths.Add(uint.Parse(lengthToken.Lexeme));
                 Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
             }
 
@@ -625,7 +622,7 @@ public class Parser(List<Token> tokens)
             };
 
             LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
-            literal.ResolvedType = new TypeInfo(lit.Type);
+            literal.ResolvedType = new TypeInfo(lit.Type, SemanticAnalyser.SizeOf(lit.Type));
             expression = literal;
         }
         else if (Peek().TokenType == TokenType.Identifier

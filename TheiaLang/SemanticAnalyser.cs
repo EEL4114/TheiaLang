@@ -1,5 +1,4 @@
-using System.Globalization;
-using LLVMSharp.Interop;
+using System.Data.SqlTypes;
 
 namespace TheiaLang;
 
@@ -16,7 +15,7 @@ public static class SemanticAnalyser
         // Later, we want to do whatever applies to structs for all composite types.
         foreach (INode node in program.Nodes)
             if (node is StructDeclaration sd)
-                ResolveStructFields(sd);
+                ResolveStruct(sd);
 
         // Now, we want to resolve all function return and argument types so we 
         // don't get into order dependency issues later.
@@ -38,6 +37,9 @@ public static class SemanticAnalyser
                     break;
             }
 
+        // we do not need to deal with variable declarations here since they will always appear
+        // before they are used, in contrast to composite fields 
+
         // Now we can actually resolve the function bodies
         foreach (INode node in program.Nodes)
         {
@@ -53,21 +55,25 @@ public static class SemanticAnalyser
 
     #region Functions, Structs
 
-    static void ResolveStructFields(StructDeclaration structDeclaration)
+    static void ResolveStruct(StructDeclaration structDeclaration)
     {
+        uint size = 0;
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
             currentScope.TryLookup(field.Name, out SymbolInfo? fieldInfo, out _);
             if (fieldInfo == null)
                 throw new Exception($"Could not find struct field '{field.Name}' in {currentScope.FullName}");
-            fieldInfo.Type = GetTypeInfo(field.TypeName);
+            fieldInfo.Type = ResolveType(field.TypeName);
+            size += fieldInfo.Type.Size;
             field.ResolvedType = fieldInfo.Type;
         }
 
+        structDeclaration.ResolvedType.Size = size;
         ExitScope();
     }
 
+    // TODO: generalise this a bit more (unions etc.)
     static void ResolveFunctionsInStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
@@ -127,7 +133,7 @@ public static class SemanticAnalyser
                 if (variable.ResolvedType != null)
                     symbolInfo.Type = UpdateTypeInfo(variable.ResolvedType);
                 else
-                    symbolInfo.Type = GetTypeInfo(variable.TypeName);
+                    symbolInfo.Type = ResolveType(variable.TypeName);
                 variable.ResolvedType = symbolInfo.Type;
 
                 if (variable.Init != null)
@@ -288,7 +294,7 @@ public static class SemanticAnalyser
                     {
                         object v;
                         string lexeme = "-" + literal.Lexeme;
-                        if (literal.ResolvedType.TypeName == "int")
+                        if (literal.ResolvedType!.TypeName == "int")
                         {
                             int.TryParse(lexeme, out int j);
                             v = j;
@@ -312,6 +318,7 @@ public static class SemanticAnalyser
                         expression = operandExpression.Operand;
                     else
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
+                                                          SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
                 }
                 else
@@ -379,19 +386,74 @@ public static class SemanticAnalyser
     {
         if (type.ArrayLengths != null)
         {
-            type.ElementType = GetTypeInfo(type.ElementType!.TypeName);
+            type.ElementType = ResolveType(type.ElementType!.TypeName);
+            // TODO!!
+            type.Size = SizeOf(type);
             return type;
         }
         else
-            return GetTypeInfo(type.TypeName);
+            return ResolveType(type.TypeName);
+    }
+
+    static TypeInfo ResolveType(string typeOrIdentifier)
+    {
+        TypeInfo typeInfo = GetTypeInfo(typeOrIdentifier);
+        typeInfo.Size = SizeOf(typeInfo.TypeName);
+        return typeInfo;
     }
 
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
+
         return symbolInfo!.Type;
     }
+
+    static uint SizeOf(TypeInfo type)
+    {
+        int i = IRGenerator.BuiltinTypeIndex(type.TypeName);
+        if (i >= 0)
+            return SizeOfBuiltin[i];
+        if (type.TypeName.StartsWith('@'))
+            return 8;   // ptrs are 64-bit == 8 B
+
+        if (type.FieldTypes != null)
+        {
+            uint size = 0;
+            foreach (string fieldTypeName in type.FieldTypes!)
+            {
+                _ = ResolveType(fieldTypeName);
+                size += SizeOf(fieldTypeName);
+            }
+
+            return size;
+        }
+        else if (type.ArrayLengths != null && type.ElementType != null)
+            // TODO multi-dim arrays!!!
+            return type.ArrayLengths[0] * SizeOf(type.ElementType.TypeName);
+
+        throw new Exception($"Cannot determine size of type '{type.TypeName}'");
+    }
+
+    public static uint SizeOf(string typeName)
+    {
+        int i = IRGenerator.BuiltinTypeIndex(typeName);
+        if (i >= 0)
+            return SizeOfBuiltin[i];
+        if (typeName.StartsWith('@'))
+            return 8;   // ptrs are 64-bit == 8 B
+
+        TypeInfo type = GetTypeInfo(typeName);
+        // @Speed this is wasteful and dirt cheap to fix
+        return SizeOf(type);
+    }
+
+    static readonly uint[] SizeOfBuiltin =
+    [
+        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128
+            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16
+    ];
 
     static void EnterScope(Scope scope)
     {
@@ -551,6 +613,7 @@ public static class SemanticAnalyser
         if (LosslessTypeInterop[builtinA, builtinB])
         {
             TypeInfo type = new TypeInfo(expectedType);
+            type.Size = SizeOf(type.TypeName);
             return type;    // literals always cast to the more concrete value
         }
 

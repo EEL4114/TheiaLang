@@ -7,6 +7,8 @@ const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
 const ConsoleColor IRGEN_COL = ConsoleColor.Green;
 const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
 
+const int BAR_CHARS = 100;
+
 Stopwatch compileTimer = new Stopwatch();
 Stopwatch lexTimer = new Stopwatch();
 Stopwatch parseTimer = new Stopwatch();
@@ -153,11 +155,11 @@ double totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
 #region Chart Printing
 
-int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * 50);
-int parserChars = (int)Math.Round(parserTime / (double)totalTime * 50);
-int semChars = (int)Math.Round(semTime / (double)totalTime * 50);
-int IRgenChars = (int)Math.Round(IRgenTime / (double)totalTime * 50);
-int llvmChars = 50 - lexerChars - parserChars - IRgenChars;
+int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * BAR_CHARS);
+int parserChars = (int)Math.Round(parserTime / (double)totalTime * BAR_CHARS);
+int semChars = (int)Math.Round(semTime / (double)totalTime * BAR_CHARS);
+int IRgenChars = (int)Math.Round(IRgenTime / (double)totalTime * BAR_CHARS);
+int llvmChars = BAR_CHARS - lexerChars - parserChars - IRgenChars;
 
 static void PrintSegment(int count, ConsoleColor color)
 {

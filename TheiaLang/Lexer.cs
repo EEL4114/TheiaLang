@@ -291,16 +291,16 @@ class Lexer(string sourceCode)
 
             if (c == '\n')
             {
-                Advance();      // consume '\n'
+                Advance();  // consume '\n'
                 line++;
-                col = 1;        // reset column at new line
+                col = 1;    // reset column at new line
                 continue;
             }
 
             if (c == '\r' && PeekNext() == '\n')
             {
-                Advance();    // consume '\r'
-                Advance();    // consume '\n'
+                Advance();  // consume '\r'
+                Advance();  // consume '\n'
                 line++;
                 col = 1;
                 continue;
