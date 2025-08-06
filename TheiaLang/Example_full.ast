@@ -1,5 +1,5 @@
 Program: Example
-Generated at 05.08.2025 15:14:02
+Generated at 07.08.2025 01:25:19
 
 UnionDeclaration: StringData
     s32 i
@@ -8,51 +8,51 @@ UnionDeclaration: StringData
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: f32[4] (16 B)  Vec4
-        Assign:
+        VariableDeclaration: [4]f32 (16 B) Vec4
+        Assignment:
             IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[4] (16 B) Vec4
+                    Identifier: [4]f32 (16 B) Vec4
                 Index:
                     Literal: s32 (4 B) 1
             Literal: f32 (4 B) 3
-        VariableDeclaration: f32 (4 B)  z =
+        VariableDeclaration: f32 (4 B) z =
             IndexExpression: f32 (4 B) 
                 Target:
-                    Identifier: f32[4] (16 B) Vec4
+                    Identifier: [4]f32 (16 B) Vec4
                 Index:
                     Literal: s32 (4 B) 2
-        VariableDeclaration: Entity (9 B)  entity =
+        VariableDeclaration: Entity (9 B) entity =
             Instantiation: Entity
                 Arguments:
                     Literal: f32 (4 B) 70
                     Literal: f32 (4 B) 1.5
                     Literal: bool (1 B) false
-        VariableDeclaration: f32 (4 B)  HP =
+        VariableDeclaration: f32 (4 B) HP =
             MemberAccess: f32 (4 B) entity.health
                 Target: Entity (9 B) entity
                 Member: f32 (4 B) health
-        VariableDeclaration: @f32 (8 B)  healthPtr =
+        VariableDeclaration: @f32 (8 B) healthPtr =
             UnaryExpression: @f32 (8 B) AddressOf
                 Operand:
                     Identifier: f32 (4 B) HP
-        Assign:
+        Assignment:
             UnaryExpression: f32 (4 B) Dereference
                 Operand:
                     Identifier: @f32 (8 B) healthPtr
             Literal: f32 (4 B) 5
-        VariableDeclaration: f32 (4 B)  moreHealth =
+        VariableDeclaration: f32 (4 B) moreHealth =
             BinaryExpression: f32 (4 B) Add
                 Literal: f32 (4 B) 1
                 MemberAccess: f32 (4 B) entity.health
                     Target: Entity (9 B) entity
                     Member: f32 (4 B) health
-        Assign:
+        Assignment:
             Identifier: @f32 (8 B) healthPtr
             UnaryExpression: @f32 (8 B) AddressOf
                 Operand:
                     Identifier: f32 (4 B) moreHealth
-        Assign:
+        Assignment:
             Identifier: f32 (4 B) HP
             UnaryExpression: f32 (4 B) Dereference
                 Operand:
@@ -75,11 +75,11 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Arguments:
                     Literal: bool (1 B) false
 
-        VariableDeclaration: s32 (4 B)  t =
+        VariableDeclaration: s32 (4 B) t =
             Call: s32 (4 B)  m
                 Arguments:
                     Literal: s32 (4 B) 8
-        VariableDeclaration: s32 (4 B)  u =
+        VariableDeclaration: s32 (4 B) u =
             BinaryExpression: s32 (4 B) Add
                 BinaryExpression: s32 (4 B) Add
                     Literal: s32 (4 B) 1
@@ -87,20 +87,20 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Arguments:
                             Literal: s32 (4 B) 8
                 Literal: s32 (4 B) 9
-        VariableDeclaration: s32 (4 B)  defaultInt
-        VariableDeclaration: f32 (4 B)  defaultFloat
-        VariableDeclaration: bool (1 B)  defaultBool
-        Assign:
+        VariableDeclaration: s32 (4 B) defaultInt
+        VariableDeclaration: f32 (4 B) defaultFloat
+        VariableDeclaration: bool (1 B) defaultBool
+        Assignment:
             MemberAccess: f32 (4 B) entity.health
                 Target: Entity (9 B) entity
                 Member: f32 (4 B) health
             Literal: f32 (4 B) 4
-        VariableDeclaration: s32 (4 B)  default_s32
-        VariableDeclaration: f32 (4 B)  default_f32
-        VariableDeclaration: bool (1 B)  default_bool
-        VariableDeclaration: f128 (16 B)  quad =
+        VariableDeclaration: s32 (4 B) default_s32
+        VariableDeclaration: f32 (4 B) default_f32
+        VariableDeclaration: bool (1 B) default_bool
+        VariableDeclaration: f128 (16 B) quad =
             Literal: f128 (16 B) 14
-        VariableDeclaration: s32 (4 B)  i =
+        VariableDeclaration: s32 (4 B) i =
             Literal: s32 (4 B) -1
         Expression:
             Call: s32 (4 B)  Abs
@@ -114,44 +114,44 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Operand:
                             Identifier: s32 (4 B) i
 
-        VariableDeclaration: f32 (4 B)  j =
+        VariableDeclaration: f32 (4 B) j =
             Literal: f32 (4 B) -1
-        VariableDeclaration: bool (1 B)  fg =
+        VariableDeclaration: bool (1 B) fg =
             Literal: bool (1 B) false
-        VariableDeclaration: bool (1 B)  ffg =
+        VariableDeclaration: bool (1 B) ffg =
             Literal: bool (1 B) true
-        VariableDeclaration: s32 (4 B)  a =
+        VariableDeclaration: s32 (4 B) a =
             Literal: s32 (4 B) 5
-        VariableDeclaration: s32 (4 B)  b =
+        VariableDeclaration: s32 (4 B) b =
             Literal: s32 (4 B) 10
-        VariableDeclaration: s32 (4 B)  c =
+        VariableDeclaration: s32 (4 B) c =
             BinaryExpression: s32 (4 B) Add
                 Identifier: s32 (4 B) a
                 Identifier: s32 (4 B) b
-        VariableDeclaration: s32 (4 B)  d =
+        VariableDeclaration: s32 (4 B) d =
             Literal: s32 (4 B) 4
-        Assign:
+        Assignment:
             Identifier: s32 (4 B) d
             BinaryExpression: s32 (4 B) Add
                 Identifier: s32 (4 B) a
                 Identifier: s32 (4 B) c
-        Assign:
+        Assignment:
             Identifier: s32 (4 B) d
             BinaryExpression: s32 (4 B) Add
                 Identifier: s32 (4 B) d
                 Literal: s32 (4 B) 42
-        VariableDeclaration: f32 (4 B)  f =
+        VariableDeclaration: f32 (4 B) f =
             Literal: f32 (4 B) 2.5
         Compound Assignment: MultEqual
             Identifier: f32 (4 B) f
             Literal: f32 (4 B) 2
-        VariableDeclaration: f32 (4 B)  g =
+        VariableDeclaration: f32 (4 B) g =
             Literal: f32 (4 B) 3
-        VariableDeclaration: f32 (4 B)  h =
+        VariableDeclaration: f32 (4 B) h =
             BinaryExpression: f32 (4 B) Subtract
                 Identifier: f32 (4 B) f
                 Identifier: f32 (4 B) g
-        VariableDeclaration: bool (1 B)  ok =
+        VariableDeclaration: bool (1 B) ok =
             BinaryExpression: bool (1 B) Greater
                 Identifier: s32 (4 B) c
                 Literal: s32 (4 B) 5
@@ -169,21 +169,21 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                     Literal: s32 (4 B) 0
             Then: | Scope: 'if_then266' 
                 BlockSatement:
-                    Assign:
+                    Assignment:
                         Identifier: s32 (4 B) value
                         Literal: s32 (4 B) 42
-                    VariableDeclaration: f32 (4 B)  f =
+                    VariableDeclaration: f32 (4 B) f =
                         Literal: f32 (4 B) 0
-                    Assign:
+                    Assignment:
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
             Else: | Scope: 'if_else282' 
                 BlockSatement:
-                    Assign:
+                    Assignment:
                         Identifier: s32 (4 B) value
                         Literal: s32 (4 B) -42
-                    VariableDeclaration: f32 (4 B)  f =
+                    VariableDeclaration: f32 (4 B) f =
                         Literal: f32 (4 B) 78
 
         Return: s32 (4 B) 
@@ -214,7 +214,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     BlockSatement:
         For: | Scope: 'for_330' 
             Initialiser:
-                VariableDeclaration: s32 (4 B)  i =
+                VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0
             Condition:
                 BinaryExpression: bool (1 B) Less
@@ -243,12 +243,12 @@ FunctionDeclaration: s32 m | Scope: 'm'
     Arguments:
         s32 j
     BlockSatement:
-        VariableDeclaration: s32 (4 B)  i =
+        VariableDeclaration: s32 (4 B) i =
             Literal: s32 (4 B) 3
         Compound Assignment: PlusEqual
             Identifier: s32 (4 B) j
             Literal: s32 (4 B) 4
-        VariableDeclaration: s32 (4 B)  health =
+        VariableDeclaration: s32 (4 B) health =
             Literal: s32 (4 B) 7
         Return: s32 (4 B) 
             Identifier: s32 (4 B) j

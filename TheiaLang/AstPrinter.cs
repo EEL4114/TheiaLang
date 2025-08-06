@@ -3,6 +3,7 @@ using TheiaLang;
 static class AstPrinter
 {
     const int tab = 4;
+    // TODO this seems redundant?
     public static void Print(ProgramNode program, TextWriter w, bool includeTimestamp = true)
         => PrintProgram(program, w, 0, includeTimestamp);
 
@@ -23,6 +24,8 @@ static class AstPrinter
                 PrintUnion(unionDeclaration, w, indent);
         }
     }
+
+    #region Baisc
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
@@ -68,6 +71,8 @@ static class AstPrinter
         w.WriteLine();
     }
 
+    #endregion
+
     #region  Statements
 
     static void PrintStatement(IStatement stmt, TextWriter w, int indent)
@@ -75,13 +80,13 @@ static class AstPrinter
         switch (stmt)
         {
             case VariableDeclaration vd:
-                w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)} {vd.Name}" +
+                w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)}{vd.Name}" +
                             (vd.Init is not null ? " =" : ""));
                 if (vd.Init != null)
                     PrintExpression(vd.Init, w, indent + tab);
                 break;
             case AssignmentStatement a:
-                w.WriteLine($"{Indent(indent)}Assign:");
+                w.WriteLine($"{Indent(indent)}Assignment:");
                 PrintExpression(a.Target, w, indent + tab);
                 PrintExpression(a.Expression, w, indent + tab);
                 break;
@@ -169,6 +174,7 @@ static class AstPrinter
             case InstantiationExpression isnt:
                 w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments:");
+                // TODO write the field names maybe?
                 foreach (IExpression arument in isnt.Arguments)
                     PrintExpression(arument, w, indent + tab * 2);
                 break;

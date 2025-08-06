@@ -44,13 +44,13 @@ StructDeclaration: Vector3 (0 B) | Scope: 'Vector3'
 FunctionDeclaration: Vector3 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration:  a =
+        VariableDeclaration: Vector3 (0 B) a =
             Instantiation: Vector3
                 Arguments:
                     Literal: int (0 B) 1
                     Literal: int (0 B) 2
                     Literal: int (0 B) 3
-        VariableDeclaration:  b =
+        VariableDeclaration: Vector3 (0 B) b =
             Instantiation: Vector3
                 Arguments:
                     Literal: int (0 B) 4

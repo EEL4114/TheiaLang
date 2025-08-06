@@ -3,7 +3,7 @@ Program: Declarations2
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration:  position =
+        VariableDeclaration: Vector3 (0 B) position =
             Instantiation: Vector3
                 Arguments:
                     UnaryExpression: Negate
@@ -15,12 +15,12 @@ FunctionDeclaration: s32 main | Scope: 'main'
                     UnaryExpression: Negate
                         Operand:
                             Literal: int (0 B) 1
-        VariableDeclaration: f32 (0 B)  z =
+        VariableDeclaration: f32 (4 B) z =
             MemberAccess: position.z
                 Target: position
                 Member: z
-        VariableDeclaration: f32[3] (0 B)  arr
-        Assign:
+        VariableDeclaration: [3]f32 (0 B) arr
+        Assignment:
             IndexExpression: 
                 Target:
                     Identifier: arr
@@ -29,7 +29,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
             MemberAccess: position.x
                 Target: position
                 Member: x
-        Assign:
+        Assignment:
             IndexExpression: 
                 Target:
                     Identifier: arr
@@ -38,7 +38,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
             MemberAccess: position.y
                 Target: position
                 Member: y
-        Assign:
+        Assignment:
             IndexExpression: 
                 Target:
                     Identifier: arr
@@ -49,7 +49,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                     Identifier: arr
                 Index:
                     Literal: int (0 B) 1
-        VariableDeclaration: f32 (0 B)  negY =
+        VariableDeclaration: f32 (4 B) negY =
             UnaryExpression: Negate
                 Operand:
                     IndexExpression: 
@@ -57,7 +57,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                             Identifier: arr
                         Index:
                             Literal: int (0 B) 2
-        VariableDeclaration:  position2 =
+        VariableDeclaration: Vector3 (0 B) position2 =
             Instantiation: Vector3
                 Arguments:
                     IndexExpression: 

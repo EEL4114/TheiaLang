@@ -46,15 +46,15 @@ else    // folder
         int failures = 0;
         foreach (string tiaFile in allTia)
         {
-            try
-            {
-                CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false, timestamps: false);
-            }
-            catch (Exception ex)
-            {
-                failures++;
-                Log.Error(99, ex.Message, false);
-            }
+            //try
+            //{
+            CompileFile(tiaFile[0..tiaFile.IndexOf('.')], insertLogs: false, timestamps: false);
+            //}
+            //catch (Exception ex)
+            //{
+            failures++;
+            //    Log.Error(99, ex.Message, false);
+            //}
 
             Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");
         }

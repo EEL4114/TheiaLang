@@ -29,8 +29,8 @@ public static class IRGenerator
     public static int BuiltinTypeIndex(string type) => BuiltinTypes.IndexOf(type);
 
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
-    static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = new();
-    static readonly Stack<Dictionary<string, TypeInfo>> varTypes = new();
+    static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
+    static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;

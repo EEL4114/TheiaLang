@@ -1,8 +1,10 @@
+
+// TODO include ptrs?
 int main()
 {
     Vector3 position = new Vector3(-1, -1, -1);
     f32 z = position.z;
-    f32[3] arr;
+    [3]f32 arr;
     arr[1] = position.x;
     arr[2] = position.y;
     arr[3] = arr[1];

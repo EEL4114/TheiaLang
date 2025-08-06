@@ -3,7 +3,7 @@ Program: Comments
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: s32 (0 B)  a =
+        VariableDeclaration: s32 (4 B) a =
             Literal: int (0 B) 17
         Return: 
             BinaryExpression: Subtract

@@ -157,8 +157,11 @@ public static class SemanticAnalyser
 
                 if (!CanImplicitlyCast(assignment.Target.ResolvedType.TypeName,
                        assignment.Expression.ResolvedType.TypeName))
+                {
+                    Log.Info($"{assignment}");
                     throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName}" +
                                         $" and {assignment.Expression.ResolvedType.TypeName}");
+                }
                 break;
             case CompoundAssignmentStatement compound:
                 compound.Target = AnalyseExpression(compound.Target);
@@ -369,7 +372,6 @@ public static class SemanticAnalyser
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
                 if (indexExpression.Target.ResolvedType!.ArrayLengths == null)
                     throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
-
                 indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
                 break;
             default: throw new Exception($"Unsupported expression: {expression.GetType()}");
@@ -566,6 +568,12 @@ public static class SemanticAnalyser
 
     static bool CanImplicitlyCast(string typeA, string typeB)  // a + b; a * b;
     {
+        if (typeA.StartsWith('@') && typeB.StartsWith('@'))
+        {
+            return CanImplicitlyCast(typeA.TrimStart('@'),
+                                     typeB.TrimStart('@'));
+        }
+
         int indexA = IRGenerator.BuiltinTypeIndex(typeA);
         int indexB = IRGenerator.BuiltinTypeIndex(typeB);
 
@@ -609,6 +617,9 @@ public static class SemanticAnalyser
 
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
+
+        if (builtinA < 0 || builtinB < 0)
+            throw new Exception($"Cannot resolve {typeInfo} to {expectedType}");
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {

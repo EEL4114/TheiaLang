@@ -3,182 +3,182 @@ Program: Declarations
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: s8 (0 B)  default_a
-        VariableDeclaration: s16 (0 B)  default_b
-        VariableDeclaration: s16 (0 B)  default_c
-        VariableDeclaration: s32 (0 B)  default_d
-        VariableDeclaration: s32 (0 B)  default_e
-        VariableDeclaration: s64 (0 B)  default_f
-        VariableDeclaration: s64 (0 B)  default_g
-        VariableDeclaration: s128 (0 B)  default_h
-        VariableDeclaration: s256 (0 B)  default_i
-        VariableDeclaration: f16 (0 B)  default_j
-        VariableDeclaration: f16 (0 B)  default_k
-        VariableDeclaration: f32 (0 B)  default_l
-        VariableDeclaration: f32 (0 B)  default_m
-        VariableDeclaration: f64 (0 B)  default_n
-        VariableDeclaration: f64 (0 B)  default_o
-        Assign:
+        VariableDeclaration: s8 (1 B) default_a
+        VariableDeclaration: s16 (2 B) default_b
+        VariableDeclaration: s16 (2 B) default_c
+        VariableDeclaration: s32 (4 B) default_d
+        VariableDeclaration: s32 (4 B) default_e
+        VariableDeclaration: s64 (8 B) default_f
+        VariableDeclaration: s64 (8 B) default_g
+        VariableDeclaration: s128 (16 B) default_h
+        VariableDeclaration: s256 (32 B) default_i
+        VariableDeclaration: f16 (2 B) default_j
+        VariableDeclaration: f16 (2 B) default_k
+        VariableDeclaration: f32 (4 B) default_l
+        VariableDeclaration: f32 (4 B) default_m
+        VariableDeclaration: f64 (8 B) default_n
+        VariableDeclaration: f64 (8 B) default_o
+        Assignment:
             Identifier: default_a
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_b
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_c
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_d
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_e
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_f
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_g
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_h
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_i
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_j
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_k
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_l
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_m
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_n
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_o
             Literal: int (0 B) 0
-        Assign:
+        Assignment:
             Identifier: default_a
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_b
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_c
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_d
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_e
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_f
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_g
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_h
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_i
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_j
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_k
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_l
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_m
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_n
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_o
             Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_a
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_b
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_c
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_d
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_e
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_f
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_g
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_h
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_i
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_j
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_k
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_l
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_m
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_n
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        Assign:
+        Assignment:
             Identifier: default_o
             UnaryExpression: Negate
                 Operand:

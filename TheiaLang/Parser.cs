@@ -215,80 +215,25 @@ public class Parser(List<Token> tokens)
 
     IStatement ParseStatement(bool requireSemicolon = true)
     {
-        if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Identifier)
+        if (MatchTypeDefinition(out TypeInfo varInfo)
+         && Peek().TokenType == TokenType.Identifier)
         {
-            Token typeToken = Advance();
-            string type = typeToken.Lexeme;     // composite type
-
-            List<uint> lengths = [];
-            while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
-            {
-                Advance();  // '['
-                // TODO adapt this for n-Dimensional arrays
-                Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
-                lengths.Add(uint.Parse(lengthToken.Lexeme));
-                Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
-            }
-
             string varName = Advance().Lexeme;
-
             IExpression? init = null;
             if (Match(TokenType.Operator_Equal))
                 init = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
 
-            TypeInfo typeInfo = new TypeInfo(type);
-            if (lengths != null)
-            {
-                foreach (uint length in lengths)
-                    type += $"[{length}]";
-
-                typeInfo = new TypeInfo($"{typeInfo.TypeName}{type}",
-                                           elementType: typeInfo,
-                                           arrayLengths: lengths);
-            }
-
-            VariableDeclaration variableDeclaration = new VariableDeclaration(type, varName, init);
-
+            VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, varName, init);
+            variable.ResolvedType = varInfo;
             currentScope!.Declare(varName, new SymbolInfo(
                 varName,
-                typeInfo,
+                varInfo,
                 SymbolKind.Variable,
                 null
             ));
-
-            return variableDeclaration;
-        }
-
-        if (Peek().TokenType == TokenType.Punctuation_At
-            && Peek().TokenType == TokenType.Identifier
-            && PeekNextNext().TokenType == TokenType.Identifier)
-        {
-            Token typeToken = Advance();
-            string type = typeToken.Lexeme;     // composite type
-            string varName = Advance().Lexeme;
-
-            IExpression? init = null;
-            if (Match(TokenType.Operator_Equal))
-                init = ParseExpression();
-            if (requireSemicolon)
-                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
-            VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, varName, init);
-
-
-            TypeInfo typeInfo = new TypeInfo("@" + type,
-                                             pointee: new TypeInfo(type));
-
-            currentScope!.Declare(varName, new SymbolInfo(
-                varName,
-                typeInfo,
-                SymbolKind.Variable,
-                null
-            ));
-
-            return variableDeclaration;
+            return variable;
         }
 
         if (Match(TokenType.Keyword_if))
@@ -339,88 +284,9 @@ public class Parser(List<Token> tokens)
             return new ReturnStatement(expr);
         }
 
-        // variable declaration?
-        if (IsBuiltinTypeKeyword(Peek().TokenType))
-        {
-            Token nameToken;
-            VariableDeclaration variableDeclaration;
-            Token typeToken = Advance();
-
-            List<uint> lengths = [];
-            while (Peek().TokenType == TokenType.Punctuation_BracketL)  // array
-            {
-                Advance();  // '['
-                // TODO adapt this for n-Dimensional arrays
-                Token lengthToken = Consume(TokenType.Literal, $"Expected array length {PrintCurrentPos()}");
-                lengths.Add(uint.Parse(lengthToken.Lexeme));
-                Consume(TokenType.Punctuation_BracketR, $"Expected ']' {PrintCurrentPos()}");
-            }
-
-            nameToken = Consume(TokenType.Identifier, "Expected variable name");
-            IExpression? init = null;
-            if (Match(TokenType.Operator_Equal))
-                init = ParseExpression();
-            if (requireSemicolon)
-                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
-
-            string type = TokenTypeToString(typeToken.TokenType);
-
-            TypeInfo typeInfo = new TypeInfo(type);
-            if (lengths != null)
-            {
-                foreach (int length in lengths)
-                    type += $"[{length}]";
-
-                typeInfo = new TypeInfo($"{type}",
-                                        elementType: typeInfo,
-                                        arrayLengths: lengths);
-            }
-            variableDeclaration = new VariableDeclaration(type, nameToken.Lexeme, init);
-
-            variableDeclaration.ResolvedType = typeInfo;
-
-            currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
-                nameToken.Lexeme,
-                variableDeclaration.ResolvedType,
-                SymbolKind.Variable,
-                null
-            ));
-            return variableDeclaration;
-        }
-
-        if (Peek().TokenType == TokenType.Punctuation_At
-            && IsBuiltinTypeKeyword(PeekNext().TokenType))
-        {
-            Advance();  // '@'
-            Token typeToken = Advance();
-            Token nameToken = Consume(TokenType.Identifier, "Expected variable name");
-            IExpression? init = null;
-            if (Match(TokenType.Operator_Equal))
-                init = ParseExpression();
-            if (requireSemicolon)
-                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after declaration");
-
-            string type = TokenTypeToString(typeToken.TokenType);
-
-            VariableDeclaration variableDeclaration = new VariableDeclaration("@" + type, nameToken.Lexeme, init);
-            TypeInfo typeInfo = new TypeInfo("@" + type,
-                                             pointee: new TypeInfo(type));
-            variableDeclaration.ResolvedType = typeInfo;
-
-
-            currentScope!.Declare(nameToken.Lexeme, new SymbolInfo(
-                nameToken.Lexeme,
-                variableDeclaration.ResolvedType,
-                SymbolKind.Variable,
-                null
-            ));
-            // Log.Info(variableDeclaration.ResolvedType.TypeName + " " + variableDeclaration.Name);
-            return variableDeclaration;
-        }
-
         // assignment: identifier '=' expr ';'
         if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Operator_Equal)
+        && PeekNext().TokenType == TokenType.Operator_Equal)
         {
             return ParseAssignment(requireSemicolon);
         }
@@ -435,9 +301,9 @@ public class Parser(List<Token> tokens)
                 // Compound assignment
                 TokenType next = Peek().TokenType;
                 if (next == TokenType.Operator_PlusEqual
-                    || next == TokenType.Operator_MinusEqual
-                    || next == TokenType.Operator_MultEqual
-                    || next == TokenType.Operator_DivEqual)
+                 || next == TokenType.Operator_MinusEqual
+                 || next == TokenType.Operator_MultEqual
+                 || next == TokenType.Operator_DivEqual)
                 {
                     op = OperatorTypeToType(next);
                     Consume(Peek().TokenType, "");
@@ -460,7 +326,7 @@ public class Parser(List<Token> tokens)
         }
 
         if (Peek().TokenType == TokenType.Identifier
-             && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+            && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
             IExpression expression = ParseExpression();
             if (requireSemicolon)
@@ -470,6 +336,67 @@ public class Parser(List<Token> tokens)
 
         Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos()}");
         return null!;
+    }
+
+    bool MatchTypeDefinition(out TypeInfo typeInfo)
+    {
+        int startPos = pos;
+        if (Match(TokenType.Punctuation_At))                // ptr
+        {
+            if (!MatchTypeDefinition(out TypeInfo pointeeInfo))
+            {
+                typeInfo = new TypeInfo("");
+                pos = startPos;
+                return false;
+            }
+
+            typeInfo = new TypeInfo(
+                type: $"@{pointeeInfo.TypeName}",
+                pointee: pointeeInfo);
+            return true;
+        }
+        else if (Match(TokenType.Punctuation_BracketL))     // array
+        {
+            List<uint> arrayLengths = [];
+            do
+            {
+                if (Peek().TokenType != TokenType.Literal)
+                    throw new Exception($"Unexpected token: expected integer literal, got: {Peek().TokenType}");
+                arrayLengths.Add(uint.Parse(Peek().Lexeme));
+                Advance();
+            } while (Match(TokenType.Punctuation_Comma));
+            Consume(TokenType.Punctuation_BracketR, $"Expected closing ']', got: {Peek().TokenType}");
+
+            string lengths = string.Join(", ", arrayLengths);
+            if (!MatchTypeDefinition(out TypeInfo elementInfo))
+                throw new Exception($"Expected type after array definition");
+
+            typeInfo = new TypeInfo($"[{lengths}]{elementInfo.TypeName}",
+                                    elementType: elementInfo,
+                                    arrayLengths: arrayLengths);
+            return true;
+        }
+        else if (IsBuiltinType(Peek().TokenType))
+        {
+            string typeName = TokenTypeToString(Peek().TokenType);
+            typeInfo = new TypeInfo($"{typeName}",
+                                    size: SemanticAnalyser.SizeOf(typeName));
+            Advance();
+            return true;
+        }
+        else    // composite; we do not want to touch the identifier here, but still check for its existence
+        if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Identifier)
+        {
+            Advance();
+            // TODO this is janky
+            string typeName = TokenTypeToString(Previous().TokenType);
+            typeInfo = new TypeInfo(typeName);
+            return true;
+        }
+
+        typeInfo = new TypeInfo("");
+        pos = startPos;
+        return false;
     }
 
     AssignmentStatement ParseAssignment(bool requireSemicolon = true)
@@ -485,6 +412,7 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
         return new AssignmentStatement(identifier, expr);
     }
+
     #endregion
 
     #region  Expressions
@@ -739,13 +667,13 @@ public class Parser(List<Token> tokens)
     Token ConsumeTypeKeyword()
     {
         Token t = Peek();
-        if (IsBuiltinTypeKeyword(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
+        if (IsBuiltinType(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
         Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {t.Line}:{t.Column}");
         return null!;
     }
 
     // 2 == Keyword_bool; 12 == Keyword_f128
-    static bool IsBuiltinTypeKeyword(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
+    static bool IsBuiltinType(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
 
     int Line() => tokens[pos].Line + 1;
     int Column() => tokens[pos].Column;
