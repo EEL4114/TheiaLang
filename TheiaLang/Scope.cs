@@ -28,7 +28,7 @@ public class TypeInfo(string type,
 {
     public string TypeName { get; init; } = type;
 
-    public TypeInfo? Pointee { get; init; } = pointee;
+    public TypeInfo? Pointee { get; set; } = pointee;
 
     public TypeInfo? ElementType { get; set; } = elementType;
     public List<uint>? ArrayLengths { get; set; } = arrayLengths;    // non-null for static arrays

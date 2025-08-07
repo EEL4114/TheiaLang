@@ -393,6 +393,12 @@ public static class SemanticAnalyser
             type.Size = SizeOf(type);
             return type;
         }
+        else if (type.Pointee != null)
+        {
+            type.Pointee = UpdateTypeInfo(type.Pointee);
+            type.Size = SizeOf(type);
+            return type;
+        }
         else
             return ResolveType(type.TypeName);
     }

@@ -28,6 +28,7 @@ public class Parser(List<Token> tokens)
     }
 
     #region Declarations
+
     FunctionDeclaration ParseFunctionDeclaration()
     {
         Token returnTypeToken = ConsumeTypeKeyword();
@@ -198,9 +199,11 @@ public class Parser(List<Token> tokens)
 
         return unionDeclaration;
     }
+
     #endregion
 
     #region Statements
+
     List<IStatement> ParseBlock()
     {
         Consume(TokenType.Punctuation_BraceL, "Expected '{' to start block");
@@ -416,6 +419,7 @@ public class Parser(List<Token> tokens)
     #endregion
 
     #region  Expressions
+
     IExpression ParseExpression() => ParseOR();
 
     IExpression ParseOR()
@@ -604,9 +608,11 @@ public class Parser(List<Token> tokens)
         Log.Error(2, $"Unexpected token {Peek().TokenType} in expression {PrintCurrentPos()}");
         return null!;
     }
+
     #endregion
 
     #region Conversion
+
     static BinaryOperator OperatorTypeToType(TokenType tokenType) => tokenType switch
     {
         TokenType.Operator_Plus => BinaryOperator.Add,
@@ -647,9 +653,11 @@ public class Parser(List<Token> tokens)
 
         _ => throw new Exception($"Unsupported Type '{Previous().Lexeme}' at {PrintCurrentPos()}"),
     };
+
     #endregion
 
     #region Helpers
+
     bool Match(TokenType type)
     {
         if (Check(type)) { Advance(); return true; }
