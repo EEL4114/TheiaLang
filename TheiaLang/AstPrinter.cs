@@ -172,7 +172,11 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + tab)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
                 break;
             case InstantiationExpression isnt:
-                w.WriteLine($"{Indent(indent)}Instantiation: {isnt.TypeName}");
+                string type = TryType(isnt.ResolvedType);
+                type = string.IsNullOrEmpty(type) ? isnt.TypeName : type;
+
+
+                w.WriteLine($"{Indent(indent)}Instantiation: {type}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments:");
                 // TODO write the field names maybe?
                 foreach (IExpression arument in isnt.Arguments)

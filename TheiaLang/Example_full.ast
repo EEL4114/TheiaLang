@@ -1,5 +1,5 @@
 Program: Example
-Generated at 08.08.2025 02:53:43
+Generated at 08.08.2025 02:57:12
 
 UnionDeclaration: StringData
     s32 i
@@ -25,21 +25,21 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Index:
                     Literal: s32 (4 B) 2
         VariableDeclaration: Entity (45 B) entity =
-            Instantiation: Entity
+            Instantiation: Entity (45 B) 
                 Arguments:
-                    Instantiation: Transform
+                    Instantiation: Transform (36 B) 
                         Arguments:
-                            Instantiation: Vector3
+                            Instantiation: Vector3 (12 B) 
                                 Arguments:
                                     Literal: f32 (4 B) 0
                                     Literal: f32 (4 B) 0
                                     Literal: f32 (4 B) 0
-                            Instantiation: Vector3
+                            Instantiation: Vector3 (12 B) 
                                 Arguments:
                                     Literal: f32 (4 B) 0
                                     Literal: f32 (4 B) 0
                                     Literal: f32 (4 B) 0
-                            Instantiation: Vector3
+                            Instantiation: Vector3 (12 B) 
                                 Arguments:
                                     Literal: f32 (4 B) 0
                                     Literal: f32 (4 B) 0
