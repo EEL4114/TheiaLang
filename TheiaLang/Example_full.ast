@@ -1,5 +1,5 @@
 Program: Example
-Generated at 07.08.2025 11:30:31
+Generated at 08.08.2025 02:53:43
 
 UnionDeclaration: StringData
     s32 i
@@ -24,15 +24,32 @@ FunctionDeclaration: s32 main | Scope: 'main'
                     Identifier: [4]f32 (16 B) Vec4
                 Index:
                     Literal: s32 (4 B) 2
-        VariableDeclaration: Entity (9 B) entity =
+        VariableDeclaration: Entity (45 B) entity =
             Instantiation: Entity
                 Arguments:
+                    Instantiation: Transform
+                        Arguments:
+                            Instantiation: Vector3
+                                Arguments:
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
+                            Instantiation: Vector3
+                                Arguments:
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
+                            Instantiation: Vector3
+                                Arguments:
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
+                                    Literal: f32 (4 B) 0
                     Literal: f32 (4 B) 70
                     Literal: f32 (4 B) 1.5
                     Literal: bool (1 B) false
         VariableDeclaration: f32 (4 B) HP =
             MemberAccess: f32 (4 B) entity.health
-                Target: Entity (9 B) entity
+                Target: Entity (45 B) entity
                 Member: f32 (4 B) health
         VariableDeclaration: @f32 (8 B) healthPtr =
             UnaryExpression: @f32 (8 B) AddressOf
@@ -47,7 +64,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
             BinaryExpression: f32 (4 B) Add
                 Literal: f32 (4 B) 1
                 MemberAccess: f32 (4 B) entity.health
-                    Target: Entity (9 B) entity
+                    Target: Entity (45 B) entity
                     Member: f32 (4 B) health
         Assignment:
             Identifier: @f32 (8 B) healthPtr
@@ -94,7 +111,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: bool (1 B) defaultBool
         Assignment:
             MemberAccess: f32 (4 B) entity.health
-                Target: Entity (9 B) entity
+                Target: Entity (45 B) entity
                 Member: f32 (4 B) health
             Literal: f32 (4 B) 4
         VariableDeclaration: s32 (4 B) default_s32
@@ -169,7 +186,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then280' 
+            Then: | Scope: 'if_then314' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -180,7 +197,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else296' 
+            Else: | Scope: 'if_else330' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -200,7 +217,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then326' 
+            Then: | Scope: 'if_then360' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -214,7 +231,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_344' 
+        For: | Scope: 'for_378' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0
@@ -255,8 +272,9 @@ FunctionDeclaration: s32 m | Scope: 'm'
         Return: s32 (4 B) 
             Identifier: s32 (4 B) j
 
-StructDeclaration: Entity (9 B) | Scope: 'Entity' 
+StructDeclaration: Entity (45 B) | Scope: 'Entity' 
     Fields:
+        Transform transform
         f32 health
         f32 speed
         bool canFly

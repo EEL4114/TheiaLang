@@ -351,7 +351,7 @@ public static class IRGenerator
     #endregion
 
     #region Expressions
-    static (StringBuilder, string) EmitExpression(IExpression expression)
+    static (StringBuilder, string value) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();
         return expression switch
@@ -367,7 +367,7 @@ public static class IRGenerator
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
-    static (StringBuilder code, string name) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
+    static (StringBuilder code, string value) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType!;
         switch (unaryExpression.Op)
@@ -416,7 +416,7 @@ public static class IRGenerator
         }
     }
 
-    static (StringBuilder code, string name) EmitLiteralExpression(
+    static (StringBuilder code, string value) EmitLiteralExpression(
     LiteralExpression literalExpression,
     StringBuilder code)
     {
@@ -452,7 +452,7 @@ public static class IRGenerator
         throw new Exception("Unknown literal");
     }
 
-    static (StringBuilder code, string name) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
+    static (StringBuilder code, string value) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
         if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
         {
@@ -482,7 +482,7 @@ public static class IRGenerator
         throw new Exception($"Undefined variable or field '{identifier.Name}'");
     }
 
-    static (StringBuilder code, string name) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
+    static (StringBuilder code, string value) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
     {
         (StringBuilder cl, string vl) = EmitExpression(binaryExpression.Left);
         (StringBuilder cr, string vr) = EmitExpression(binaryExpression.Right);
@@ -537,15 +537,15 @@ public static class IRGenerator
         return (code, $"%{tmp}");
     }
 
-    static (StringBuilder code, string name) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
+    static (StringBuilder code, string value) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
-        string irType = instantiation.TypeName;
+        string irType = TypeToLLVM(instantiation.ResolvedType!)!;
         string ptrName = $"%{NewTempVar()}";
         code.AppendLine($"  {ptrName} = alloca {irType}");
 
         for (int i = 0; i < instantiation.Arguments.Count; i++)
         {
-            (StringBuilder argCode, string argReg) = EmitExpression(instantiation.Arguments[i]);
+            (StringBuilder argCode, string argumentValue) = EmitExpression(instantiation.Arguments[i]);
             code.Append(argCode);
 
             string gep = $"%{NewTempVar()}";
@@ -554,13 +554,16 @@ public static class IRGenerator
 
             string llvmType = TypeToLLVM(instantiation.Arguments[i].ResolvedType!)!;
 
-            code.AppendLine($"  store {llvmType} {argReg}, {llvmType}* {gep}");
+            code.AppendLine($"  store {llvmType} {argumentValue}, {llvmType}* {gep}");
         }
 
-        return (code, ptrName);
+        string valueName = $"%{NewTempVar()}";
+        code.AppendLine($"  {valueName} = load {irType}, {irType}* {ptrName}");
+
+        return (code, valueName);
     }
 
-    static (StringBuilder code, string name) EmitCallExpression(CallExpression call, StringBuilder code)
+    static (StringBuilder code, string value) EmitCallExpression(CallExpression call, StringBuilder code)
     {
         if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? calleeInfo, out _))
             throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
@@ -602,7 +605,7 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-    static (StringBuilder code, string name) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
+    static (StringBuilder code, string value) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
         (string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
 
@@ -611,7 +614,7 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-    static (StringBuilder code, string name) EmitIndexExpression(IndexExpression index, StringBuilder code)
+    static (StringBuilder code, string value) EmitIndexExpression(IndexExpression index, StringBuilder code)
     {
         (string ptr, string llvmType) = EmitAddressOf(index, code);
 
