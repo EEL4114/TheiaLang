@@ -1,0 +1,19 @@
+int main()
+{
+    bool a;     //default to 'false'
+    bool b = true;
+
+    bool c = a || b;
+    bool d = a && b;
+    
+    int i = 1;
+    int j = 3;
+
+    int k = i / j;
+
+    float f = 1;
+    float g = 3;
+    float h = f / g;
+
+    return k;
+}

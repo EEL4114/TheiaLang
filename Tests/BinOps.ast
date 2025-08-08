@@ -1,0 +1,35 @@
+Program: BinOps
+
+FunctionDeclaration: s32 main | Scope: 'main' 
+    Arguments:
+    BlockSatement:
+        VariableDeclaration: bool (1 B) a
+        VariableDeclaration: bool (1 B) b =
+            Literal: bool (1 B) true
+        VariableDeclaration: bool (1 B) c =
+            BinaryExpression: OR
+                Identifier: a
+                Identifier: b
+        VariableDeclaration: bool (1 B) d =
+            BinaryExpression: AND
+                Identifier: a
+                Identifier: b
+        VariableDeclaration: s32 (4 B) i =
+            Literal: int (0 B) 1
+        VariableDeclaration: s32 (4 B) j =
+            Literal: int (0 B) 3
+        VariableDeclaration: s32 (4 B) k =
+            BinaryExpression: Divide
+                Identifier: i
+                Identifier: j
+        VariableDeclaration: f32 (4 B) f =
+            Literal: int (0 B) 1
+        VariableDeclaration: f32 (4 B) g =
+            Literal: int (0 B) 3
+        VariableDeclaration: f32 (4 B) h =
+            BinaryExpression: Divide
+                Identifier: f
+                Identifier: g
+        Return: 
+            Identifier: k
+

@@ -8,8 +8,9 @@ int main()
                                 // when using arr of ptrs vs ptr to arr
     Vec4[1] = 3;
 
-    @[4]f32 ptrToFloatArray;
-    [4]@f32 arrOfFloatPtrs;
+    @[4]f32 ptrToFloatArray;    // this is much less ambiguous / error-prone
+    [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
+
 
     f32 z = Vec4[2];
 
@@ -134,9 +135,9 @@ struct Entity(Transform transform, float health, float speed, bool canFly)
     }
 }
 
-struct Transform(       // declared before 'Vector3' is
-    Vector3 position, 
-    Vector3 rotation, 
+struct Transform(           // declared before 'Vector3' is
+    Vector3 position,       // -> should work regardless since this is not a 
+    Vector3 rotation,       //    clown language
     Vector3 scale);
 
 struct Vector3(f32 x, f32 y, f32 z)

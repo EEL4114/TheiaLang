@@ -174,8 +174,6 @@ static class AstPrinter
             case InstantiationExpression isnt:
                 string type = TryType(isnt.ResolvedType);
                 type = string.IsNullOrEmpty(type) ? isnt.TypeName : type;
-
-
                 w.WriteLine($"{Indent(indent)}Instantiation: {type}");
                 w.WriteLine($"{Indent(indent + tab)}Arguments:");
                 // TODO write the field names maybe?

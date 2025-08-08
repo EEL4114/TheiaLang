@@ -181,13 +181,13 @@ public static class IRGenerator
     {
         switch (statement)
         {
-            case VariableDeclaration v: EmitVariableDeclaration(v, sb); break;
-            case AssignmentStatement a: EmitAssignmentStatement(a, sb); break;
+            case VariableDeclaration v:         EmitVariableDeclaration(v, sb); break;
+            case AssignmentStatement a:         EmitAssignmentStatement(a, sb); break;
             case CompoundAssignmentStatement c: EmitCompoundAssignmentStatement(c, sb); break;
-            case IfStatement i: EmitIfStatement(i, sb); break;
-            case ForStatement f: EmitForStatement(f, sb); break;
-            case ReturnStatement r: EmitReturnStatement(r, sb); break;
-            case ExpressionStatement e: EmitExpressionStatement(e, sb); break;
+            case IfStatement i:                 EmitIfStatement(i, sb); break;
+            case ForStatement f:                EmitForStatement(f, sb); break;
+            case ReturnStatement r:             EmitReturnStatement(r, sb); break;
+            case ExpressionStatement e:         EmitExpressionStatement(e, sb); break;
             default: throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
@@ -245,10 +245,10 @@ public static class IRGenerator
 
         BinaryOperator op = assignment.Op switch
         {
-            BinaryOperator.PlusEqual => BinaryOperator.Add,
+            BinaryOperator.PlusEqual  => BinaryOperator.Add,
             BinaryOperator.MinusEqual => BinaryOperator.Subtract,
-            BinaryOperator.MultEqual => BinaryOperator.Multiply,
-            BinaryOperator.DivEqual => BinaryOperator.Divide,
+            BinaryOperator.MultEqual  => BinaryOperator.Multiply,
+            BinaryOperator.DivEqual   => BinaryOperator.Divide,
             _ => throw new Exception($"Invalid compound operator: '{assignment.Op}'")
         };
 
@@ -356,14 +356,14 @@ public static class IRGenerator
         StringBuilder code = new StringBuilder();
         return expression switch
         {
-            UnaryExpression unaryExpression => EmitUnaryExpression(unaryExpression, code),
-            LiteralExpression literal => EmitLiteralExpression(literal, code),
-            IdentifierExpression identifier => EmitIdentifierExpression(identifier, code),
-            BinaryExpression binaryExpression => EmitBinaryExpression(binaryExpression, code),
+            UnaryExpression unaryExpression       => EmitUnaryExpression(unaryExpression, code),
+            LiteralExpression literal             => EmitLiteralExpression(literal, code),
+            IdentifierExpression identifier       => EmitIdentifierExpression(identifier, code),
+            BinaryExpression binaryExpression     => EmitBinaryExpression(binaryExpression, code),
             InstantiationExpression instantiation => EmitInstantiationExpression(instantiation, code),
-            CallExpression call => EmitCallExpression(call, code),
-            MemberAccessExpression memberAccess => EmitMemberAccessExpression(memberAccess, code),
-            IndexExpression index => EmitIndexExpression(index, code),
+            CallExpression call                   => EmitCallExpression(call, code),
+            MemberAccessExpression memberAccess   => EmitMemberAccessExpression(memberAccess, code),
+            IndexExpression index                 => EmitIndexExpression(index, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
@@ -380,16 +380,16 @@ public static class IRGenerator
 
                 string instr = typeInfo.TypeName switch
                 {
-                    "s8" => "sub",
-                    "s16" => "sub",
-                    "s32" => "sub",
-                    "s64" => "sub",
+                    "s8"   => "sub",
+                    "s16"  => "sub",
+                    "s32"  => "sub",
+                    "s64"  => "sub",
                     "s128" => "sub",
                     "s256" => "sub",
 
-                    "f16" => "fsub",
-                    "f32" => "fsub",
-                    "f64" => "fsub",
+                    "f16"  => "fsub",
+                    "f32"  => "fsub",
+                    "f64"  => "fsub",
                     "f128" => "fsub",
                     _ => throw new NotSupportedException($"Unary '-' on {typeInfo.TypeName}")
                 };
@@ -500,34 +500,36 @@ public static class IRGenerator
         else if (typeInfo.TypeName == "bool") op = binaryExpression.Op switch
         {
             BinaryOperator.EqualEqual => "icmp eq",
-            BinaryOperator.NotEqual => "icmp ne",
-            BinaryOperator.AND => "and",
-            BinaryOperator.OR => "or",
+            BinaryOperator.NotEqual   => "icmp ne",
+            BinaryOperator.AND        => "and",
+            BinaryOperator.OR         => "or",
             _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type 'bool'")
         };
         else if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
         {
-            BinaryOperator.Add => "add",
-            BinaryOperator.Subtract => "sub",
-            BinaryOperator.Multiply => "mul",
-            BinaryOperator.Greater => "icmp sgt",
-            BinaryOperator.Less => "icmp slt",
+            BinaryOperator.Add        => "add",
+            BinaryOperator.Subtract   => "sub",
+            BinaryOperator.Multiply   => "mul",
+            BinaryOperator.Divide     => "sdiv",
+            BinaryOperator.Greater    => "icmp sgt",
+            BinaryOperator.Less       => "icmp slt",
             BinaryOperator.EqualEqual => "icmp eq",
-            BinaryOperator.NotEqual => "icmp ne",
+            BinaryOperator.NotEqual   => "icmp ne",
             _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type {typeInfo.TypeName}")
         };
         else if (typeInfo.TypeName.StartsWith('f')) op = binaryExpression.Op switch
         {
-            BinaryOperator.Add => "fadd",
-            BinaryOperator.Subtract => "fsub",
-            BinaryOperator.Multiply => "fmul",
-            BinaryOperator.Greater => "fcmp ogt",
-            BinaryOperator.Less => "fcmp olt",
+            BinaryOperator.Add        => "fadd",
+            BinaryOperator.Subtract   => "fsub",
+            BinaryOperator.Multiply   => "fmul",
+            BinaryOperator.Divide     => "fdiv",
+            BinaryOperator.Greater    => "fcmp ogt",
+            BinaryOperator.Less       => "fcmp olt",
             BinaryOperator.EqualEqual => "fcmp oeq",
-            BinaryOperator.NotEqual => "fcmp one",
+            BinaryOperator.NotEqual   => "fcmp one",
             _ => throw new Exception($"Op {binaryExpression.Op}")
         };
-        else throw new Exception($"Unsupported operation '{typeInfo.TypeName}' for type {typeInfo.TypeName}");
+        else throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type {typeInfo.TypeName}");
 
         string LLVMType = TypeToLLVM(typeInfo)!;
 
@@ -760,16 +762,16 @@ public static class IRGenerator
             {
                 "bool" => "i1",
 
-                "s8" => "i8",
-                "s16" => "i16",
-                "s32" => "i32",
-                "s64" => "i64",
+                "s8"   => "i8",
+                "s16"  => "i16",
+                "s32"  => "i32",
+                "s64"  => "i64",
                 "s128" => "i128",
                 "s256" => "i256",
 
-                "f16" => "half",
-                "f32" => "float",
-                "f64" => "double",
+                "f16"  => "half",
+                "f32"  => "float",
+                "f64"  => "double",
                 "f128" => "fp128",
 
                 _ => throw new NotImplementedException(typeName),

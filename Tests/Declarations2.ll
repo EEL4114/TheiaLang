@@ -7,49 +7,49 @@ target triple = "x86_64-pc-windows-msvc19.44.35211"
 define i32 @main() {
 entry:
   %position_main = alloca %Vector3
-  %tmp2 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 0
-  store float -1.0, float* %tmp2
-  %tmp3 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 1
-  store float -1.0, float* %tmp3
-  %tmp4 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 2
-  store float -1.0, float* %tmp4
+  %tmp15 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 0
+  store float -1.0, float* %tmp15
+  %tmp16 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 1
+  store float -1.0, float* %tmp16
+  %tmp17 = getelementptr %Vector3, %Vector3* %position_main, i32 0, i32 2
+  store float -1.0, float* %tmp17
 
   %z_main = alloca float
-  %tmp5 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 2
-  %tmp6 = load float, float* %tmp5
-  store float %tmp6, float* %z_main
+  %tmp18 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 2
+  %tmp19 = load float, float* %tmp18
+  store float %tmp19, float* %z_main
   %arr_main = alloca [3 x float]
-  %tmp7 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
-  %tmp8 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 0
-  %tmp9 = load float, float* %tmp8
-  store float %tmp9, float* %tmp7
-  %tmp10 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
-  %tmp11 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 1
-  %tmp12 = load float, float* %tmp11
-  store float %tmp12, float* %tmp10
-  %tmp13 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 3
-  %tmp14 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
-  %tmp15 = load float, float* %tmp14
-  store float %tmp15, float* %tmp13
+  %tmp20 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
+  %tmp21 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 0
+  %tmp22 = load float, float* %tmp21
+  store float %tmp22, float* %tmp20
+  %tmp23 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
+  %tmp24 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 1
+  %tmp25 = load float, float* %tmp24
+  store float %tmp25, float* %tmp23
+  %tmp26 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 3
+  %tmp27 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
+  %tmp28 = load float, float* %tmp27
+  store float %tmp28, float* %tmp26
   %negY_main = alloca float
-  %tmp16 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
-  %tmp17 = load float, float* %tmp16
-  %tmp18 = fsub float 0.0, %tmp17
-  store float %tmp18, float* %negY_main
+  %tmp29 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
+  %tmp30 = load float, float* %tmp29
+  %tmp31 = fsub float 0.0, %tmp30
+  store float %tmp31, float* %negY_main
   %position2_main = alloca %Vector3
-  %tmp19 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
-  %tmp20 = load float, float* %tmp19
-  %tmp21 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 0
-  store float %tmp20, float* %tmp21
-  %tmp22 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
-  %tmp23 = load float, float* %tmp22
-  %tmp24 = fsub float 0.0, %tmp23
-  %tmp25 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 1
-  store float %tmp24, float* %tmp25
-  %tmp26 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 2
-  %tmp27 = load float, float* %tmp26
-  %tmp28 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 2
-  store float %tmp27, float* %tmp28
+  %tmp32 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 1
+  %tmp33 = load float, float* %tmp32
+  %tmp34 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 0
+  store float %tmp33, float* %tmp34
+  %tmp35 = getelementptr inbounds [3 x float], [3 x float]* %arr_main, i32 0, i32 2
+  %tmp36 = load float, float* %tmp35
+  %tmp37 = fsub float 0.0, %tmp36
+  %tmp38 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 1
+  store float %tmp37, float* %tmp38
+  %tmp39 = getelementptr inbounds %Vector3, %Vector3* %position_main, i32 0, i32 2
+  %tmp40 = load float, float* %tmp39
+  %tmp41 = getelementptr %Vector3, %Vector3* %position2_main, i32 0, i32 2
+  store float %tmp40, float* %tmp41
 
   ret i32 0
 }

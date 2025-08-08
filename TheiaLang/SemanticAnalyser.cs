@@ -544,12 +544,12 @@ public static class SemanticAnalyser
         string shared = GetImplicitPromotionType(typeA, typeB)!;
 
         if (binaryOperator == BinaryOperator.EqualEqual
-            || binaryOperator == BinaryOperator.NotEqual)
+         || binaryOperator == BinaryOperator.NotEqual)
             return "bool";
 
         if (typeA == "bool" && typeB == "bool"
-            && binaryOperator == BinaryOperator.AND
-            || binaryOperator == BinaryOperator.OR)
+         && binaryOperator == BinaryOperator.AND
+         || binaryOperator == BinaryOperator.OR)
             return "bool";
 
         if (shared != "bool" && IRGenerator.IsBuiltinType(shared))

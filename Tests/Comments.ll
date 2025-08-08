@@ -6,9 +6,9 @@ define i32 @main() {
 entry:
   %a_main = alloca i32
   store i32 17, i32* %a_main
-  %tmp0 = load i32, i32* %a_main
-  %tmp1 = sub i32 %tmp0, 17
+  %tmp13 = load i32, i32* %a_main
+  %tmp14 = sub i32 %tmp13, 17
 
-  ret i32 %tmp1
+  ret i32 %tmp14
 }
 

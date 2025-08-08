@@ -152,7 +152,7 @@ class Lexer(string sourceCode)
             "==" => MakeToken(TokenType.Operator_EqualEqual, s),
             "!=" => MakeToken(TokenType.Operator_Inequal, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
-            "||" => MakeToken(TokenType.Operator_AND, s),
+            "||" => MakeToken(TokenType.Operator_OR, s),
             _ => throw new NotImplementedException($"Unexpected character '{c}' at {line + 1}:{col - 1}"),
         };
 
@@ -199,37 +199,38 @@ class Lexer(string sourceCode)
         {
             "bool" => new Token(TokenType.Keyword_bool, lexeme, line, startCol),
 
-            "s8" => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
+            "s8"    => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
             "sbyte" => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
-            "s16" => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
+            "s16"   => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
             "short" => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
-            "s32" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "int" => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "s64" => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
-            "long" => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
-            "s128" => new Token(TokenType.Keyword_s128, lexeme, line, startCol),
-            "s256" => new Token(TokenType.Keyword_s256, lexeme, line, startCol),
+            "s32"   => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "int"   => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
+            "s64"   => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
+            "long"  => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
+            "s128"  => new Token(TokenType.Keyword_s128, lexeme, line, startCol),
+            "s256"  => new Token(TokenType.Keyword_s256, lexeme, line, startCol),
 
-            "f16" => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
-            "half" => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
-            "f32" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
-            "float" => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
-            "f64" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
+            "f16"    => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
+            "half"   => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
+            "f32"    => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "float"  => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
+            "f64"    => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
             "double" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
-            "f128" => new Token(TokenType.Keyword_f128, lexeme, line, startCol),
+            "f128"   => new Token(TokenType.Keyword_f128, lexeme, line, startCol),
 
             "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
-            "union" => new Token(TokenType.Keyword_union, lexeme, line, startCol),
+            "union"  => new Token(TokenType.Keyword_union, lexeme, line, startCol),
 
-            "if" => new Token(TokenType.Keyword_if, lexeme, line, startCol),
+            "if"   => new Token(TokenType.Keyword_if, lexeme, line, startCol),
             "else" => new Token(TokenType.Keyword_else, lexeme, line, startCol),
 
             "for" => new Token(TokenType.Keyword_for, lexeme, line, startCol),
 
             "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
-            "true" => new Token(TokenType.Literal, lexeme, line, startCol),
-            "false" => new Token(TokenType.Literal, lexeme, line, startCol),
-            "new" => new Token(TokenType.Keyword_new, lexeme, line, startCol),
+            "true"   => new Token(TokenType.Literal, lexeme, line, startCol),
+            "false"  => new Token(TokenType.Literal, lexeme, line, startCol),
+            "new"    => new Token(TokenType.Keyword_new, lexeme, line, startCol),
+            
             _ => new Token(TokenType.Identifier, lexeme, line, startCol),
         };
     }

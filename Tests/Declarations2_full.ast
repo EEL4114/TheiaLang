@@ -4,7 +4,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
     Arguments:
     BlockSatement:
         VariableDeclaration: Vector3 (12 B) position =
-            Instantiation: Vector3
+            Instantiation: Vector3 (12 B) 
                 Arguments:
                     Literal: f32 (4 B) -1
                     Literal: f32 (4 B) -1
@@ -52,7 +52,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Index:
                             Literal: s32 (4 B) 2
         VariableDeclaration: Vector3 (12 B) position2 =
-            Instantiation: Vector3
+            Instantiation: Vector3 (12 B) 
                 Arguments:
                     IndexExpression: f32 (4 B) 
                         Target:

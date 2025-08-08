@@ -1,21 +1,21 @@
 ﻿using System.Diagnostics;
 using TheiaLang;
 
-const ConsoleColor LEXER_COL = ConsoleColor.Cyan;
+const ConsoleColor LEXER_COL  = ConsoleColor.Cyan;
 const ConsoleColor PARSER_COL = ConsoleColor.Yellow;
-const ConsoleColor SEM_COL = ConsoleColor.DarkRed;
-const ConsoleColor IRGEN_COL = ConsoleColor.Green;
-const ConsoleColor LLVM_COL = ConsoleColor.Magenta;
+const ConsoleColor SEM_COL    = ConsoleColor.DarkRed;
+const ConsoleColor IRGEN_COL  = ConsoleColor.Green;
+const ConsoleColor LLVM_COL   = ConsoleColor.Magenta;
 
 const int BAR_CHARS = 100;
 
-Stopwatch compileTimer = new Stopwatch();
-Stopwatch lexTimer = new Stopwatch();
-Stopwatch parseTimer = new Stopwatch();
-Stopwatch printTimer = new Stopwatch();
+Stopwatch compileTimer  = new Stopwatch();
+Stopwatch lexTimer      = new Stopwatch();
+Stopwatch parseTimer    = new Stopwatch();
+Stopwatch printTimer    = new Stopwatch();
 Stopwatch analysisTimer = new Stopwatch();
-Stopwatch IRGenTimer = new Stopwatch();
-Stopwatch LLVMTimer = new Stopwatch();
+Stopwatch IRGenTimer    = new Stopwatch();
+Stopwatch LLVMTimer     = new Stopwatch();
 
 #region Args
 
@@ -136,11 +136,11 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
 
 #endregion
 
-int lexerTime = (int)lexTimer.Elapsed.TotalMilliseconds;
+int lexerTime  = (int)lexTimer.Elapsed.TotalMilliseconds;
 int parserTime = (int)parseTimer.Elapsed.TotalMilliseconds;
-int semTime = (int)analysisTimer.Elapsed.TotalMilliseconds;
-int IRgenTime = (int)IRGenTimer.Elapsed.TotalMilliseconds;
-int LLVMTime = (int)LLVMTimer.Elapsed.TotalMilliseconds;
+int semTime    = (int)analysisTimer.Elapsed.TotalMilliseconds;
+int IRgenTime  = (int)IRGenTimer.Elapsed.TotalMilliseconds;
+int LLVMTime   = (int)LLVMTimer.Elapsed.TotalMilliseconds;
 
 Log.Time("Lexer took", lexerTime, LEXER_COL);
 Log.Time("Parser took", parserTime, PARSER_COL);
@@ -155,11 +155,11 @@ double totalTime = lexerTime + parserTime + IRgenTime + LLVMTime;
 
 #region Chart Printing
 
-int lexerChars = (int)Math.Round(lexerTime / (double)totalTime * BAR_CHARS);
+int lexerChars  = (int)Math.Round(lexerTime / (double)totalTime * BAR_CHARS);
 int parserChars = (int)Math.Round(parserTime / (double)totalTime * BAR_CHARS);
-int semChars = (int)Math.Round(semTime / (double)totalTime * BAR_CHARS);
-int IRgenChars = (int)Math.Round(IRgenTime / (double)totalTime * BAR_CHARS);
-int llvmChars = BAR_CHARS - lexerChars - parserChars - IRgenChars;
+int semChars    = (int)Math.Round(semTime / (double)totalTime * BAR_CHARS);
+int IRgenChars  = (int)Math.Round(IRgenTime / (double)totalTime * BAR_CHARS);
+int llvmChars   = BAR_CHARS - lexerChars - parserChars - IRgenChars;
 
 static void PrintSegment(int count, ConsoleColor color)
 {

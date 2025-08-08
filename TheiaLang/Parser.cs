@@ -615,21 +615,21 @@ public class Parser(List<Token> tokens)
 
     static BinaryOperator OperatorTypeToType(TokenType tokenType) => tokenType switch
     {
-        TokenType.Operator_Plus => BinaryOperator.Add,
-        TokenType.Operator_Minus => BinaryOperator.Subtract,
-        TokenType.Operator_Mult => BinaryOperator.Multiply,
-        TokenType.Operator_Div => BinaryOperator.Divide,
-        TokenType.Operator_Equal => BinaryOperator.Equal,
+        TokenType.Operator_Plus    => BinaryOperator.Add,
+        TokenType.Operator_Minus   => BinaryOperator.Subtract,
+        TokenType.Operator_Mult    => BinaryOperator.Multiply,
+        TokenType.Operator_Div     => BinaryOperator.Divide,
+        TokenType.Operator_Equal   => BinaryOperator.Equal,
         TokenType.Operator_Greater => BinaryOperator.Greater,
-        TokenType.Operator_Less => BinaryOperator.Less,
+        TokenType.Operator_Less    => BinaryOperator.Less,
 
         TokenType.Operator_EqualEqual => BinaryOperator.EqualEqual,
-        TokenType.Operator_Inequal => BinaryOperator.NotEqual,
+        TokenType.Operator_Inequal    => BinaryOperator.NotEqual,
 
-        TokenType.Operator_PlusEqual => BinaryOperator.PlusEqual,
+        TokenType.Operator_PlusEqual  => BinaryOperator.PlusEqual,
         TokenType.Operator_MinusEqual => BinaryOperator.MinusEqual,
-        TokenType.Operator_MultEqual => BinaryOperator.MultEqual,
-        TokenType.Operator_DivEqual => BinaryOperator.DivEqual,
+        TokenType.Operator_MultEqual  => BinaryOperator.MultEqual,
+        TokenType.Operator_DivEqual   => BinaryOperator.DivEqual,
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 
@@ -637,16 +637,16 @@ public class Parser(List<Token> tokens)
     {
         TokenType.Keyword_bool => "bool",
 
-        TokenType.Keyword_s8 => "s8",
-        TokenType.Keyword_s16 => "s16",
-        TokenType.Keyword_s32 => "s32",
-        TokenType.Keyword_s64 => "s64",
+        TokenType.Keyword_s8   => "s8",
+        TokenType.Keyword_s16  => "s16",
+        TokenType.Keyword_s32  => "s32",
+        TokenType.Keyword_s64  => "s64",
         TokenType.Keyword_s128 => "s128",
         TokenType.Keyword_s256 => "s256",
 
-        TokenType.Keyword_f16 => "f16",
-        TokenType.Keyword_f32 => "f32",
-        TokenType.Keyword_f64 => "f64",
+        TokenType.Keyword_f16  => "f16",
+        TokenType.Keyword_f32  => "f32",
+        TokenType.Keyword_f64  => "f64",
         TokenType.Keyword_f128 => "f128",
 
         TokenType.Identifier => Previous().Lexeme,
