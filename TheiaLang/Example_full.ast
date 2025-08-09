@@ -1,5 +1,5 @@
 Program: Example
-Generated at 09.08.2025 20:10:48
+Generated at 10.08.2025 01:05:59
 
 UnionDeclaration: StringData
     s32 i
@@ -18,6 +18,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
             Literal: f32 (4 B) 3
         VariableDeclaration: @[4]f32 (8 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (32 B) arrOfFloatPtrs
+        VariableDeclaration: @void (8 B) voidPtr
         VariableDeclaration: f32 (4 B) z =
             IndexExpression: f32 (4 B) 
                 Target:
@@ -197,7 +198,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then331' 
+            Then: | Scope: 'if_then335' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -208,7 +209,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else347' 
+            Else: | Scope: 'if_else351' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -228,7 +229,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then377' 
+            Then: | Scope: 'if_then381' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -242,7 +243,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_395' 
+        For: | Scope: 'for_399' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0

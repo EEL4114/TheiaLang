@@ -197,6 +197,8 @@ public static class IRGenerator
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
+        if (LLVMType == "void*")
+            LLVMType = "i8*";
 
         string slot = $"%{variableDeclaration.Name}_{currentScope!.Name}";
         sb.AppendLine($"  {slot} = alloca {LLVMType}");

@@ -17,6 +17,7 @@ entry:
   store float 3.0, float* %tmp0
   %ptrToFloatArray_main = alloca [4 x float]*
   %arrOfFloatPtrs_main = alloca [4 x float*]
+  %voidPtr_main = alloca i8*
   %z_main = alloca float
   %tmp1 = getelementptr inbounds [4 x float], [4 x float]* %Vec4_main, i32 0, i32 2
   %tmp2 = load float, float* %tmp1
@@ -189,14 +190,14 @@ entry:
   br i1 %tmp70, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, i32* %tmp68
-  %f_if_then331 = alloca float
-  store float 0.0, float* %f_if_then331
-  store float -1.0, float* %f_if_then331
+  %f_if_then335 = alloca float
+  store float 0.0, float* %f_if_then335
+  store float -1.0, float* %f_if_then335
   br label %if_end_0
 if_else_0:
   store i32 -42, i32* %tmp68
-  %f_if_else347 = alloca float
-  store float 78.0, float* %f_if_else347
+  %f_if_else351 = alloca float
+  store float 78.0, float* %f_if_else351
   br label %if_end_0
 if_end_0:
   %tmp71 = load i32, i32* %tmp68

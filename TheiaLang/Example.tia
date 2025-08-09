@@ -11,6 +11,8 @@ int main()
     @[4]f32 ptrToFloatArray;    // this is much less ambiguous / error-prone
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
+    @void voidPtr;
+
     /*
     []byte dynamicArray;        // implicit initialisation with '[]',
                                 // so we don't have any annoying null stuff
