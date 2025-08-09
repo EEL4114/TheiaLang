@@ -1,5 +1,5 @@
 Program: Example
-Generated at 08.08.2025 21:45:47
+Generated at 09.08.2025 20:10:48
 
 UnionDeclaration: StringData
     s32 i
@@ -177,6 +177,17 @@ FunctionDeclaration: s32 main | Scope: 'main'
         Return: s32 (4 B) 
             Literal: s32 (4 B) 0
 
+FunctionDeclaration: void fn | Scope: 'fn' 
+    Arguments:
+        s32 i
+    BlockSatement:
+        VariableDeclaration: s32 (4 B) j =
+            BinaryExpression: s32 (4 B) Divide
+                Identifier: s32 (4 B) i
+                Literal: s32 (4 B) 7
+        Return: void (0 B) 
+            Literal: void (0 B) void
+
 FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
     Arguments:
         s32 value
@@ -186,7 +197,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then314' 
+            Then: | Scope: 'if_then331' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -197,7 +208,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else330' 
+            Else: | Scope: 'if_else347' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -217,7 +228,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then360' 
+            Then: | Scope: 'if_then377' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -231,7 +242,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_378' 
+        For: | Scope: 'for_395' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0

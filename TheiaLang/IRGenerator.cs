@@ -22,7 +22,7 @@ public static class IRGenerator
         "f64",
         "f128",
 
-        // "void",
+        "void",
     ];
 
     public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
@@ -179,15 +179,17 @@ public static class IRGenerator
 
     static void EmitStatement(IStatement statement, StringBuilder sb)
     {
+        int[] ints = [];
+        int j = ints.Length;
         switch (statement)
         {
-            case VariableDeclaration v:         EmitVariableDeclaration(v, sb); break;
-            case AssignmentStatement a:         EmitAssignmentStatement(a, sb); break;
+            case VariableDeclaration v: EmitVariableDeclaration(v, sb); break;
+            case AssignmentStatement a: EmitAssignmentStatement(a, sb); break;
             case CompoundAssignmentStatement c: EmitCompoundAssignmentStatement(c, sb); break;
-            case IfStatement i:                 EmitIfStatement(i, sb); break;
-            case ForStatement f:                EmitForStatement(f, sb); break;
-            case ReturnStatement r:             EmitReturnStatement(r, sb); break;
-            case ExpressionStatement e:         EmitExpressionStatement(e, sb); break;
+            case IfStatement i: EmitIfStatement(i, sb); break;
+            case ForStatement f: EmitForStatement(f, sb); break;
+            case ReturnStatement r: EmitReturnStatement(r, sb); break;
+            case ExpressionStatement e: EmitExpressionStatement(e, sb); break;
             default: throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
@@ -331,13 +333,12 @@ public static class IRGenerator
         sb.Append(code);
         string LLVMType = TypeToLLVM(returnStatement.Expression.ResolvedType!)!;
 
-        if (AutoLog && currentScope!.DeclaringNode is FunctionDeclaration)
+        if (AutoLog && currentScope!.DeclaringNode is FunctionDeclaration && LLVMType != "void")
             sb.AppendLine(
                 $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
             $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
             $"i8* getelementptr inbounds ([{LLVMType.Length + 1} x i8], [{LLVMType.Length + 1} x i8]* @.fn_{currentScope.Name}_str, i32 0, i32 0), " +
-            $"{LLVMType} {val})"
-            );
+            $"{LLVMType} {val})");
 
         sb.AppendLine($"  ret {LLVMType} {val}");
     }
@@ -424,6 +425,7 @@ public static class IRGenerator
         TypeInfo typeInfo = literalExpression.ResolvedType
             ?? throw new InvalidOperationException("Literal has no ResolvedType");
 
+        // TODO switch
         // Integer literals
         if (literalExpression.Value is int i)
         {
@@ -449,6 +451,15 @@ public static class IRGenerator
         if (literalExpression.Value is bool b)
             return (code, b ? "1" : "0");
 
+        // void
+        if (literalExpression.Value is null)
+        {
+            return typeInfo.TypeName switch
+            {
+                "void" => (code, ""),
+                _ => throw new Exception($"Unexpected type name: {literalExpression.Lexeme}")
+            };
+        }
         throw new Exception("Unknown literal");
     }
 
@@ -773,6 +784,8 @@ public static class IRGenerator
                 "f32"  => "float",
                 "f64"  => "double",
                 "f128" => "fp128",
+
+                "void" => "void",
 
                 _ => throw new NotImplementedException(typeName),
             };

@@ -213,7 +213,13 @@ public static class SemanticAnalyser
                 ExitScope();
                 break;
             case ReturnStatement returnStatement:
-                returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
+                if (returnStatement.Expression != null)
+                    returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
+                else
+                {
+                    returnStatement.Expression = new LiteralExpression(null!, "void");
+                    returnStatement.Expression.ResolvedType = new TypeInfo("void");
+                }
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
                 {
@@ -485,22 +491,23 @@ public static class SemanticAnalyser
     #endregion
 
     #region Interop
-    static readonly bool[,] LosslessTypeInterop = new bool[13, 13]
+    static readonly bool[,] LosslessTypeInterop = new bool[14, 14]
     {
-        //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false },
-        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true  },
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
-        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
-        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false },
-        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false },
-        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false },
-        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false },
-        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false },
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false },
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false },
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true  },
+        //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false},
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false},
+        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false},
+        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false},
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false},
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false},
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false},
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false},
+        /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   true},
     };
 
     static readonly bool[,] ScalarTypeInterop = new bool[13, 13]

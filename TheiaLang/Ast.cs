@@ -185,10 +185,10 @@ public sealed record ForStatement(
 
 
 public sealed record ReturnStatement(
-    IExpression Expression
+    IExpression? Expression
 ) : IStatement
 {
-    public IExpression Expression { get; set; } = Expression;
+    public IExpression? Expression { get; set; } = Expression;
 }
 #endregion
 

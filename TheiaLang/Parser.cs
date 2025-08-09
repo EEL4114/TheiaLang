@@ -282,9 +282,14 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Keyword_return))
         {
-            IExpression expr = ParseExpression();
+            ReturnStatement returnStatement;
+            if (Peek().TokenType != TokenType.Punctuation_Semicolon)
+                returnStatement = new ReturnStatement(ParseExpression());
+            else
+                returnStatement = new ReturnStatement(null);
+
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after return value");
-            return new ReturnStatement(expr);
+            return returnStatement;
         }
 
         // assignment: identifier '=' expr ';'

@@ -113,8 +113,10 @@ static class AstPrinter
                 PrintBlock(forStatement.Body, w, indent + tab * 2);
                 break;
             case ReturnStatement r:
-                w.WriteLine($"{Indent(indent)}Return: {TryType(r.Expression.ResolvedType)}");
-                PrintExpression(r.Expression, w, indent + tab);
+                    w.WriteLine($"{Indent(indent)}Return: {TryType(r.Expression?.ResolvedType)}");
+                if(r.Expression != null)
+                    PrintExpression(r.Expression, w, indent + tab);
+                    
                 break;
             case ExpressionStatement e:
                 w.WriteLine($"{Indent(indent)}Expression:");

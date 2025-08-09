@@ -11,6 +11,12 @@ int main()
     @[4]f32 ptrToFloatArray;    // this is much less ambiguous / error-prone
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
+    /*
+    []byte dynamicArray;        // implicit initialisation with '[]',
+                                // so we don't have any annoying null stuff
+
+    dynamicArray.Add(1);
+    */
 
     f32 z = Vec4[2];
 
@@ -80,6 +86,12 @@ int main()
     return 0;
 }
 
+void fn(s32 i)
+{
+    s32 j = i / 7;
+    return;
+}
+
 int Branchy(int value)
 {
     if(value == 0)
@@ -113,6 +125,7 @@ int Loopy(int value)
     }
     return value;
 }
+
 
 bool n(bool b)
 {

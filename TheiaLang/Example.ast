@@ -1,5 +1,5 @@
 Program: Example
-Generated at 08.08.2025 21:45:47
+Generated at 09.08.2025 20:10:47
 
 UnionDeclaration: StringData
     s32 i
@@ -179,6 +179,16 @@ FunctionDeclaration: s32 main | Scope: 'main'
         Return: int (0 B) 
             Literal: int (0 B) 0
 
+FunctionDeclaration: void fn | Scope: 'fn' 
+    Arguments:
+        s32 i
+    BlockSatement:
+        VariableDeclaration: s32 (4 B) j =
+            BinaryExpression: Divide
+                Identifier: i
+                Literal: int (0 B) 7
+        Return: 
+
 FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
     Arguments:
         s32 value
@@ -188,7 +198,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then314' 
+            Then: | Scope: 'if_then331' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -201,7 +211,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else330' 
+            Else: | Scope: 'if_else347' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -223,7 +233,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then360' 
+            Then: | Scope: 'if_then377' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -237,7 +247,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_378' 
+        For: | Scope: 'for_395' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

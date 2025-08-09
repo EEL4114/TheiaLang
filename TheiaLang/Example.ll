@@ -165,121 +165,134 @@ entry:
   ret i32 0
 }
 
+@.fn_fn_str = private constant [3 x i8] c"fn\00"
+define void @fn(i32 %i) {
+entry:
+  %tmp65 = alloca i32
+  store i32 %i, i32* %tmp65
+  %j_fn = alloca i32
+  %tmp66 = load i32, i32* %tmp65
+  %tmp67 = sdiv i32 %tmp66, 7
+
+  store i32 %tmp67, i32* %j_fn
+  ret void 
+}
+
 @.fn_Branchy_str = private constant [8 x i8] c"Branchy\00"
 define i32 @Branchy(i32 %value) {
 entry:
-  %tmp65 = alloca i32
-  store i32 %value, i32* %tmp65
-  %tmp66 = load i32, i32* %tmp65
-  %tmp67 = icmp eq i32 %tmp66, 0
+  %tmp68 = alloca i32
+  store i32 %value, i32* %tmp68
+  %tmp69 = load i32, i32* %tmp68
+  %tmp70 = icmp eq i32 %tmp69, 0
 
-  br i1 %tmp67, label %if_then_0, label %if_else_0
+  br i1 %tmp70, label %if_then_0, label %if_else_0
 if_then_0:
-  store i32 42, i32* %tmp65
-  %f_if_then314 = alloca float
-  store float 0.0, float* %f_if_then314
-  store float -1.0, float* %f_if_then314
+  store i32 42, i32* %tmp68
+  %f_if_then331 = alloca float
+  store float 0.0, float* %f_if_then331
+  store float -1.0, float* %f_if_then331
   br label %if_end_0
 if_else_0:
-  store i32 -42, i32* %tmp65
-  %f_if_else330 = alloca float
-  store float 78.0, float* %f_if_else330
+  store i32 -42, i32* %tmp68
+  %f_if_else347 = alloca float
+  store float 78.0, float* %f_if_else347
   br label %if_end_0
 if_end_0:
-  %tmp68 = load i32, i32* %tmp65
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Branchy_str, i32 0, i32 0), i32 %tmp68)
-  ret i32 %tmp68
+  %tmp71 = load i32, i32* %tmp68
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Branchy_str, i32 0, i32 0), i32 %tmp71)
+  ret i32 %tmp71
 }
 
 @.fn_Abs_str = private constant [4 x i8] c"Abs\00"
 define i32 @Abs(i32 %value) {
 entry:
-  %tmp69 = alloca i32
-  store i32 %value, i32* %tmp69
-  %tmp70 = load i32, i32* %tmp69
-  %tmp71 = icmp slt i32 %tmp70, 0
+  %tmp72 = alloca i32
+  store i32 %value, i32* %tmp72
+  %tmp73 = load i32, i32* %tmp72
+  %tmp74 = icmp slt i32 %tmp73, 0
 
-  br i1 %tmp71, label %if_then_1, label %if_end_1
+  br i1 %tmp74, label %if_then_1, label %if_end_1
 if_then_1:
-  %tmp72 = load i32, i32* %tmp69
-  %tmp73 = sub i32 0, %tmp72
-  ret i32 %tmp73
+  %tmp75 = load i32, i32* %tmp72
+  %tmp76 = sub i32 0, %tmp75
+  ret i32 %tmp76
   br label %if_end_1
 if_end_1:
-  %tmp74 = load i32, i32* %tmp69
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Abs_str, i32 0, i32 0), i32 %tmp74)
-  ret i32 %tmp74
+  %tmp77 = load i32, i32* %tmp72
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Abs_str, i32 0, i32 0), i32 %tmp77)
+  ret i32 %tmp77
 }
 
 @.fn_Loopy_str = private constant [6 x i8] c"Loopy\00"
 define i32 @Loopy(i32 %value) {
 entry:
-  %tmp75 = alloca i32
-  store i32 %value, i32* %tmp75
+  %tmp78 = alloca i32
+  store i32 %value, i32* %tmp78
   %i_Loopy = alloca i32
   store i32 0, i32* %i_Loopy
   br label %for_cond2
 for_cond2:
-  %tmp76 = load i32, i32* %i_Loopy
-  %tmp77 = load i32, i32* %tmp75
-  %tmp78 = icmp slt i32 %tmp76, %tmp77
+  %tmp79 = load i32, i32* %i_Loopy
+  %tmp80 = load i32, i32* %tmp78
+  %tmp81 = icmp slt i32 %tmp79, %tmp80
 
-  br i1 %tmp78, label %for_body2, label %for_end2
+  br i1 %tmp81, label %for_body2, label %for_end2
 for_body2:
-  %tmp79 = load i32, i32* %tmp75
-  %tmp80 = load i32, i32* %i_Loopy
-  %tmp81 = add i32 %tmp79, %tmp80
+  %tmp82 = load i32, i32* %tmp78
+  %tmp83 = load i32, i32* %i_Loopy
+  %tmp84 = add i32 %tmp82, %tmp83
 
-  store i32 %tmp81, i32* %tmp75
+  store i32 %tmp84, i32* %tmp78
   br label %for_iter2
 for_iter2:
-  %tmp82 = load i32, i32* %i_Loopy
-  %tmp83 = sub i32 %tmp82, 3
+  %tmp85 = load i32, i32* %i_Loopy
+  %tmp86 = sub i32 %tmp85, 3
 
-  store i32 %tmp83, i32* %i_Loopy
+  store i32 %tmp86, i32* %i_Loopy
   br label %for_cond2
 for_end2:
-  %tmp84 = load i32, i32* %tmp75
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Loopy_str, i32 0, i32 0), i32 %tmp84)
-  ret i32 %tmp84
+  %tmp87 = load i32, i32* %tmp78
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_Loopy_str, i32 0, i32 0), i32 %tmp87)
+  ret i32 %tmp87
 }
 
 @.fn_n_str = private constant [2 x i8] c"n\00"
 define i1 @n(i1 %b) {
 entry:
-  %tmp85 = alloca i1
-  store i1 %b, i1* %tmp85
-  %tmp86 = load i1, i1* %tmp85
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_n_str, i32 0, i32 0), i1 %tmp86)
-  ret i1 %tmp86
+  %tmp88 = alloca i1
+  store i1 %b, i1* %tmp88
+  %tmp89 = load i1, i1* %tmp88
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_n_str, i32 0, i32 0), i1 %tmp89)
+  ret i1 %tmp89
 }
 
 @.fn_m_str = private constant [2 x i8] c"m\00"
 define i32 @m(i32 %j) {
 entry:
-  %tmp87 = alloca i32
-  store i32 %j, i32* %tmp87
+  %tmp90 = alloca i32
+  store i32 %j, i32* %tmp90
   %i_m = alloca i32
   store i32 3, i32* %i_m
-  %tmp88 = load i32, i32* %tmp87
-  %tmp89 = add i32 %tmp88, 4
+  %tmp91 = load i32, i32* %tmp90
+  %tmp92 = add i32 %tmp91, 4
 
-  store i32 %tmp89, i32* %tmp87
+  store i32 %tmp92, i32* %tmp90
   %health_m = alloca i32
   store i32 7, i32* %health_m
-  %tmp90 = load i32, i32* %tmp87
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_m_str, i32 0, i32 0), i32 %tmp90)
-  ret i32 %tmp90
+  %tmp93 = load i32, i32* %tmp90
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.fn_m_str, i32 0, i32 0), i32 %tmp93)
+  ret i32 %tmp93
 }
 
 @.fn_IsAlive_str = private constant [8 x i8] c"IsAlive\00"
 define i1 @Entity.IsAlive(%Entity* %this) {
 entry:
-  %tmp91 = getelementptr %Entity, %Entity* %this, i32 0, i32 1
-  %tmp92 = load float, float* %tmp91
-  %tmp93 = fcmp ogt float %tmp92, 0.0
+  %tmp94 = getelementptr %Entity, %Entity* %this, i32 0, i32 1
+  %tmp95 = load float, float* %tmp94
+  %tmp96 = fcmp ogt float %tmp95, 0.0
 
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp93)
-  ret i1 %tmp93
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp96)
+  ret i1 %tmp96
 }
 
