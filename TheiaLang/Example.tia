@@ -12,14 +12,11 @@ int main()
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
     @void voidPtr;
-
-    /*
-    []byte dynamicArray;        // implicit initialisation with '[]',
+/*
+    []s8 dynamicArray;          // implicit initialisation with '[]',
                                 // so we don't have any annoying null stuff
-
-    dynamicArray.Add(1);
-    */
-
+    // dynamicArray.Add(1);
+*/
     f32 z = Vec4[2];
 
     Entity entity = new Entity(
@@ -74,9 +71,7 @@ int main()
     int c = a + b;
 
     int d = 4;
-
     d = a + c;
-
     d = d + 42;
 
     float f = 2.5;
@@ -156,7 +151,4 @@ struct Transform(           // declared before 'Vector3' is
     Vector3 rotation,       //    clown language
     Vector3 scale);
 
-struct Vector3(f32 x, f32 y, f32 z)
-{
-
-}
+struct Vector3(f32 x, f32 y, f32 z);

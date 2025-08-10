@@ -48,10 +48,12 @@ public class Parser(List<Token> tokens)
         {
             do
             {
-                Token typeToken = ConsumeTypeKeyword();
-                string fieldType = TokenTypeToString(typeToken.TokenType);
+                if (!MatchTypeDefinition(out TypeInfo parameterInfo))
+                    throw new Exception("Can't resolve type");
+
+                string parameterType = parameterInfo.TypeName;
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
+                TypeNamePair parameter = new TypeNamePair(parameterType, identifierToken.Lexeme);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
@@ -106,17 +108,17 @@ public class Parser(List<Token> tokens)
         {
             do
             {
-                if (!MatchTypeDefinition(out TypeInfo parameterInfo))
+                if (!MatchTypeDefinition(out TypeInfo fieldInfo))
                     throw new Exception("Can't resolve type");
 
-                string fieldType = parameterInfo.TypeName;
+                string fieldType = fieldInfo.TypeName;
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
                 currentScope.Declare(identifierToken.Lexeme,
                                      new SymbolInfo(
                                         identifierToken.Lexeme,
-                                        parameterInfo,
+                                        fieldInfo,
                                         SymbolKind.Variable,
                                         null
                                      ));
@@ -370,8 +372,11 @@ public class Parser(List<Token> tokens)
             do
             {
                 if (Peek().TokenType != TokenType.Literal)
-                    throw new Exception($"Unexpected token: expected integer literal, got: {Peek().TokenType}");
-                arrayLengths.Add(uint.Parse(Peek().Lexeme));
+                {
+                    Log.Info(arrayLengths.Count.ToString());
+                    break;
+                }
+                    arrayLengths.Add(uint.Parse(Peek().Lexeme));
                 Advance();
             } while (Match(TokenType.Punctuation_Comma));
             Consume(TokenType.Punctuation_BracketR, $"Expected closing ']', got: {Peek().TokenType}");
