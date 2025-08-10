@@ -106,16 +106,17 @@ public class Parser(List<Token> tokens)
         {
             do
             {
-                Token typeToken = ConsumeTypeKeyword();
-                string fieldType = TokenTypeToString(typeToken.TokenType);
+                if (!MatchTypeDefinition(out TypeInfo parameterInfo))
+                    throw new Exception("Can't resolve type");
+
+                string fieldType = parameterInfo.TypeName;
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                TypeInfo typeInfo = new TypeInfo(fieldType);
                 currentScope.Declare(identifierToken.Lexeme,
                                      new SymbolInfo(
                                         identifierToken.Lexeme,
-                                        typeInfo,
+                                        parameterInfo,
                                         SymbolKind.Variable,
                                         null
                                      ));

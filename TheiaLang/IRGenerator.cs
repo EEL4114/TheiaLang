@@ -765,7 +765,7 @@ public static class IRGenerator
             if (type.Pointee.TypeName != "void")
                 return $"{TypeToLLVM(type.Pointee)}*";
             else
-                return $"i8*";
+                return "i8*";
         }
         // TODO make this work with n-Dimensional arrays
         if (type.ArrayLengths != null && type.ArrayLengths.Count > 0)
