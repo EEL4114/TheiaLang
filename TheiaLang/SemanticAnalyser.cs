@@ -453,10 +453,10 @@ public static class SemanticAnalyser
     public static uint SizeOf(string typeName)
     {
         int i = IRGenerator.BuiltinTypeIndex(typeName);
-        if (i >= 0)
-            return SizeOfBuiltin[i];
         if (typeName.StartsWith('@'))
             return 8;   // ptrs are 64-bit == 8 B
+        if (i >= 0)
+            return SizeOfBuiltin[i];
 
         TypeInfo type = GetTypeInfo(typeName);
         // @Speed this is wasteful and dirt cheap to fix
@@ -465,8 +465,8 @@ public static class SemanticAnalyser
 
     static readonly uint[] SizeOfBuiltin =
     [
-        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128
-            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16
+        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void
+            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0
     ];
 
     static void EnterScope(Scope scope)
@@ -494,20 +494,20 @@ public static class SemanticAnalyser
     static readonly bool[,] LosslessTypeInterop = new bool[14, 14]
     {
         //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
-        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false},
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false},
-        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false},
-        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false},
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false},
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false},
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false},
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false},
-        /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   true},
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true},
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  true},
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
+        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
+        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
+        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  true},
+        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  true},
+        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  true},
+        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   true},
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  true},
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  true},
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  true},
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   true},
+        /*void  */  {   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true},
     };
 
     static readonly bool[,] ScalarTypeInterop = new bool[13, 13]

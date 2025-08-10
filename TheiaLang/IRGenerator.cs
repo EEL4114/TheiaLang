@@ -197,8 +197,6 @@ public static class IRGenerator
     static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
-        if (LLVMType == "void*")
-            LLVMType = "i8*";
 
         string slot = $"%{variableDeclaration.Name}_{currentScope!.Name}";
         sb.AppendLine($"  {slot} = alloca {LLVMType}");
@@ -763,8 +761,12 @@ public static class IRGenerator
     static string? TypeToLLVM(TypeInfo type)
     {
         if (type.Pointee != null)
-            return $"{TypeToLLVM(type.Pointee)}*";
-
+        {
+            if (type.Pointee.TypeName != "void")
+                return $"{TypeToLLVM(type.Pointee)}*";
+            else
+                return $"i8*";
+        }
         // TODO make this work with n-Dimensional arrays
         if (type.ArrayLengths != null && type.ArrayLengths.Count > 0)
             return $"[{type.ArrayLengths[0]} x {TypeToLLVM(type.ElementType!)}]";

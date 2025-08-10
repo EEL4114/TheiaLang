@@ -1,5 +1,5 @@
 Program: Example
-Generated at 10.08.2025 01:05:59
+Generated at 10.08.2025 13:26:03
 
 UnionDeclaration: StringData
     s32 i
@@ -72,6 +72,9 @@ FunctionDeclaration: s32 main | Scope: 'main'
             UnaryExpression: @f32 (8 B) AddressOf
                 Operand:
                     Identifier: f32 (4 B) moreHealth
+        Assignment:
+            Identifier: @void (8 B) voidPtr
+            Identifier: @f32 (8 B) healthPtr
         Assignment:
             Identifier: f32 (4 B) HP
             UnaryExpression: f32 (4 B) Dereference
@@ -198,7 +201,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then335' 
+            Then: | Scope: 'if_then341' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -209,7 +212,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else351' 
+            Else: | Scope: 'if_else357' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -229,7 +232,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then381' 
+            Then: | Scope: 'if_then387' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -243,7 +246,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_399' 
+        For: | Scope: 'for_405' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0
