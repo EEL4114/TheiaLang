@@ -475,7 +475,7 @@ public static class SemanticAnalyser
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
-            Log.Error(14, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
+            Log.Error(14, $"Scope '{scope}' does not exist in '{currentScope}'");
 
         currentScope = scope;
     }
@@ -483,7 +483,7 @@ public static class SemanticAnalyser
     static void ExitScope()
     {
         if (currentScope.Parent == null)
-            throw new Exception($"Tried to exit scope {currentScope.FullName}");
+            throw new Exception($"Tried to exit scope {currentScope}");
 
         currentScope = currentScope.Parent;
     }

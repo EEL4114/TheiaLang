@@ -1,6 +1,7 @@
 // all sorts of stuff
 
 union StringData(int i, float f);
+struct Vector2(float x, float y);
 
 int main()
 {

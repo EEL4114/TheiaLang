@@ -132,6 +132,14 @@ public sealed record VariableDeclaration(
 {
     public TypeInfo? ResolvedType { get; set; }
     public IExpression? Init { get; set; } = Init;
+    public override string ToString()
+    {
+        string s = $"VariableDeclaration: {TypeName} {Name}";
+        // TODO this can be done better
+        if (Init != null)
+            s += $"\n    Init: {Init}";
+        return s;
+    }
 }
 
 #endregion

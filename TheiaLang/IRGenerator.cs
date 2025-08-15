@@ -806,7 +806,7 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsKey(scopeName))  // verify that we can enter that scope
-            Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope.FullName}'");
+            Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope}'");
 #endif
 
         allocas.Push([]);
@@ -822,7 +822,7 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
-            Log.Error(8, $"Scope '{scope.Name}' does not exist in '{currentScope.FullName}'");
+            Log.Error(8, $"Scope '{scope}' does not exist in '{currentScope}'");
 #endif
         allocas.Push([]);
         varTypes.Push([]);
@@ -837,7 +837,7 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (currentScope.Parent == null)
-            Log.Error(9, $"Can't exit out of scope '{currentScope.FullName}'");
+            Log.Error(9, $"Can't exit out of scope '{currentScope}'");
 #endif
         allocas.Pop();
         varTypes.Pop();

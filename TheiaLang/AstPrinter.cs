@@ -23,6 +23,8 @@ static class AstPrinter
             if (node is UnionDeclaration unionDeclaration)
                 PrintUnion(unionDeclaration, w, indent);
         }
+
+        w.Flush();
     }
 
     #region Baisc

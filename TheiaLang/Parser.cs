@@ -43,7 +43,7 @@ public class Parser(List<Token> tokens)
 
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnType, name, parameters, body);
 
-        EnterScope(name, null);
+        EnterNewScope(name, null);
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
@@ -99,9 +99,7 @@ public class Parser(List<Token> tokens)
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
 
-        EnterScope(name);
-
-        structDeclaration.Scope = currentScope;
+        structDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = structDeclaration;
 
         if (!Check(TokenType.Punctuation_ParenthesisR))
@@ -248,7 +246,7 @@ public class Parser(List<Token> tokens)
             IExpression condition = ParseExpression();
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' to close condition of if statement");
 
-            EnterScope($"if_then{pos}");
+            EnterNewScope($"if_then{pos}");
             List<IStatement> thenBranch = ParseBlock();
             Scope thenScope = currentScope!;
             Scope? elseScope = null;
@@ -256,7 +254,7 @@ public class Parser(List<Token> tokens)
             List<IStatement>? elseBranch = null;
             if (Peek().TokenType == TokenType.Keyword_else)
             {
-                EnterScope($"if_else{pos}");
+                EnterNewScope($"if_else{pos}");
                 elseScope = currentScope;
                 Consume(TokenType.Keyword_else, "");
                 elseBranch = ParseBlock();
@@ -268,7 +266,7 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Keyword_for))
         {
-            EnterScope($"for_{pos}");
+            EnterNewScope($"for_{pos}");
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after for keyword");
             IStatement initialiser = ParseStatement();
             IExpression condition = ParseExpression();
@@ -713,9 +711,10 @@ public class Parser(List<Token> tokens)
 
     Token Previous() => tokens[pos - 1];
 
-    void EnterScope(string name, INode? declaringNode = null)
+    public Scope EnterNewScope(string name, INode? declaringNode = null)
     {
         currentScope = new Scope(name, declaringNode, currentScope);
+        return currentScope;
     }
 
     void ExitScope()

@@ -21,10 +21,12 @@ public class SymbolInfo(string name,
     {
         string s = $"{Kind} {Name}: {type}";
         if (Parameters != null)
+        {
             s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Name}";
-        for (int i = 1; i < Parameters!.Count; i++)
-            s += $",\n    {Parameters[i].TypeName} {Parameters[i].Name}";
+            for (int i = 1; i < Parameters!.Count; i++)
+                s += $",\n    {Parameters[i].TypeName} {Parameters[i].Name}";
             s += ")";
+        }
         return s;
     }
 }

@@ -5,9 +5,11 @@ declare i32 @puts(i8*, ...)
 declare i32 @printf(i8*, ...)
 @.print_ret_fmt = private constant [16 x i8] c"%s returned %d\0A\00"
 
+%Vector2 = type { float, float }
 %Entity = type { %Transform, float, float, i1 }
 %Transform = type { %Vector3, %Vector3, %Vector3 }
 %Vector3 = type { float, float, float }
+%Dynamic_Array_s8 = type { i64, i8*, i64 }
 
 @.fn_main_str = private constant [5 x i8] c"main\00"
 define i32 @main() {
@@ -18,6 +20,7 @@ entry:
   %ptrToFloatArray_main = alloca [4 x float]*
   %arrOfFloatPtrs_main = alloca [4 x float*]
   %voidPtr_main = alloca i8*
+  %dynamicArray_main = alloca %Dynamic_Array_s8
   %z_main = alloca float
   %tmp1 = getelementptr inbounds [4 x float], [4 x float]* %Vec4_main, i32 0, i32 2
   %tmp2 = load float, float* %tmp1
@@ -192,14 +195,14 @@ entry:
   br i1 %tmp71, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, i32* %tmp69
-  %f_if_then341 = alloca float
-  store float 0.0, float* %f_if_then341
-  store float -1.0, float* %f_if_then341
+  %f_if_then356 = alloca float
+  store float 0.0, float* %f_if_then356
+  store float -1.0, float* %f_if_then356
   br label %if_end_0
 if_else_0:
   store i32 -42, i32* %tmp69
-  %f_if_else357 = alloca float
-  store float 78.0, float* %f_if_else357
+  %f_if_else372 = alloca float
+  store float 78.0, float* %f_if_else372
   br label %if_end_0
 if_end_0:
   %tmp72 = load i32, i32* %tmp69

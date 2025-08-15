@@ -1,9 +1,14 @@
 Program: Example
-Generated at 11.08.2025 21:40:39
+Generated at 15.08.2025 22:14:40
 
 UnionDeclaration: StringData
     s32 i
     f32 f
+
+StructDeclaration: Vector2 (8 B) | Scope: 'Vector2' 
+    Fields:
+        f32 x
+        f32 y
 
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
@@ -19,6 +24,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: @[4]f32 (8 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (32 B) arrOfFloatPtrs
         VariableDeclaration: @void (8 B) voidPtr
+        VariableDeclaration: Dynamic_Array_s8 (24 B) dynamicArray
         VariableDeclaration: f32 (4 B) z =
             IndexExpression: f32 (4 B) 
                 Target:
@@ -201,7 +207,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then341' 
+            Then: | Scope: 'if_then356' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -212,7 +218,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else357' 
+            Else: | Scope: 'if_else372' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -232,7 +238,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then387' 
+            Then: | Scope: 'if_then402' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -246,7 +252,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_405' 
+        For: | Scope: 'for_420' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0
@@ -312,4 +318,10 @@ StructDeclaration: Vector3 (12 B) | Scope: 'Vector3'
         f32 x
         f32 y
         f32 z
+
+StructDeclaration: Dynamic_Array_s8 (24 B) | Scope: 'Dynamic_Array_s8' 
+    Fields:
+        s64 Length
+        @void Data
+        s64 Size
 

@@ -1,14 +1,7 @@
-using System.Data;
-using LLVMSharp.Interop;
-
 namespace TheiaLang;
 
 static class Elaboration
 {
-    // everything with this type placeholder has to be substituted with
-    // the concrete type that is being used
-    const string monomorphisationHook = "__subst_Type";
-
     // the template we use for dynamic arrays
     const string DYNAMIC_ARRAY_HOOK = "Dynamic_Array";
 
@@ -16,19 +9,21 @@ static class Elaboration
     static SymbolInfo DynamicArrayTemplate;
     static Scope currentScope;
     static ProgramNode ProgramAST;
+    static Scope GlobalScope;
 
-    public static void Simplify(Scope preloadScope, ProgramNode preloadAST,
-                                Scope programScope, ProgramNode programAST)
+    public static (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
+                                                                        Scope programScope, ProgramNode programAST)
     {
+        GlobalScope = programScope;
         ProgramAST = programAST;
         if (!preloadScope.TryLookup(DYNAMIC_ARRAY_HOOK, out DynamicArrayTemplate, out _))
             throw new Exception($"Could not find template {DYNAMIC_ARRAY_HOOK}");
 
-        currentScope = programScope;
+        currentScope = GlobalScope;
 
-        for (int i = 0; i < programAST.Nodes.Count; i++)
+        for (int i = 0; i < ProgramAST.Nodes.Count; i++)
         {
-            INode node = programAST.Nodes[i];
+            INode node = ProgramAST.Nodes[i];
 
             if (node is StructDeclaration sd)
                 AnalyseStruct(sd);
@@ -36,6 +31,8 @@ static class Elaboration
             if (node is FunctionDeclaration fn)
                 AnalyseFunctionBody(fn);
         }
+
+        return (ProgramAST, GlobalScope);
     }
 
     static void AnalyseStruct(StructDeclaration structDeclaration)
@@ -49,7 +46,6 @@ static class Elaboration
 
     static void AnalyseFunctionBody(FunctionDeclaration function)
     {
-        Log.Info(function.ToString());
         currentScope = function.Scope!;
         AnalyseStatements(function.Statements);
 
@@ -65,7 +61,7 @@ static class Elaboration
              && variableDeclaration.ResolvedType?.ArrayLengths?.Count == 0)
             {
                 string typeName = variableDeclaration.ResolvedType.ElementType!.TypeName;
-                Log.Info($"Dynamic Array: {typeName}");
+                string structName = $"{DYNAMIC_ARRAY_HOOK}_{typeName}";
                 // (1) check if that kind of array is already declared as struct
                 if (DynamicArrayCache.ContainsKey(typeName))
                 {
@@ -74,22 +70,32 @@ static class Elaboration
                 // (2) if no  -> declare the struct
                 else
                 {
-                    StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate);
-                    sd.Scope = new Scope($"{DYNAMIC_ARRAY_HOOK}_{typeName}",
-                                         sd,
-                                         currentScope);
+                    StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
+                    sd.Name = structName;
+                    sd.Scope = new Scope(structName, sd, GlobalScope);
 
-                    Log.Info(sd.Scope.ToString());
+                    // TODO: make this work with inits once we have them for arrays
+                    VariableDeclaration vd = new VariableDeclaration(structName,
+                                                                     variableDeclaration.Name,
+                                                                     null);
+                    Scope variableScope = currentScope;
 
-                    sd.Name += $"_{typeName}";
+                    vd.ResolvedType = sd.ResolvedType;
+                    statements[i] = vd;
+                    currentScope!.Symbols[vd.Name] = new SymbolInfo(vd.Name,
+                                                                    sd.ResolvedType,
+                                                                    SymbolKind.Variable,
+                                                                    null);
+
                     ProgramAST.Nodes.Add(sd);
-                    currentScope.Declare($"{DYNAMIC_ARRAY_HOOK}_{typeName}",
-                                         new SymbolInfo(sd.Name,
-                                                        sd.ResolvedType,
-                                                        SymbolKind.Type,
-                                                        sd.Fields));
+                    GlobalScope.Declare(structName,
+                                        new SymbolInfo(sd.Name,
+                                                       sd.ResolvedType,
+                                                       SymbolKind.Type,
+                                                       sd.Fields));
+
                     currentScope = sd.Scope;
-                    Log.Info(currentScope.ToString());
+                    currentScope.DeclaringNode = sd;
 
                     foreach (TypeNamePair field in sd.Fields)
                         currentScope.Declare(field.Name,
@@ -98,9 +104,7 @@ static class Elaboration
                                                             SymbolKind.Variable,
                                                             null));
 
-                    ExitScope();
-
-                    Log.Info(sd.ToString());
+                    currentScope = variableScope;
                 }
 
                 // (3) replace the current variable declaration with a struct instantiation
@@ -113,15 +117,17 @@ static class Elaboration
 
     #region Helpers
 
-
-    static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo)
+    static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo, string name = "")
     {
+        if (name == "")
+            name = symbolInfo.Name;
+
         List<TypeNamePair> fields = [];
         for (int i = 0; i < symbolInfo.Type.FieldNames!.Count; i++)
             fields.Add(new TypeNamePair(symbolInfo.Type.FieldTypes![i],
                                         symbolInfo.Type.FieldNames[i]));
 
-        return new StructDeclaration(symbolInfo.Name,
+        return new StructDeclaration(name,
                                      fields,
                                      []);
     }

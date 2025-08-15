@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using LLVMSharp;
 using TheiaLang;
 
 const ConsoleColor PRELOAD_COL = ConsoleColor.DarkGray;
@@ -39,7 +40,7 @@ do
 
 Parser preloadParser = new Parser(preloadTokens);
 (ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
-    using StreamWriter writer = new StreamWriter($"__preload__.ast");
+using StreamWriter writer = new StreamWriter($"__preload__.ast");
 AstPrinter.Print(preloadAST, writer, false);
 
 preloadTimer.Stop();
@@ -133,10 +134,10 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
     compileTimer.Stop();
     printTimer.Start();
 
-    using StreamWriter writer = new StreamWriter($"{programName}.ast");
-    Elaboration.Simplify(preloadScope, preloadAST, globalScope, ast);
-    AstPrinter.Print(ast, writer, timestamps);
+    (ast, globalScope) = Elaboration.Lower(preloadScope, preloadAST, globalScope, ast);
 
+    using StreamWriter writer = new StreamWriter($"{programName}.ast");
+    AstPrinter.Print(ast, writer, timestamps);
 
     printTimer.Stop();
     compileTimer.Start();
