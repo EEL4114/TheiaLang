@@ -1,0 +1,8 @@
+Program: __preload__
+
+StructDeclaration: Dynamic_Array (0 B) | Scope: 'Dynamic_Array' 
+    Fields:
+        s64 Length
+        @void Data
+        s64 Size
+

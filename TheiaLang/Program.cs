@@ -1,21 +1,52 @@
 ﻿using System.Diagnostics;
 using TheiaLang;
 
-const ConsoleColor LEXER_COL  = ConsoleColor.Cyan;
-const ConsoleColor PARSER_COL = ConsoleColor.Yellow;
-const ConsoleColor SEM_COL    = ConsoleColor.DarkRed;
-const ConsoleColor IRGEN_COL  = ConsoleColor.Green;
-const ConsoleColor LLVM_COL   = ConsoleColor.Magenta;
+const ConsoleColor PRELOAD_COL = ConsoleColor.DarkGray;
+const ConsoleColor LEXER_COL   = ConsoleColor.Cyan;
+const ConsoleColor PARSER_COL  = ConsoleColor.Yellow;
+const ConsoleColor SEM_COL     = ConsoleColor.DarkRed;
+const ConsoleColor IRGEN_COL   = ConsoleColor.Green;
+const ConsoleColor LLVM_COL    = ConsoleColor.Magenta;
 
 const int BAR_CHARS = 100;
 
 Stopwatch compileTimer  = new Stopwatch();
+Stopwatch preloadTimer  = new Stopwatch();
 Stopwatch lexTimer      = new Stopwatch();
 Stopwatch parseTimer    = new Stopwatch();
 Stopwatch printTimer    = new Stopwatch();
 Stopwatch analysisTimer = new Stopwatch();
 Stopwatch IRGenTimer    = new Stopwatch();
 Stopwatch LLVMTimer     = new Stopwatch();
+
+#region  Startup
+
+preloadTimer.Start();
+
+string preloadPath = "Preload.tia";
+string preloadCode = File.ReadAllText(preloadPath);
+Lexer lexer = new Lexer(preloadCode);
+List<Token> preloadTokens = [];
+Token token;
+
+do
+{
+    token = lexer.NextToken();
+    preloadTokens.Add(token);
+    // Log.Info(token.ToString());
+    // Log.Info(token.TokenType.ToString());
+} while (token.TokenType != TokenType.EOF);
+
+Parser preloadParser = new Parser(preloadTokens);
+(ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
+    using StreamWriter writer = new StreamWriter($"__preload__.ast");
+AstPrinter.Print(preloadAST, writer, false);
+
+preloadTimer.Stop();
+
+Log.Time("Preload took", preloadTimer.Elapsed.TotalMilliseconds, PRELOAD_COL);
+
+#endregion
 
 #region Args
 
@@ -103,7 +134,9 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
     printTimer.Start();
 
     using StreamWriter writer = new StreamWriter($"{programName}.ast");
+    Elaboration.Simplify(preloadScope, preloadAST, globalScope, ast);
     AstPrinter.Print(ast, writer, timestamps);
+
 
     printTimer.Stop();
     compileTimer.Start();
@@ -136,11 +169,11 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
 
 #endregion
 
-int lexerTime  = (int)lexTimer.Elapsed.TotalMilliseconds;
-int parserTime = (int)parseTimer.Elapsed.TotalMilliseconds;
-int semTime    = (int)analysisTimer.Elapsed.TotalMilliseconds;
-int IRgenTime  = (int)IRGenTimer.Elapsed.TotalMilliseconds;
-int LLVMTime   = (int)LLVMTimer.Elapsed.TotalMilliseconds;
+double lexerTime  = lexTimer.Elapsed.TotalMilliseconds;
+double parserTime = parseTimer.Elapsed.TotalMilliseconds;
+double semTime    = analysisTimer.Elapsed.TotalMilliseconds;
+double IRgenTime  = IRGenTimer.Elapsed.TotalMilliseconds;
+double LLVMTime   = LLVMTimer.Elapsed.TotalMilliseconds;
 
 Log.Time("Lexer took", lexerTime, LEXER_COL);
 Log.Time("Parser took", parserTime, PARSER_COL);
@@ -169,11 +202,11 @@ static void PrintSegment(int count, ConsoleColor color)
 }
 
 Console.Write("[");
-PrintSegment(lexerChars, LEXER_COL);
+PrintSegment(lexerChars,  LEXER_COL);
 PrintSegment(parserChars, PARSER_COL);
-PrintSegment(semChars, SEM_COL);
-PrintSegment(IRgenChars, IRGEN_COL);
-PrintSegment(llvmChars, LLVM_COL);
+PrintSegment(semChars,    SEM_COL);
+PrintSegment(IRgenChars,  IRGEN_COL);
+PrintSegment(llvmChars,   LLVM_COL);
 Console.WriteLine("]");
 
 #endregion
@@ -197,7 +230,7 @@ public static class Log
         Console.WriteLine(text);
     }
 
-    public static void Time(string text, int time, ConsoleColor highlight = ConsoleColor.White, float linesPerS = 0)
+    public static void Time(string text, double time, ConsoleColor highlight = ConsoleColor.White, float linesPerS = 0)
     {
         Console.Write($"{text} ");
         Console.ForegroundColor = highlight;

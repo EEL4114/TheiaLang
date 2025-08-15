@@ -83,7 +83,7 @@ public class FunctionDeclaration : IDeclaration
 public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public string Name { get; }
+    public string Name { get; set; }
     public TypeInfo ResolvedType { get; set; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
@@ -99,6 +99,19 @@ public class StructDeclaration : IDeclaration
         ResolvedType = new TypeInfo(name,
                                     fieldNames: fields.Select(f => f.Name).ToList(),
                                     fieldTypes: fields.Select(f => f.TypeName).ToList());
+    }
+
+    public override string ToString()
+    {
+        string s = $"struct {Name}: (\n";
+        if (Fields != null)
+        {
+            s += $"    {Fields[0]}\n";
+            for (int i = 1; i < Fields.Count; i++)
+                s += $"    {Fields[i]}\n";
+        }
+        s += ")";
+        return s;
     }
 }
 
@@ -129,9 +142,18 @@ public sealed record TypeNamePair(
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+
+    public override string ToString()
+    {
+        if (ResolvedType != null)
+            return $"{ResolvedType} {Name}";
+        else
+            return $"{TypeName} {Name}";
+    }
 }
 
 #region  Statements
+
 /// A “new” expression for any nominal type (struct, union, etc.)
 /*
 public sealed record CallArgument(

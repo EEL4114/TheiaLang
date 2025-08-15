@@ -1,0 +1,6 @@
+struct Dynamic_Array
+(
+    s64 Length,
+    @void Data,
+    s64 Size
+);

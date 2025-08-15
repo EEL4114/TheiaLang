@@ -1,5 +1,5 @@
 Program: Example
-Generated at 10.08.2025 13:58:05
+Generated at 15.08.2025 02:58:17
 
 UnionDeclaration: StringData
     s32 i
@@ -19,6 +19,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
         VariableDeclaration: @void (0 B) voidPtr
+        VariableDeclaration: []s8 (0 B) dynamicArray
         VariableDeclaration: f32 (4 B) z =
             IndexExpression: 
                 Target:
@@ -206,7 +207,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then341' 
+            Then: | Scope: 'if_then346' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -219,7 +220,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else357' 
+            Else: | Scope: 'if_else362' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -241,7 +242,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then387' 
+            Then: | Scope: 'if_then392' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -255,7 +256,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_405' 
+        For: | Scope: 'for_410' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0
@@ -321,4 +322,10 @@ StructDeclaration: Vector3 (0 B) | Scope: 'Vector3'
         f32 x
         f32 y
         f32 z
+
+StructDeclaration: Dynamic_Array_s8 (0 B) | Scope: 'Dynamic_Array_s8' 
+    Fields:
+        s64 Length
+        @void Data
+        s64 Size
 

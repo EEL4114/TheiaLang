@@ -371,12 +371,10 @@ public class Parser(List<Token> tokens)
             List<uint> arrayLengths = [];
             do
             {
-                if (Peek().TokenType != TokenType.Literal)
-                {
-                    Log.Info(arrayLengths.Count.ToString());
+                if (Peek().TokenType != TokenType.Literal)  // dynamic
                     break;
-                }
-                    arrayLengths.Add(uint.Parse(Peek().Lexeme));
+
+                arrayLengths.Add(uint.Parse(Peek().Lexeme));
                 Advance();
             } while (Match(TokenType.Punctuation_Comma));
             Consume(TokenType.Punctuation_BracketR, $"Expected closing ']', got: {Peek().TokenType}");

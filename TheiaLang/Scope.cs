@@ -16,6 +16,17 @@ public class SymbolInfo(string name,
     public TypeInfo Type { get; set; } = type;
     public SymbolKind Kind { get; init; } = symbolKind;
     public List<TypeNamePair>? Parameters { get; init; } = parameters;
+
+    public override string ToString()
+    {
+        string s = $"{Kind} {Name}: {type}";
+        if (Parameters != null)
+            s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Name}";
+        for (int i = 1; i < Parameters!.Count; i++)
+            s += $",\n    {Parameters[i].TypeName} {Parameters[i].Name}";
+            s += ")";
+        return s;
+    }
 }
 
 public class TypeInfo(string type,
@@ -55,11 +66,11 @@ public class TypeInfo(string type,
         // @Robust
         if (FieldNames != null && FieldNames.Count != 0)
         {
-            s += ", Fields = {";
-            s += FieldTypes![0] + " " + FieldNames[0];
+            s += ",\nFields = {";
+            s += $"\n    {FieldTypes![0]} {FieldNames[0]}";
             for (int i = 1; i < FieldNames.Count; i++)
-                s += ", " + FieldTypes![i] + " " + FieldNames[i];
-            s += "}";
+                s += $",\n    {FieldTypes![i]} {FieldNames[i]}";
+            s += "\n}";
         }
         return s;
     }
@@ -130,6 +141,9 @@ public class Scope : INode
         }
         return Parent!.GetParentOf(scope, out parent);
     }
+
+    public override string ToString() => string.IsNullOrEmpty(FullName) ? "Global" 
+                                                                          : FullName;
 
     #endregion
 }
