@@ -1,5 +1,5 @@
 Program: Example
-Generated at 15.08.2025 22:14:40
+Generated at 15.08.2025 22:35:56
 
 UnionDeclaration: StringData
     s32 i
@@ -25,6 +25,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
         VariableDeclaration: @void (0 B) voidPtr
         VariableDeclaration: Dynamic_Array_s8 (0 B) dynamicArray
+        VariableDeclaration: dynamicArray2
         VariableDeclaration: f32 (4 B) z =
             IndexExpression: 
                 Target:
@@ -212,7 +213,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then356' 
+            Then: | Scope: 'if_then361' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -225,7 +226,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else372' 
+            Else: | Scope: 'if_else377' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -247,7 +248,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then402' 
+            Then: | Scope: 'if_then407' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -261,7 +262,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_420' 
+        For: | Scope: 'for_425' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

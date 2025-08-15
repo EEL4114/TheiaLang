@@ -14,6 +14,7 @@ int main()
 
     @void voidPtr;
     []s8 dynamicArray;          // implicit initialisation with '[]',
+    []s8 dynamicArray2;         // implicit initialisation with '[]',
 /*
                                 // so we don't have any annoying null stuff
     // dynamicArray.Add(1);
