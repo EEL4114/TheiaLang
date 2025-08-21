@@ -54,9 +54,8 @@ public static class IRGenerator
 
         if (AutoLog)
         {
-            sb.AppendLine("declare i32 @puts(i8*, ...)");
             sb.AppendLine("@.theia_print_str = private constant[19 x i8] c\"Hello from Theia!\\0A\\00\"");
-            sb.AppendLine("declare i32 @printf(i8*, ...)");
+            sb.AppendLine("declare i32 @printf(ptr, ...)");
             sb.AppendLine("@.print_ret_fmt = private constant [16 x i8] c\"%s returned %d\\0A\\00\"");
         }
         sb.AppendLine();
@@ -334,9 +333,9 @@ public static class IRGenerator
 
         if (AutoLog && currentScope!.DeclaringNode is FunctionDeclaration && LLVMType != "void")
             sb.AppendLine(
-                $"  call i32 (i8*, ...) @printf(i8* getelementptr inbounds " +
-            $"([16 x i8], [16 x i8]* @.print_ret_fmt, i32 0, i32 0), " +
-            $"i8* getelementptr inbounds ([{LLVMType.Length + 1} x i8], [{LLVMType.Length + 1} x i8]* @.fn_{currentScope.Name}_str, i32 0, i32 0), " +
+                $"  call i32 (ptr, ...) @printf(ptr getelementptr inbounds " +
+            $"([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), " +
+            $"ptr getelementptr inbounds ([{LLVMType.Length + 1} x i8], ptr @.fn_{currentScope.Name}_str, i32 0, i32 0), " +
             $"{LLVMType} {val})");
 
         sb.AppendLine($"  ret {LLVMType} {val}");
