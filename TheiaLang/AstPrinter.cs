@@ -45,7 +45,7 @@ static class AstPrinter
 
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}");
+        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name} ({unionDeclaration.ResolvedType.Size} B) {PrintScope(unionDeclaration.Scope!)}");
         foreach (TypeNamePair variant in unionDeclaration.Variants)
             PrintTypeNamePair(variant, w, indent + tab);
         w.WriteLine();
@@ -77,9 +77,9 @@ static class AstPrinter
 
     #region  Statements
 
-    static void PrintStatement(IStatement stmt, TextWriter w, int indent)
+    static void PrintStatement(IStatement statement, TextWriter w, int indent)
     {
-        switch (stmt)
+        switch (statement)
         {
             case VariableDeclaration vd:
                 w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)}{vd.Name}" +
@@ -131,8 +131,8 @@ static class AstPrinter
                 PrintExpression(compound.Expression, w, indent + tab);
                 break;
             default:
-                w.WriteLine($"{Indent(indent)}<unknown statement '{stmt.GetType().Name}'>");
-                w.WriteLine($"{Indent(indent + tab)}<{stmt}'>");
+                w.WriteLine($"{Indent(indent)}<unknown statement '{statement.GetType().Name}'>");
+                w.WriteLine($"{Indent(indent + tab)}<{statement}'>");
                 break;
         }
     }

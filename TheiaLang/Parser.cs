@@ -7,8 +7,12 @@ public class Parser(List<Token> tokens)
     Scope? globalScope;
     Scope? currentScope;
 
+    string programName;
+
+
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
+        programName = ProgramName;
         globalScope = new Scope("");
         currentScope = globalScope;   // global scope
 
@@ -89,58 +93,56 @@ public class Parser(List<Token> tokens)
         // we've already consumed 'struct'
         Token nameToken = Consume(TokenType.Identifier, "Expected struct name");
         string name = nameToken.Lexeme;
-
-        Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after struct name");
+        Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
 
         List<TypeNamePair> fields = [];
         List<string> fieldNames = [];
         List<string> fieldTypes = [];
-        List<FunctionDeclaration> methods = [];
+        List<FunctionDeclaration> functions = [];
 
-        StructDeclaration structDeclaration = new StructDeclaration(name, fields, methods);
+        StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions);
 
         structDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = structDeclaration;
 
-        if (!Check(TokenType.Punctuation_ParenthesisR))
+        if (!Check(TokenType.Punctuation_BraceR))
         {
             do
             {
                 if (!MatchTypeDefinition(out TypeInfo fieldInfo))
-                    throw new Exception("Can't resolve type");
+                    throw new Exception("Can't resove type");
 
-                string fieldType = fieldInfo.TypeName;
-                Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
+                if (Peek().TokenType == TokenType.Identifier
+                 && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+                {
+                    pos--;
+                    FunctionDeclaration functionDeclaration = ParseFunctionDeclaration();
+                    functions.Add(functionDeclaration);
+                }
+                else
+                {
+                    string fieldType = fieldInfo.TypeName;
+                    Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
+                    TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                currentScope.Declare(identifierToken.Lexeme,
-                                     new SymbolInfo(
-                                        identifierToken.Lexeme,
-                                        fieldInfo,
-                                        SymbolKind.Variable,
-                                        null
-                                     ));
+                    currentScope.Declare(identifierToken.Lexeme,
+                                         new SymbolInfo(
+                                            identifierToken.Lexeme,
+                                            fieldInfo,
+                                            SymbolKind.Variable,
+                                            null
+                                         ));
 
-                fields.Add(parameter);
-                fieldNames.Add(parameter.Name);
-                fieldTypes.Add(parameter.TypeName);
-            } while (Match(TokenType.Punctuation_Comma));
+                    fields.Add(parameter);
+                    fieldNames.Add(parameter.Name);
+                    fieldTypes.Add(parameter.TypeName);
+                }
+
+
+            } while (Match(TokenType.Punctuation_Semicolon)
+                 && !Check(TokenType.Punctuation_BraceR));
         }
-        Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after struct fields");
-
-        // either semicolon‐form or brace‐form
-
-        if (!Match(TokenType.Punctuation_Semicolon))
-        {
-            Consume(TokenType.Punctuation_BraceL, "Expected '{' to start struct body");
-            // initialise only with name
-            while (!Check(TokenType.Punctuation_BraceR) && !IsAtEnd())
-            {
-                FunctionDeclaration functionDeclaration = ParseFunctionDeclaration();
-                methods.Add(functionDeclaration);
-            }
-            Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct body");
-        }
+        Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
 
         ExitScope();
         structDeclaration.ResolvedType = new TypeInfo(
@@ -163,34 +165,51 @@ public class Parser(List<Token> tokens)
         Token nameTok = Consume(TokenType.Identifier, "Expected union name");
         string name = nameTok.Lexeme;
 
-        Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after union name");
-        List<string> fieldNames = [];
-        List<string> fieldTypes = [];
+        Consume(TokenType.Punctuation_BraceL, "Expected '{' after union name");
+        List<string> variantNames = [];
+        List<string> variantTypes = [];
         List<TypeNamePair> variants = [];
 
-        if (!Check(TokenType.Punctuation_ParenthesisR))
-        {
-            do
-            {
-                Token typeToken = ConsumeTypeKeyword();
-                string type = TokenTypeToString(typeToken.TokenType);
-
-                Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
-                fieldNames.Add(identifierToken.Lexeme);
-                fieldTypes.Add(type);
-                variants.Add(new TypeNamePair(type, identifierToken.Lexeme));
-            }
-            while (Match(TokenType.Punctuation_Comma));
-        }
-        Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after variants");
-        Consume(TokenType.Punctuation_Semicolon, "Expected ';' after union declaration");
 
         TypeInfo unionInfo = new TypeInfo(
             name,
-            fieldNames: fieldNames,
-            fieldTypes: fieldTypes);
+            fieldNames: variantNames,
+            fieldTypes: variantTypes);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo);
+        unionDeclaration.Scope = EnterNewScope(name);
+        currentScope!.DeclaringNode = unionDeclaration;
+
+        if (!Check(TokenType.Punctuation_BraceR))
+        {
+            do
+            {
+                if (!MatchTypeDefinition(out TypeInfo variantInfo))
+                    throw new Exception($"Can't resolve type");
+
+                string variantType = variantInfo.TypeName;
+                Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
+                TypeNamePair parameter = new TypeNamePair(variantType, identifierToken.Lexeme);
+
+                variants.Add(parameter);
+                variantNames.Add(identifierToken.Lexeme);
+                variantTypes.Add(variantType);
+
+                currentScope.Declare(identifierToken.Lexeme,
+                     new SymbolInfo(
+                        identifierToken.Lexeme,
+                        variantInfo,
+                        SymbolKind.Variable,
+                        null
+                     ));
+            }
+            while (Match(TokenType.Punctuation_Semicolon)
+               && !Check(TokenType.Punctuation_BraceR));
+        }
+
+        Consume(TokenType.Punctuation_BraceR, "Expected '}' after union variants");
+
+        ExitScope();
         currentScope!.Declare(name, new SymbolInfo(
                               name,
                               unionInfo,
@@ -222,10 +241,11 @@ public class Parser(List<Token> tokens)
         if (MatchTypeDefinition(out TypeInfo varInfo)
          && Peek().TokenType == TokenType.Identifier)
         {
-            string varName = Advance().Lexeme;
             IExpression? init = null;
+            string varName = Advance().Lexeme;
+
             if (Match(TokenType.Operator_Equal))
-                init = ParseExpression();
+                    init = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
 
@@ -535,6 +555,7 @@ public class Parser(List<Token> tokens)
     IExpression ParsePrimary()
     {
         IExpression expression = null!;
+        /*
         if (Match(TokenType.Keyword_new))
         {
             Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
@@ -550,7 +571,9 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
             expression = new InstantiationExpression(type, arguments);
         }
-        else if (Match(TokenType.Literal))
+        else 
+        */
+        if (Match(TokenType.Literal))
         {
             (object Value, string Type) lit = Previous().Lexeme switch
             {
@@ -565,7 +588,7 @@ public class Parser(List<Token> tokens)
             expression = literal;
         }
         else if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+             && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
         {
             Token nameToken = Advance();
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
@@ -579,6 +602,23 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
             expression = new CallExpression(nameToken.Lexeme, arguments);
+        }
+        else if (Peek().TokenType == TokenType.Identifier
+             && PeekNext().TokenType == TokenType.Punctuation_BraceL)
+        {
+            Token typeToken = Advance();
+            Consume(TokenType.Punctuation_BraceL, "Expected '{' after method call");
+
+            List<IExpression> arguments = [];
+            if (!Check(TokenType.Punctuation_BraceR))
+                do
+                {
+                    arguments.Add(ParseExpression());
+                } while (Match(TokenType.Punctuation_Comma)
+                     && !Check(TokenType.Punctuation_BraceR));
+
+            Consume(TokenType.Punctuation_BraceR, "Expected '}' after arguments");
+            expression = new InstantiationExpression(typeToken.Lexeme, arguments);
         }
         else if (Peek().TokenType == TokenType.Identifier
             && PeekNext().TokenType == TokenType.Punctuation_Dot)
@@ -674,7 +714,7 @@ public class Parser(List<Token> tokens)
     Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
-        Log.Error(3, $"{message} at {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
+        Log.Error(3, $"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         Environment.Exit(1);
         return null;
     }
@@ -683,7 +723,7 @@ public class Parser(List<Token> tokens)
     {
         Token t = Peek();
         if (IsBuiltinType(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
-        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {t.Line}:{t.Column}");
+        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {programName} {t.Line}:{t.Column}");
         return null!;
     }
 

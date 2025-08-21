@@ -183,13 +183,13 @@ public static class IRGenerator
         int j = ints.Length;
         switch (statement)
         {
-            case VariableDeclaration v: EmitVariableDeclaration(v, sb); break;
-            case AssignmentStatement a: EmitAssignmentStatement(a, sb); break;
+            case VariableDeclaration v:         EmitVariableDeclaration(v, sb); break;
+            case AssignmentStatement a:         EmitAssignmentStatement(a, sb); break;
             case CompoundAssignmentStatement c: EmitCompoundAssignmentStatement(c, sb); break;
-            case IfStatement i: EmitIfStatement(i, sb); break;
-            case ForStatement f: EmitForStatement(f, sb); break;
-            case ReturnStatement r: EmitReturnStatement(r, sb); break;
-            case ExpressionStatement e: EmitExpressionStatement(e, sb); break;
+            case IfStatement i:                 EmitIfStatement(i, sb); break;
+            case ForStatement f:                EmitForStatement(f, sb); break;
+            case ReturnStatement r:             EmitReturnStatement(r, sb); break;
+            case ExpressionStatement e:         EmitExpressionStatement(e, sb); break;
             default: throw new Exception($"Unknown Statement: {statement.GetType().Name}");
         }
     }
@@ -302,7 +302,7 @@ public static class IRGenerator
         string condLabel = $"for_cond{labelCounter}";
         string bodyLabel = $"for_body{labelCounter}";
         string iterLabel = $"for_iter{labelCounter}";
-        string endLabel = $"for_end{labelCounter}";
+        string endLabel  = $"for_end{labelCounter}";
         labelCounter++;
 
         sb.AppendLine($"  br label %{condLabel}");

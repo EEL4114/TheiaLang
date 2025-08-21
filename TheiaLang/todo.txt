@@ -13,6 +13,7 @@ basic ptrs                              done
 basic arrays                            done
 testing                                 done
 comments                                done
+dynamic arrays
 operator overloading
 strings
 scope annotations for functions

@@ -122,6 +122,7 @@ public record UnionDeclaration(
 ) : IDeclaration
 {
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
+    public Scope? Scope { get; set; }
 }
 
 public sealed record VariableDeclaration(

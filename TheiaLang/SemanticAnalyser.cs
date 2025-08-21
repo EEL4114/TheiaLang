@@ -1,5 +1,3 @@
-using System.Data.SqlTypes;
-
 namespace TheiaLang;
 
 public static class SemanticAnalyser
@@ -29,7 +27,7 @@ public static class SemanticAnalyser
                     break;
 
                 case UnionDeclaration ud:
-                    // nothing more to do right now
+                    ResolveUnion(ud);
                     break;
 
                 case FunctionDeclaration fn:
@@ -62,14 +60,38 @@ public static class SemanticAnalyser
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
             currentScope.TryLookup(field.Name, out SymbolInfo? fieldInfo, out _);
+#if DEBUG
             if (fieldInfo == null)
                 throw new Exception($"Could not find struct field '{field.Name}' in {currentScope.FullName}");
+#endif
             fieldInfo.Type = ResolveType(field.TypeName);
             size += fieldInfo.Type.Size;
             field.ResolvedType = fieldInfo.Type;
         }
 
         structDeclaration.ResolvedType.Size = size;
+        ExitScope();
+    }
+
+    static void ResolveUnion(UnionDeclaration unionDeclaration)
+    {
+        uint size = 0;
+        currentScope = unionDeclaration.Scope!;
+
+        foreach (TypeNamePair variant in unionDeclaration.Variants)
+        {
+            currentScope.TryLookup(variant.Name, out SymbolInfo? variantInfo, out _);
+#if DEBUG
+            if (variantInfo == null)
+                throw new Exception($"Could not find union variant '{variant.Name}' in {currentScope.FullName}");
+#endif
+            variantInfo.Type = ResolveType(variant.TypeName);
+            size = Math.Max(variantInfo.Type.Size, size);
+            variant.ResolvedType = variantInfo.Type;
+        }
+
+        unionDeclaration.ResolvedType.Size = size;
+
         ExitScope();
     }
 

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using LLVMSharp;
 using TheiaLang;
 
 const ConsoleColor PRELOAD_COL = ConsoleColor.DarkGray;

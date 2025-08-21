@@ -1,8 +1,8 @@
 Program: Example
-Generated at 15.08.2025 22:35:56
+Generated at 21.08.2025 16:41:23
 
-UnionDeclaration: StringData
-    s32 i
+UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
+    Vector3 v
     f32 f
 
 StructDeclaration: Vector2 (0 B) | Scope: 'Vector2' 
@@ -213,7 +213,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then361' 
+            Then: | Scope: 'if_then356' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -226,7 +226,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else377' 
+            Else: | Scope: 'if_else372' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -248,7 +248,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then407' 
+            Then: | Scope: 'if_then402' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -262,7 +262,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_425' 
+        For: | Scope: 'for_420' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

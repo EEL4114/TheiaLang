@@ -196,14 +196,14 @@ entry:
   br i1 %tmp71, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, i32* %tmp69
-  %f_if_then361 = alloca float
-  store float 0.0, float* %f_if_then361
-  store float -1.0, float* %f_if_then361
+  %f_if_then356 = alloca float
+  store float 0.0, float* %f_if_then356
+  store float -1.0, float* %f_if_then356
   br label %if_end_0
 if_else_0:
   store i32 -42, i32* %tmp69
-  %f_if_else377 = alloca float
-  store float 78.0, float* %f_if_else377
+  %f_if_else372 = alloca float
+  store float 78.0, float* %f_if_else372
   br label %if_end_0
 if_end_0:
   %tmp72 = load i32, i32* %tmp69
