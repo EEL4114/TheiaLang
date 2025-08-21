@@ -132,8 +132,7 @@ public static class IRGenerator
         List<string> args = [];
         if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
         {
-            string structPtrType = $"%{parentStruct.Name}*";
-            args.Add($"{structPtrType} %this");
+            args.Add($"ptr %this");
         }
 
         // this is messy but works for now?
@@ -157,7 +156,7 @@ public static class IRGenerator
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {LLVMType}");
-            sb.AppendLine($"  store {LLVMType} %{parameter.Name}, {LLVMType}* {varName}");
+            sb.AppendLine($"  store {LLVMType} %{parameter.Name}, ptr {varName}");
 
             allocas.Peek()[parameter.Name] = (varName, null);
             varTypes.Peek()[parameter.Name] = parameter.ResolvedType!;
@@ -214,12 +213,12 @@ public static class IRGenerator
 
                 string gep = $"%{NewTempVar()}";
                 sb.AppendLine(
-                  $"  {gep} = getelementptr {LLVMType}, {LLVMType}* {slot}, i32 0, i32 {i}");
+                  $"  {gep} = getelementptr {LLVMType}, ptr {slot}, i32 0, i32 {i}");
 
                 string LLVMTypeArg = TypeToLLVM(inst.Arguments[i].ResolvedType!)!;
 
                 sb.AppendLine(
-                  $"  store {LLVMTypeArg} {argReg}, {LLVMTypeArg}* {gep}");
+                  $"  store {LLVMTypeArg} {argReg}, ptr {gep}");
             }
             sb.AppendLine();
         }
@@ -228,7 +227,7 @@ public static class IRGenerator
             (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
             sb.Append(initCode);
             sb.AppendLine(
-              $"  store {LLVMType} {initReg}, {LLVMType}* {slot}");
+              $"  store {LLVMType} {initReg}, ptr {slot}");
         }
     }
 
@@ -238,7 +237,7 @@ public static class IRGenerator
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
-        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
+        sb.AppendLine($"  store {LLVMType} {val}, ptr {ptr}");
     }
 
     static void EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
@@ -257,7 +256,7 @@ public static class IRGenerator
         (StringBuilder code, string val) = EmitExpression(new BinaryExpression(assignment.Target, op, assignment.Expression));
 
         sb.Append(code);
-        sb.AppendLine($"  store {LLVMType} {val}, {LLVMType}* {ptr}");
+        sb.AppendLine($"  store {LLVMType} {val}, ptr {ptr}");
     }
 
     static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
@@ -410,7 +409,7 @@ public static class IRGenerator
                 TypeInfo pointee = unaryExpression.Operand.ResolvedType!.Pointee!;
                 llvmType = TypeToLLVM(pointee)!;
                 tmp = NewTempVar();
-                code.AppendLine($"  %{tmp} = load {llvmType}, {llvmType}* {val}");
+                code.AppendLine($"  %{tmp} = load {llvmType}, ptr {val}");
                 return (code, $"%{tmp}");
 
             default: throw new NotSupportedException($"{unaryExpression.Op}");
@@ -470,7 +469,7 @@ public static class IRGenerator
             string LLVMType = TypeToLLVM(typeInfo)!;
 
             string tmp = $"tmp{tmpCounter++}";
-            code.AppendLine($"  %{tmp} = load {LLVMType}, {LLVMType}* {alloc.ptr}");
+            code.AppendLine($"  %{tmp} = load {LLVMType}, ptr {alloc.ptr}");
             return (code, $"%{tmp}");
         }
 
@@ -483,9 +482,9 @@ public static class IRGenerator
 
                 string gep = $"%{NewTempVar()}";
                 code.AppendLine(
-                    $"  {gep} = getelementptr %{sd.ResolvedType.TypeName}, %{sd.ResolvedType.TypeName}* %this, i32 0, i32 {index}");
+                    $"  {gep} = getelementptr %{sd.ResolvedType.TypeName}, ptr %this, i32 0, i32 {index}");
                 string tempIdentifier = $"%{NewTempVar()}";
-                code.AppendLine($"  {tempIdentifier} = load {LLVMType}, {LLVMType}* {gep}");
+                code.AppendLine($"  {tempIdentifier} = load {LLVMType}, ptr {gep}");
                 return (code, tempIdentifier);
             }
         }
@@ -563,15 +562,15 @@ public static class IRGenerator
 
             string gep = $"%{NewTempVar()}";
             code.AppendLine(
-                $"  {gep} = getelementptr {irType}, {irType}* {ptrName}, i32 0, i32 {i}");
+                $"  {gep} = getelementptr {irType}, ptr {ptrName}, i32 0, i32 {i}");
 
             string llvmType = TypeToLLVM(instantiation.Arguments[i].ResolvedType!)!;
 
-            code.AppendLine($"  store {llvmType} {argumentValue}, {llvmType}* {gep}");
+            code.AppendLine($"  store {llvmType} {argumentValue}, ptr {gep}");
         }
 
         string valueName = $"%{NewTempVar()}";
-        code.AppendLine($"  {valueName} = load {irType}, {irType}* {ptrName}");
+        code.AppendLine($"  {valueName} = load {irType}, ptr {ptrName}");
 
         return (code, valueName);
     }
@@ -623,7 +622,7 @@ public static class IRGenerator
         (string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
 
         string tmp = $"%{NewTempVar()}";
-        code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
+        code.AppendLine($"  {tmp} = load {llvmType}, ptr {ptr}");
         return (code, tmp);
     }
 
@@ -632,7 +631,7 @@ public static class IRGenerator
         (string ptr, string llvmType) = EmitAddressOf(index, code);
 
         string tmp = $"%{NewTempVar()}";
-        code.AppendLine($"  {tmp} = load {llvmType}, {llvmType}* {ptr}");
+        code.AppendLine($"  {tmp} = load {llvmType}, ptr {ptr}");
         return (code, tmp);
     }
 
@@ -672,7 +671,7 @@ public static class IRGenerator
                 if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
                     throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
 
-                // the scope the target *defines*
+                // the scope the target defines
                 Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
 
                 if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
@@ -691,7 +690,7 @@ public static class IRGenerator
                 string gep = $"%{NewTempVar()}";
 
                 code.AppendLine(
-                    $"  {gep} = getelementptr inbounds {LLVMType}, {LLVMType}* {alloc.ptr}, i32 0, i32 {memberIndex}");
+                    $"  {gep} = getelementptr inbounds {LLVMType}, ptr {alloc.ptr}, i32 0, i32 {memberIndex}");
 
                 return (gep, memberLLVMType);
             case IndexExpression index:
@@ -706,7 +705,7 @@ public static class IRGenerator
                 gep = $"%{NewTempVar()}";
 
                 code.AppendLine(
-                    $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, {arrayTypeLLVM}* {targetPtr}, i32 0, i32 {indexReg}");
+                    $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, ptr {targetPtr}, i32 0, i32 {indexReg}");
                 return (gep, elementType);
 
             default: throw new Exception($"Unsupported expression type: {target.GetType()}");
@@ -762,10 +761,8 @@ public static class IRGenerator
     {
         if (type.Pointee != null)
         {
-            if (type.Pointee.TypeName != "void")
-                return $"{TypeToLLVM(type.Pointee)}*";
-            else
-                return "i8*";
+            if (type.Pointee != null)
+                return "ptr";
         }
         // TODO make this work with n-Dimensional arrays
         if (type.ArrayLengths != null && type.ArrayLengths.Count > 0)
