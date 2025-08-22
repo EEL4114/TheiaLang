@@ -764,8 +764,8 @@ public static class IRGenerator
                 return "ptr";
         }
         // TODO make this work with n-Dimensional arrays
-        if (type.ArrayLengths != null && type.ArrayLengths.Count > 0)
-            return $"[{type.ArrayLengths[0]} x {TypeToLLVM(type.ElementType!)}]";
+        if (type.ArrayLength != null && type.ArrayLength > 0)
+            return $"[{type.ArrayLength} x {TypeToLLVM(type.ElementType!)}]";
 
         string typeName = type.TypeName;
         if (IsBuiltinType(typeName))

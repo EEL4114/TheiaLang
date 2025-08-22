@@ -1,9 +1,5 @@
 Program: Example
-Generated at 21.08.2025 16:41:23
-
-UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
-    Vector3 v
-    f32 f
+Generated at 22.08.2025 17:11:31
 
 StructDeclaration: Vector2 (0 B) | Scope: 'Vector2' 
     Fields:
@@ -213,7 +209,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then356' 
+            Then: | Scope: 'if_then346' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -226,7 +222,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else372' 
+            Else: | Scope: 'if_else362' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -248,7 +244,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then402' 
+            Then: | Scope: 'if_then392' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -262,7 +258,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_420' 
+        For: | Scope: 'for_410' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

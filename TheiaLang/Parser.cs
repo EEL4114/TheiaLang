@@ -386,24 +386,19 @@ public class Parser(List<Token> tokens)
         }
         else if (Match(TokenType.Punctuation_BracketL))     // array
         {
-            List<uint> arrayLengths = [];
-            do
-            {
-                if (Peek().TokenType != TokenType.Literal)  // dynamic
-                    break;
+            uint arrayLength = 0;
 
-                arrayLengths.Add(uint.Parse(Peek().Lexeme));
-                Advance();
-            } while (Match(TokenType.Punctuation_Comma));
+            if (Peek().TokenType == TokenType.Literal)
+                arrayLength = uint.Parse(Advance().Lexeme);
+
             Consume(TokenType.Punctuation_BracketR, $"Expected closing ']', got: {Peek().TokenType}");
 
-            string lengths = string.Join(", ", arrayLengths);
             if (!MatchTypeDefinition(out TypeInfo elementInfo))
                 throw new Exception($"Expected type after array definition");
 
-            typeInfo = new TypeInfo($"[{lengths}]{elementInfo.TypeName}",
+            typeInfo = new TypeInfo($"[{arrayLength}]{elementInfo.TypeName}",
                                     elementType: elementInfo,
-                                    arrayLengths: arrayLengths);
+                                    arrayLength: arrayLength);
             return true;
         }
         else if (IsBuiltinType(Peek().TokenType))

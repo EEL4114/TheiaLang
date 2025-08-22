@@ -398,7 +398,7 @@ public static class SemanticAnalyser
 
                 if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
-                if (indexExpression.Target.ResolvedType!.ArrayLengths == null)
+                if (indexExpression.Target.ResolvedType!.ArrayLength == null)
                     throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
                 indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
                 break;
@@ -414,7 +414,7 @@ public static class SemanticAnalyser
 
     static TypeInfo UpdateTypeInfo(TypeInfo type)
     {
-        if (type.ArrayLengths != null)
+        if (type.ArrayLength != null)
         {
             type.ElementType = ResolveType(type.ElementType!.TypeName);
             // TODO!!
@@ -465,9 +465,8 @@ public static class SemanticAnalyser
 
             return size;
         }
-        else if (type.ArrayLengths != null && type.ElementType != null)
-            // TODO multi-dim arrays!!!
-            return type.ArrayLengths[0] * SizeOf(type.ElementType.TypeName);
+        else if (type.ArrayLength is uint length && type.ElementType != null)
+            return length! * SizeOf(type.ElementType.TypeName);
 
         throw new Exception($"Cannot determine size of type '{type.TypeName}'");
     }

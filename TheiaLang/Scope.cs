@@ -35,7 +35,7 @@ public class TypeInfo(string type,
                       uint size = 0,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
-                      List<uint>? arrayLengths = null,
+                      uint? arrayLength = null,
                       List<string>? fieldNames = null,
                       List<string>? fieldTypes = null)
 {
@@ -44,7 +44,7 @@ public class TypeInfo(string type,
     public TypeInfo? Pointee { get; set; } = pointee;
 
     public TypeInfo? ElementType { get; set; } = elementType;
-    public List<uint>? ArrayLengths { get; set; } = arrayLengths;    // non-null for static arrays
+    public uint? ArrayLength { get; set; } = arrayLength;    // non-null for static arrays
 
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<string>? FieldTypes { get; set; } = fieldTypes;
@@ -57,14 +57,8 @@ public class TypeInfo(string type,
             s += $", Pointee = {Pointee}";
         if (ElementType != null)
             s += $", ElementType = {ElementType}";
-        if (ArrayLengths != null && ArrayLengths.Count != 0)
-        {
-            s += ", ArrayLengths = {";
-            s += ArrayLengths[0];
-            for (int i = 1; i < ArrayLengths.Count; i++)
-                s += ", " + ArrayLengths[i];
-            s += "}";
-        }
+        if (ArrayLength != null)
+            s += $", Length = {ArrayLength}";
         // @Robust
         if (FieldNames != null && FieldNames.Count != 0)
         {
