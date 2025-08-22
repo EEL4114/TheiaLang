@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.08.2025 17:11:31
+Generated at 22.08.2025 18:39:18
 
 StructDeclaration: Vector2 (8 B) | Scope: 'Vector2' 
     Fields:
@@ -17,6 +17,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Index:
                     Literal: s32 (4 B) 1
             Literal: f32 (4 B) 3
+        VariableDeclaration: [4][6]s8 (24 B) arrayOfArrays
         VariableDeclaration: @[4]f32 (8 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (32 B) arrOfFloatPtrs
         VariableDeclaration: @void (8 B) voidPtr
@@ -204,7 +205,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then346' 
+            Then: | Scope: 'if_then355' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -215,7 +216,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else362' 
+            Else: | Scope: 'if_else371' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -235,7 +236,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then392' 
+            Then: | Scope: 'if_then401' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -249,7 +250,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_410' 
+        For: | Scope: 'for_419' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0

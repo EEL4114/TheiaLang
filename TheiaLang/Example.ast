@@ -1,5 +1,5 @@
 Program: Example
-Generated at 22.08.2025 17:11:31
+Generated at 22.08.2025 18:39:18
 
 StructDeclaration: Vector2 (0 B) | Scope: 'Vector2' 
     Fields:
@@ -17,6 +17,7 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Index:
                     Literal: int (0 B) 1
             Literal: int (0 B) 3
+        VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
         VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
         VariableDeclaration: @void (0 B) voidPtr
@@ -209,7 +210,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then346' 
+            Then: | Scope: 'if_then355' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -222,7 +223,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else362' 
+            Else: | Scope: 'if_else371' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -244,7 +245,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then392' 
+            Then: | Scope: 'if_then401' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -258,7 +259,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_410' 
+        For: | Scope: 'for_419' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

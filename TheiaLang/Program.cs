@@ -40,7 +40,7 @@ do
 Parser preloadParser = new Parser(preloadTokens);
 (ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
 using StreamWriter writer = new StreamWriter($"__preload__.ast");
-AstPrinter.Print(preloadAST, writer, false);
+// AstPrinter.Print(preloadAST, writer, false);
 
 preloadTimer.Stop();
 

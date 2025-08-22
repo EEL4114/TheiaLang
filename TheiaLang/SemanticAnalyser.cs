@@ -416,7 +416,7 @@ public static class SemanticAnalyser
     {
         if (type.ArrayLength != null)
         {
-            type.ElementType = ResolveType(type.ElementType!.TypeName);
+            type.ElementType = UpdateTypeInfo(type.ElementType!);
             // TODO!!
             type.Size = SizeOf(type);
             return type;
@@ -466,7 +466,7 @@ public static class SemanticAnalyser
             return size;
         }
         else if (type.ArrayLength is uint length && type.ElementType != null)
-            return length! * SizeOf(type.ElementType.TypeName);
+            return length! * SizeOf(type.ElementType);
 
         throw new Exception($"Cannot determine size of type '{type.TypeName}'");
     }
