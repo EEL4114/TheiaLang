@@ -1,11 +1,10 @@
 // all sorts of stuff
-/*
 union StringData
 {
-    @[]s8 dataPtr;
-    [8]s8 inlineData;
+    []s8 dataPtr;
+    @s8 inlineData;
 }
-*/
+
 
 struct Vector2 
 {
@@ -19,10 +18,22 @@ int main()
                                 // when using arr of ptrs vs ptr to arr
     Vec4[1] = 3;
 
+    []s8 ff;
     [4][6]s8 arrayOfArrays;
+    [4][6]@s8 arrX;
+    [4]@[6]s8 arrY;
+    @[4]@[6]s8 ptrToArrayOfArrays;
+
     //@[]s8 charArrPtr;
     @[4]f32 ptrToFloatArray;    // this is much less ambiguous / error-prone
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
+
+
+    @void v = allocB(4);
+
+    // @f32 floatPtr;
+    // s64 voidPtrVirtAddr = @floatPtr;
+    // s64 voidPtrNextVirtAddr = @floatPtr + 1;
 
     @void voidPtr;
     []s8 dynamicArray;          // implicit initialisation with '[]',

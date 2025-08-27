@@ -1,5 +1,9 @@
 Program: Example
-Generated at 22.08.2025 18:39:18
+Generated at 27.08.2025 05:13:19
+
+UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
+    [0]s8 dataPtr
+    @s8 inlineData
 
 StructDeclaration: Vector2 (0 B) | Scope: 'Vector2' 
     Fields:
@@ -17,11 +21,19 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Index:
                     Literal: int (0 B) 1
             Literal: int (0 B) 3
+        VariableDeclaration: Dynamic_Array_s8 (0 B) ff
         VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
+        VariableDeclaration: [4][6]@s8 (0 B) arrX
+        VariableDeclaration: [4]@[6]s8 (0 B) arrY
+        VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
         VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
+        VariableDeclaration: @void (0 B) v =
+            Call:  allocB
+                Arguments:
+                    Literal: int (0 B) 4
         VariableDeclaration: @void (0 B) voidPtr
-        VariableDeclaration: Dynamic_Array_s8 (0 B) dynamicArray
+        VariableDeclaration: dynamicArray
         VariableDeclaration: dynamicArray2
         VariableDeclaration: f32 (4 B) z =
             IndexExpression: 
@@ -210,7 +222,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then355' 
+            Then: | Scope: 'if_then413' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -223,7 +235,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else371' 
+            Else: | Scope: 'if_else429' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -245,7 +257,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then401' 
+            Then: | Scope: 'if_then459' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -259,7 +271,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_419' 
+        For: | Scope: 'for_477' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0
@@ -325,6 +337,15 @@ StructDeclaration: Vector3 (0 B) | Scope: 'Vector3'
         f32 x
         f32 y
         f32 z
+
+FunctionDeclaration: @void allocB | Scope: 'allocB' 
+    Arguments:
+        s64 size
+    BlockSatement:
+        Return: 
+            Call:  __th_allocB
+                Arguments:
+                    Identifier: size
 
 StructDeclaration: Dynamic_Array_s8 (0 B) | Scope: 'Dynamic_Array_s8' 
     Fields:

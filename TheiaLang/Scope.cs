@@ -22,9 +22,9 @@ public class SymbolInfo(string name,
         string s = $"{Kind} {Name}: {type}";
         if (Parameters != null)
         {
-            s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Name}";
+            s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Identifier}";
             for (int i = 1; i < Parameters!.Count; i++)
-                s += $",\n    {Parameters[i].TypeName} {Parameters[i].Name}";
+                s += $",\n    {Parameters[i].TypeName} {Parameters[i].Identifier}";
             s += ")";
         }
         return s;
@@ -100,6 +100,7 @@ public class Scope : INode
 
     #region Helpers
 
+    // TODO the name parameter seems redundant?
     public void Declare(string name, SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(name))

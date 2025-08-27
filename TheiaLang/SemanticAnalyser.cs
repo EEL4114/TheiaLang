@@ -59,12 +59,15 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
-            currentScope.TryLookup(field.Name, out SymbolInfo? fieldInfo, out _);
+            currentScope.TryLookup(field.Identifier, out SymbolInfo? fieldInfo, out _);
 #if DEBUG
             if (fieldInfo == null)
-                throw new Exception($"Could not find struct field '{field.Name}' in {currentScope.FullName}");
+                throw new Exception($"Could not find struct field '{field.Identifier}' in {currentScope.FullName}");
 #endif
-            fieldInfo.Type = ResolveType(field.TypeName);
+            if (fieldInfo.Type != null)
+                fieldInfo.Type = UpdateTypeInfo(fieldInfo.Type);
+            else
+                fieldInfo.Type = ResolveType(field.TypeName);
             size += fieldInfo.Type.Size;
             field.ResolvedType = fieldInfo.Type;
         }
@@ -80,12 +83,15 @@ public static class SemanticAnalyser
 
         foreach (TypeNamePair variant in unionDeclaration.Variants)
         {
-            currentScope.TryLookup(variant.Name, out SymbolInfo? variantInfo, out _);
+            currentScope.TryLookup(variant.Identifier, out SymbolInfo? variantInfo, out _);
 #if DEBUG
             if (variantInfo == null)
-                throw new Exception($"Could not find union variant '{variant.Name}' in {currentScope.FullName}");
+                throw new Exception($"Could not find union variant '{variant.Identifier}' in {currentScope.FullName}");
 #endif
-            variantInfo.Type = ResolveType(variant.TypeName);
+            if (variantInfo.Type != null)
+                variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
+            else
+                variantInfo.Type = ResolveType(variant.TypeName);
             size = Math.Max(variantInfo.Type.Size, size);
             variant.ResolvedType = variantInfo.Type;
         }
@@ -115,7 +121,7 @@ public static class SemanticAnalyser
         {
             arg.ResolvedType = GetTypeInfo(arg.TypeName);
             // function arguments do not get declared in the Parser so we do it here
-            currentScope.Declare(arg.Name, new SymbolInfo(arg.Name, arg.ResolvedType, SymbolKind.Variable, null));
+            currentScope.Declare(arg.Identifier, new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
         ExitScope();
@@ -277,8 +283,8 @@ public static class SemanticAnalyser
                 break;
             case CallExpression call:
                 if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
-                    || function!.Kind != SymbolKind.Function)
-                    throw new Exception($"Unknown function '{call.CalleeName}'");
+                        || function!.Kind != SymbolKind.Function)
+                        throw new Exception($"Unknown function '{call.CalleeName}'");
 
                 if (call.Arguments.Count != function.Parameters!.Count)
                     throw new Exception($"Function '{function.Name}' expects {function.Parameters.Count}"
@@ -580,7 +586,7 @@ public static class SemanticAnalyser
          || binaryOperator == BinaryOperator.OR)
             return "bool";
 
-        if (shared != "bool" && IRGenerator.IsBuiltinType(shared))
+        if (shared != "bool" && IRGenerator.IsBuiltinType(shared) || shared.StartsWith('@'))
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
                 return "bool";
             else
@@ -594,19 +600,30 @@ public static class SemanticAnalyser
         int indexA = IRGenerator.BuiltinTypeIndex(typeA);
         int indexB = IRGenerator.BuiltinTypeIndex(typeB);
 
+        if (typeA.StartsWith('@')
+        && (typeB == "s8" || typeB == "s16" || typeB == "s32" || typeB == "s64"))
+            return true;
+
+        if (typeB.StartsWith('@')
+        && (typeA == "s8" || typeA == "s16" || typeA == "s32" || typeA == "s64"))
+            return true;
+
         if (indexA < 0 || indexB < 0)   // scalar math only allowed for built in types
             return false;
 
         return ScalarTypeInterop[indexA, indexB];
     }
 
-    static bool CanImplicitlyCast(string typeA, string typeB)  // a + b; a * b;
+    static bool CanImplicitlyCast(string typeA, string typeB)
     {
         if (typeA.StartsWith('@') && typeB.StartsWith('@'))
         {
             return CanImplicitlyCast(typeA.TrimStart('@'),
                                      typeB.TrimStart('@'));
         }
+
+        if (typeA == "s64" && typeB.StartsWith('@'))    // assigning ptr address to s64
+            return true;
 
         int indexA = IRGenerator.BuiltinTypeIndex(typeA);
         int indexB = IRGenerator.BuiltinTypeIndex(typeB);
@@ -632,6 +649,14 @@ public static class SemanticAnalyser
                 result = typeA;
         }
 
+        if (typeA.StartsWith('@')
+        && (typeB == "s8" || typeB == "s16" || typeB == "s32" || typeB == "s64"))
+            result = typeA;
+
+        if (typeB.StartsWith('@')
+        && (typeA == "s8" || typeA == "s16" || typeA == "s32" || typeA == "s64"))
+            result = typeB;
+
         if (string.IsNullOrEmpty(result))
             result = null;
 
@@ -646,14 +671,21 @@ public static class SemanticAnalyser
         if (typeInfo.TypeName.StartsWith('@'))
             return typeInfo;
 
+        // TODO do some enum stuff instead??
         int builtinA = IRGenerator.BuiltinTypeIndex(typeInfo.TypeName);
         int builtinB = IRGenerator.BuiltinTypeIndex(expectedType);
 
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
 
+        if (typeInfo.TypeName.StartsWith('@') && builtinB < 8)    // int - ptr
+            return new TypeInfo("s64");
+
+        if (expectedType.StartsWith('@') && builtinA < 8)
+            return new TypeInfo("s64");
+
         if (builtinA < 0 || builtinB < 0)
-            throw new Exception($"Cannot resolve {typeInfo} to {expectedType}");
+            throw new Exception($"Cannot resolve {typeInfo.TypeName} to {expectedType}");
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {

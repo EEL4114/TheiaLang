@@ -1,0 +1,5 @@
+int main()
+{
+    @void a = allocB(4);
+    return 0;
+}

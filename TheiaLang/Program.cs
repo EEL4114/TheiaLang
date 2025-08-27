@@ -23,8 +23,12 @@ Stopwatch LLVMTimer     = new Stopwatch();
 
 preloadTimer.Start();
 
-string preloadPath = "Preload.tia";
-string preloadCode = File.ReadAllText(preloadPath);
+const string PRELOAD_PATH = "Preload.tia";
+
+if (!File.Exists(PRELOAD_PATH))
+    Log.Error(18, "Preload module could not be located");
+
+string preloadCode = File.ReadAllText(PRELOAD_PATH);
 Lexer lexer = new Lexer(preloadCode);
 List<Token> preloadTokens = [];
 Token token;
@@ -84,7 +88,7 @@ else    // folder
             catch (Exception ex)
             {
                 failures++;
-                Log.Error(99, ex.Message, false);
+                Log.Error(17, ex.Message, false);
             }
 
             Log.Info($"=== Testing {Path.GetFileName(tiaFile)} ===");

@@ -19,7 +19,26 @@ public class Parser(List<Token> tokens)
         foreach (string builtinType in IRGenerator.BuiltinTypes)
             DeclareBuiltin(builtinType);
 
+        globalScope.Declare("__th_allocB",
+                             new SymbolInfo("__th_allocB",
+                                new TypeInfo("@void", 8, new TypeInfo("void")),
+                                SymbolKind.Function,
+                                [new TypeNamePair("s64", "size") {ResolvedType = new TypeInfo("s64")}]
+                            ));
+
         List<INode> nodes = [];
+        // currentScope.Declare(
+        //     "free",
+        //     new SymbolInfo(name: "free", type: new TypeInfo("void"),
+        //                    symbolKind: SymbolKind.Function,
+        //                    [new TypeNamePair(TypeName: "@void",
+        //                                      Identifier: "allocation")
+        //     {
+        //         ResolvedType = new TypeInfo("@void", 8, new TypeInfo("void"))
+        //     }])
+        // );
+
+
         while (!IsAtEnd())
             if (Match(TokenType.Keyword_struct))
                 nodes.Add(ParseStructDeclaration());
@@ -35,8 +54,8 @@ public class Parser(List<Token> tokens)
 
     FunctionDeclaration ParseFunctionDeclaration()
     {
-        Token returnTypeToken = ConsumeTypeKeyword();
-        string returnType = TokenTypeToString(returnTypeToken.TokenType);
+        if (!MatchTypeDefinition(out TypeInfo returnTypeInfo))
+            throw new Exception("Couldn't parse function return type");
 
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
@@ -45,7 +64,7 @@ public class Parser(List<Token> tokens)
         List<TypeNamePair> parameters = [];
         List<IStatement> body = [];
 
-        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnType, name, parameters, body);
+        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo.TypeName, name, parameters, body);
 
         EnterNewScope(name, null);
         if (!Check(TokenType.Punctuation_ParenthesisR))
@@ -75,14 +94,12 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        TypeInfo returnTypeInfo = new TypeInfo(functionDeclaration.TypeName);
-
         currentScope.Declare(name,
                              new SymbolInfo(
-                             functionDeclaration.Name,
-                             returnTypeInfo,
-                             SymbolKind.Function,
-                             functionDeclaration.Arguments
+                                functionDeclaration.Name,
+                                returnTypeInfo,
+                                SymbolKind.Function,
+                                functionDeclaration.Arguments
                              ));
 
         return functionDeclaration;
@@ -134,7 +151,7 @@ public class Parser(List<Token> tokens)
                                          ));
 
                     fields.Add(parameter);
-                    fieldNames.Add(parameter.Name);
+                    fieldNames.Add(parameter.Identifier);
                     fieldTypes.Add(parameter.TypeName);
                 }
 

@@ -6,23 +6,23 @@ public static class IRGenerator
 {
     public static readonly List<string> BuiltinTypes =
     [
-        "bool",
+        /*  0  */    "bool",
 
-        "int",      // literals only
-        "s8",
-        "s16",
-        "s32",
-        "s64",
-        "s128",
-        "s256",
+        /*  1   */    "int",      // literals only
+        /*  2   */    "s8",
+        /*  3   */    "s16",
+        /*  4   */    "s32",
+        /*  5   */    "s64",
+        /*  6   */    "s128",
+        /*  7   */    "s256",
 
-        "float",    // literals only
-        "f16",
-        "f32",
-        "f64",
-        "f128",
+        /*  8   */    "float",    // literals only
+        /*  9   */    "f16",
+        /*  10  */    "f32",
+        /*  11  */    "f64",
+        /*  12  */    "f128",
 
-        "void",
+        /*  13  */    "void",
     ];
 
     public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
@@ -37,8 +37,17 @@ public static class IRGenerator
 
     static bool AutoLog;
 
+    const string INTRINSICS_PATH = "Intrinsics.ll";
+
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
     {
+        if (!File.Exists(INTRINSICS_PATH))
+            Log.Error(19, "Intrinsics module could not be located");
+
+        string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH);
+        StringBuilder sb = new StringBuilder();
+        sb.Append(intrinsicsIR);
+
         AutoLog = autoLog;
         allocas.Clear();
         varTypes.Clear();
@@ -47,10 +56,13 @@ public static class IRGenerator
         varTypes.Push([]);
 
         currentScope = globalScope;
-        StringBuilder sb = new StringBuilder();
 
+        sb.AppendLine();
+        sb.AppendLine();
+        sb.AppendLine("; =============================================================================");
+        sb.AppendLine();
         sb.AppendLine("; ModuleID = 'theia_module'");
-        sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
+        // sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
 
         if (AutoLog)
         {
@@ -113,7 +125,7 @@ public static class IRGenerator
         TypeInfo typeInfo = new TypeInfo
         (
             sd.Name,
-            fieldNames: sd.Fields.Select(f => f.Name).ToList(),
+            fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
             fieldTypes: fieldTypes.ToList()
         );
 
@@ -140,7 +152,7 @@ public static class IRGenerator
         foreach (TypeNamePair parameter in fn.Arguments)
         {
             string parameterLLVMType = TypeToLLVM(parameter.ResolvedType!)!;
-            args.Add($"{parameterLLVMType} %{parameter.Name}");
+            args.Add($"{parameterLLVMType} %{parameter.Identifier}");
         }
         paramList = string.Join(", ", args);
         if (AutoLog)
@@ -155,10 +167,10 @@ public static class IRGenerator
             string varName = $"%{NewTempVar()}";
 
             sb.AppendLine($"  {varName} = alloca {LLVMType}");
-            sb.AppendLine($"  store {LLVMType} %{parameter.Name}, ptr {varName}");
+            sb.AppendLine($"  store {LLVMType} %{parameter.Identifier}, ptr {varName}");
 
-            allocas.Peek()[parameter.Name] = (varName, null);
-            varTypes.Peek()[parameter.Name] = parameter.ResolvedType!;
+            allocas.Peek()[parameter.Identifier] = (varName, null);
+            varTypes.Peek()[parameter.Identifier] = parameter.ResolvedType!;
         }
 
         foreach (IStatement statement in fn.Statements)
@@ -474,7 +486,7 @@ public static class IRGenerator
 
         if (currentScope!.Parent?.DeclaringNode is StructDeclaration sd)
         {
-            int index = sd.Fields.FindIndex(f => f.Name == identifier.Name);
+            int index = sd.Fields.FindIndex(f => f.Identifier == identifier.Name);
             if (index >= 0)
             {
                 string LLVMType = TypeToLLVM(sd.Fields[index].ResolvedType!)!;
@@ -586,6 +598,7 @@ public static class IRGenerator
             Log.Error(11,
                 $"Function '{call.CalleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
                 $"but got {call.Arguments.Count}");
+
         string retTy = TypeToLLVM(calleeInfo.Type)!;
 
         List<string> argumentList = [];
@@ -602,15 +615,16 @@ public static class IRGenerator
             string actualLLVMType = TypeToLLVM(actualType)!;
             string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
 
-            if (actualType.TypeName != calleeInfo.Type.TypeName && AutoLog)
+            if (actualType.TypeName != call.Arguments[i].ResolvedType!.TypeName && AutoLog)
                 Log.Error(12,
-                    $"Type mismatch in call to '{call.CalleeName}.{calleeInfo.Parameters[i].Name}' " +
-                    $"expected {calleeInfo.Type.TypeName}, got {actualType.TypeName}");
+                    $"Type mismatch in call to '{call.CalleeName}.{calleeInfo.Parameters[i].Identifier}' " +
+                    $"expected {call.Arguments[i].ResolvedType!.TypeName}, got {actualType.TypeName}");
 
             argumentList.Add($"{actualLLVMType} {argReg}");
         }
 
         string tmp = $"%{NewTempVar()}";
+
         code.AppendLine(
             $"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
@@ -679,7 +693,7 @@ public static class IRGenerator
                 if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
                     throw new Exception($"Variable {targetName} does not define any fields");
 
-                int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Name == memberName);
+                int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
                 if (memberIndex < 0)
                     throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
@@ -802,6 +816,7 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsKey(scopeName))  // verify that we can enter that scope
+
             Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope}'");
 #endif
 
@@ -818,9 +833,12 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
+        {
+            throw new Exception();
             Log.Error(8, $"Scope '{scope}' does not exist in '{currentScope}'");
+        }
 #endif
-        allocas.Push([]);
+            allocas.Push([]);
         varTypes.Push([]);
 
         currentScope = scope;

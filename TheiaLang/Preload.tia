@@ -3,4 +3,31 @@ struct Dynamic_Array
     s64 Length;
     @void Data;
     s64 Size;
+
+/*
+    void RemoveAt(s64 index)
+    {
+
+    }
+
+*/
+
+/*
+    void RemoveAtUnordered(s64 index, s32 elementSize)
+    {
+        
+    }
+*/
 }
+
+@void allocB(s64 size)
+{
+    return __th_allocB(size);
+}
+
+/*
+void Dynamic_Array_Reserve(@void data, s64 arrayLength, s64 elementSize, s64 desiredLength)
+{
+
+}
+*/

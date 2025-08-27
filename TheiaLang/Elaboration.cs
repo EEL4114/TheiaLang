@@ -4,22 +4,31 @@ static class Elaboration
 {
     // the template we use for dynamic arrays
     const string DYNAMIC_ARRAY_HOOK = "Dynamic_Array";
+    const string ALLOCB_HOOK = "allocB";
+
 
     static Dictionary<string, SymbolInfo> DynamicArrayCache = [];
     static SymbolInfo DynamicArrayTemplate;
     static Scope currentScope;
+    static ProgramNode PreloadAST;
     static ProgramNode ProgramAST;
     static Scope GlobalScope;
+    static Scope PreloadScope;
 
     public static (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
-                                                                        Scope programScope, ProgramNode programAST)
+                                                                     Scope programScope, ProgramNode programAST)
     {
         GlobalScope = programScope;
         ProgramAST = programAST;
+        PreloadAST = preloadAST;
+        PreloadScope = preloadScope;
+
         if (!preloadScope.TryLookup(DYNAMIC_ARRAY_HOOK, out DynamicArrayTemplate!, out _))
             throw new Exception($"Could not find template {DYNAMIC_ARRAY_HOOK}");
 
         currentScope = GlobalScope;
+
+        IncludeIntrinsicFn("allocB");
 
         for (int i = 0; i < ProgramAST.Nodes.Count; i++)
         {
@@ -33,6 +42,21 @@ static class Elaboration
         }
 
         return (ProgramAST, GlobalScope);
+    }
+
+    static void IncludeIntrinsicFn(string name)
+    {
+        // TODO this is very slow ofc but should work for now
+        foreach (INode node in PreloadAST.Nodes)
+            if (node is FunctionDeclaration functionDeclaration
+             && functionDeclaration.Name == name)
+            {
+                ProgramAST.Nodes.Add(node);
+                if (!PreloadScope.TryLookup(name, out SymbolInfo? allocB, out _))
+                    throw new Exception($"Could not find template {name}");
+                functionDeclaration.Scope = new Scope(name, node, GlobalScope);
+                GlobalScope.Declare(name, allocB!);
+            }
     }
 
     static void AnalyseStruct(StructDeclaration structDeclaration)
@@ -82,58 +106,58 @@ static class Elaboration
 
             if (statement is VariableDeclaration varDeclaration
                  && varDeclaration.ResolvedType?.ArrayLength == 0)
+            {
+                string typeName = varDeclaration.ResolvedType.ElementType!.TypeName;
+                string structName = $"{DYNAMIC_ARRAY_HOOK}_{typeName}";
+                // Log.Info(typeName);
+                // (1) check if that kind of array is already declared as struct
+                if (DynamicArrayCache.TryGetValue(typeName, out SymbolInfo? symbolInfo))
                 {
-                    string typeName = varDeclaration.ResolvedType.ElementType!.TypeName;
-                    string structName = $"{DYNAMIC_ARRAY_HOOK}_{typeName}";
-                    // Log.Info(typeName);
-                    // (1) check if that kind of array is already declared as struct
-                    if (DynamicArrayCache.TryGetValue(typeName, out SymbolInfo? symbolInfo))
-                    {
-                        statements[i] = new VariableDeclaration(structName,
-                                                                varDeclaration.Name,
-                                                                null);
-                        currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
-                    }
-                    // (2) if no -> declare the struct
-                    else
-                    {
-                        Scope variableScope = currentScope;
-                        StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
-                        sd.Name = structName;
-                        sd.Scope = new Scope(structName, sd, GlobalScope);
-                        sd.Scope.DeclaringNode = sd;
-
-                        // TODO: make this work with inits once we have them for arrays
-                        VariableDeclaration vd = new VariableDeclaration(structName,
-                                                                         varDeclaration.Name,
-                                                                         null);
-
-                        vd.ResolvedType = sd.ResolvedType;
-                        SymbolInfo varInfo = new SymbolInfo(vd.Name,
-                                                            sd.ResolvedType,
-                                                            SymbolKind.Variable,
+                    statements[i] = new VariableDeclaration(structName,
+                                                            varDeclaration.Name,
                                                             null);
-                        currentScope!.Symbols[vd.Name] = varInfo;
-                        DynamicArrayCache.Add(typeName, varInfo);
-                        statements[i] = vd;
-
-                        ProgramAST.Nodes.Add(sd);
-                        GlobalScope.Declare(structName,
-                                            new SymbolInfo(sd.Name,
-                                                           sd.ResolvedType,
-                                                           SymbolKind.Type,
-                                                           sd.Fields));
-
-                        currentScope = sd.Scope;
-                        foreach (TypeNamePair field in sd.Fields)
-                            currentScope.Declare(field.Name,
-                                                 new SymbolInfo(field.TypeName,
-                                                                new TypeInfo(field.TypeName),
-                                                                SymbolKind.Variable,
-                                                                null));
-                        currentScope = variableScope;
-                    }
+                    currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
                 }
+                // (2) if no -> declare the struct
+                else
+                {
+                    Scope variableScope = currentScope;
+                    StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
+                    sd.Name = structName;
+                    sd.Scope = new Scope(structName, sd, GlobalScope);
+                    sd.Scope.DeclaringNode = sd;
+
+                    // TODO: make this work with inits once we have them for arrays
+                    VariableDeclaration vd = new VariableDeclaration(structName,
+                                                                     varDeclaration.Name,
+                                                                     null);
+
+                    vd.ResolvedType = sd.ResolvedType;
+                    SymbolInfo varInfo = new SymbolInfo(vd.Name,
+                                                        sd.ResolvedType,
+                                                        SymbolKind.Variable,
+                                                        null);
+                    currentScope!.Symbols[vd.Name] = varInfo;
+                    DynamicArrayCache.Add(typeName, varInfo);
+                    statements[i] = vd;
+
+                    ProgramAST.Nodes.Add(sd);
+                    GlobalScope.Declare(structName,
+                                        new SymbolInfo(sd.Name,
+                                                       sd.ResolvedType,
+                                                       SymbolKind.Type,
+                                                       sd.Fields));
+
+                    currentScope = sd.Scope;
+                    foreach (TypeNamePair field in sd.Fields)
+                        currentScope.Declare(field.Identifier,
+                                             new SymbolInfo(field.TypeName,
+                                                            new TypeInfo(field.TypeName),
+                                                            SymbolKind.Variable,
+                                                            null));
+                    currentScope = variableScope;
+                }
+            }
         }
     }
 

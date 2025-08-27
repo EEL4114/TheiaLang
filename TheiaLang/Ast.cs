@@ -97,7 +97,7 @@ public class StructDeclaration : IDeclaration
         Functions = functions;
 
         ResolvedType = new TypeInfo(name,
-                                    fieldNames: fields.Select(f => f.Name).ToList(),
+                                    fieldNames: fields.Select(f => f.Identifier).ToList(),
                                     fieldTypes: fields.Select(f => f.TypeName).ToList());
     }
 
@@ -146,7 +146,7 @@ public sealed record VariableDeclaration(
 #endregion
 public sealed record TypeNamePair(
     string TypeName,
-    string Name
+    string Identifier
 )
 {
     public TypeInfo? ResolvedType { get; set; }
@@ -155,9 +155,9 @@ public sealed record TypeNamePair(
     public override string ToString()
     {
         if (ResolvedType != null)
-            return $"{ResolvedType} {Name}";
+            return $"{ResolvedType} {Identifier}";
         else
-            return $"{TypeName} {Name}";
+            return $"{TypeName} {Identifier}";
     }
 }
 
