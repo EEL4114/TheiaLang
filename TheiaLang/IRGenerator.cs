@@ -833,10 +833,7 @@ public static class IRGenerator
             throw new Exception("'currentScope' is null!");
 
         if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
-        {
-            throw new Exception();
             Log.Error(8, $"Scope '{scope}' does not exist in '{currentScope}'");
-        }
 #endif
             allocas.Push([]);
         varTypes.Push([]);
