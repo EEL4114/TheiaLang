@@ -121,7 +121,7 @@ public static class SemanticAnalyser
         {
             arg.ResolvedType = GetTypeInfo(arg.TypeName);
             // function arguments do not get declared in the Parser so we do it here
-            currentScope.Declare(arg.Identifier, new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
+            currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
         ExitScope();

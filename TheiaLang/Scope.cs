@@ -101,11 +101,11 @@ public class Scope : INode
     #region Helpers
 
     // TODO the name parameter seems redundant?
-    public void Declare(string name, SymbolInfo symbolInfo)
+    public void Declare(SymbolInfo symbolInfo)
     {
-        if (Symbols.ContainsKey(name))
-            Log.Error(6, $"Identifier '{name}' already declared in the scope '{FullName}'");
-        Symbols[name] = symbolInfo;
+        if (Symbols.ContainsKey(symbolInfo.Name))
+            Log.Error(6, $"Identifier '{symbolInfo.Name}' already declared in the scope '{FullName}'");
+        Symbols[symbolInfo.Name] = symbolInfo;
     }
 
     // TODO it may be useful to have a version of this function that always returns or errors

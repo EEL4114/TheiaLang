@@ -19,23 +19,23 @@ public class Parser(List<Token> tokens)
         foreach (string builtinType in IRGenerator.BuiltinTypes)
             DeclareBuiltin(builtinType);
 
-        globalScope.Declare("__th_allocB",
-                             new SymbolInfo("__th_allocB",
+        globalScope.Declare(new SymbolInfo(
+                                "__th_allocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
                                 [new TypeNamePair("s64", "size") { ResolvedType = new TypeInfo("s64") }]
                             ));
 
-        globalScope.Declare("__th_reallocB",
-                            new SymbolInfo("__th_reallocB",
+        globalScope.Declare(new SymbolInfo(
+                                "__th_reallocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
                                 [   new TypeNamePair("@void", "alloc") { ResolvedType = new TypeInfo("@void") },
                                     new TypeNamePair("s64", "newSize") { ResolvedType = new TypeInfo("s64")   }]
                                 ));
 
-        globalScope.Declare("__th_free",
-                            new SymbolInfo("__th_free",
+        globalScope.Declare(new SymbolInfo(
+                                "__th_free",
                                 new TypeInfo("void", 0),
                                 SymbolKind.Function,
                                 [new TypeNamePair("@void", "ptr") { ResolvedType = new TypeInfo("@void") }
@@ -98,8 +98,7 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        currentScope.Declare(name,
-                             new SymbolInfo(
+        currentScope.Declare(new SymbolInfo(
                                 functionDeclaration.Name,
                                 returnTypeInfo,
                                 SymbolKind.Function,
@@ -146,8 +145,7 @@ public class Parser(List<Token> tokens)
                     Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                     TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
 
-                    currentScope.Declare(identifierToken.Lexeme,
-                                         new SymbolInfo(
+                    currentScope.Declare(new SymbolInfo(
                                             identifierToken.Lexeme,
                                             fieldInfo,
                                             SymbolKind.Variable,
@@ -177,7 +175,7 @@ public class Parser(List<Token> tokens)
             SymbolKind.Type,
             fields);
 
-        currentScope.Declare(name, symbolInfo);
+        currentScope.Declare(symbolInfo);
         return structDeclaration;
     }
 
@@ -216,7 +214,7 @@ public class Parser(List<Token> tokens)
                 variantNames.Add(identifierToken.Lexeme);
                 variantTypes.Add(variantType);
 
-                currentScope.Declare(identifierToken.Lexeme,
+                currentScope.Declare(
                      new SymbolInfo(
                         identifierToken.Lexeme,
                         variantInfo,
@@ -231,7 +229,7 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after union variants");
 
         ExitScope();
-        currentScope!.Declare(name, new SymbolInfo(
+        currentScope!.Declare(new SymbolInfo(
                               name,
                               unionInfo,
                               SymbolKind.Type,
@@ -272,7 +270,7 @@ public class Parser(List<Token> tokens)
 
             VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, varName, init);
             variable.ResolvedType = varInfo;
-            currentScope!.Declare(varName, new SymbolInfo(
+            currentScope!.Declare(new SymbolInfo(
                 varName,
                 varInfo,
                 SymbolKind.Variable,
@@ -783,14 +781,14 @@ public class Parser(List<Token> tokens)
     void DeclareBuiltin(string typeName)
     {
         TypeInfo typeInfo = new TypeInfo(typeName);
-        globalScope!.Declare(typeName,
+        globalScope!.Declare(
             new SymbolInfo(
                 typeName,
                 typeInfo,
                 SymbolKind.Type,
                 null
             ));
-        globalScope!.Declare("@" + typeName,
+        globalScope!.Declare(
             new SymbolInfo(
                 "@" + typeName,
                 new TypeInfo("@" + typeName, pointee: typeInfo),

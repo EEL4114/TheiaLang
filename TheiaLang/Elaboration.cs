@@ -55,7 +55,7 @@ static class Elaboration
                 if (!PreloadScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
                     throw new Exception($"Could not find template {name}");
                 functionDeclaration.Scope = new Scope(name, node, GlobalScope);
-                GlobalScope.Declare(name, symbolInfo!);
+                GlobalScope.Declare(symbolInfo!);
             }
     }
 
@@ -142,16 +142,14 @@ static class Elaboration
                     statements[i] = vd;
 
                     ProgramAST.Nodes.Add(sd);
-                    GlobalScope.Declare(structName,
-                                        new SymbolInfo(sd.Name,
+                    GlobalScope.Declare(new SymbolInfo(sd.Name,
                                                        sd.ResolvedType,
                                                        SymbolKind.Type,
                                                        sd.Fields));
 
                     currentScope = sd.Scope;
                     foreach (TypeNamePair field in sd.Fields)
-                        currentScope.Declare(field.Identifier,
-                                             new SymbolInfo(field.TypeName,
+                        currentScope.Declare(new SymbolInfo(field.Identifier,
                                                             new TypeInfo(field.TypeName),
                                                             SymbolKind.Variable,
                                                             null));
