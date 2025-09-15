@@ -23,7 +23,7 @@ Stopwatch LLVMTimer     = new Stopwatch();
 
 preloadTimer.Start();
 
-const string PRELOAD_PATH = "Preload.tia";
+const string PRELOAD_PATH = "__preload.tia";
 
 if (!File.Exists(PRELOAD_PATH))
     Log.Error(18, "Preload module could not be located");

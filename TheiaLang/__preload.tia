@@ -1,0 +1,47 @@
+struct Dynamic_Array
+{
+    s64 Length;
+    @void Data;
+    s64 Size;
+
+/*
+    void Add(@void item)
+    {
+        return;
+    }
+
+    void Insert(@void item, s64 index)
+    {
+        return;
+    }
+
+    void RemoveAt(s64 index)
+    {
+
+    }
+
+*/
+
+/*
+    void RemoveAtUnordered(s64 index, s32 elementSize)
+    {
+        
+    }
+*/
+}
+
+@void AllocB(s64 size)
+{
+    return __th_allocB(size);
+}
+
+@void ReallocB(@void ptr, s64 newSize)
+{
+    return __th_reallocB(ptr, newSize);
+}
+
+void Free(@void ptr)
+{
+    __th_free(ptr);
+    return;
+}

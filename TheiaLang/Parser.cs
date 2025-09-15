@@ -23,21 +23,25 @@ public class Parser(List<Token> tokens)
                              new SymbolInfo("__th_allocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [new TypeNamePair("s64", "size") {ResolvedType = new TypeInfo("s64")}]
+                                [new TypeNamePair("s64", "size") { ResolvedType = new TypeInfo("s64") }]
                             ));
 
-        List<INode> nodes = [];
-        // currentScope.Declare(
-        //     "free",
-        //     new SymbolInfo(name: "free", type: new TypeInfo("void"),
-        //                    symbolKind: SymbolKind.Function,
-        //                    [new TypeNamePair(TypeName: "@void",
-        //                                      Identifier: "allocation")
-        //     {
-        //         ResolvedType = new TypeInfo("@void", 8, new TypeInfo("void"))
-        //     }])
-        // );
+        globalScope.Declare("__th_reallocB",
+                            new SymbolInfo("__th_reallocB",
+                                new TypeInfo("@void", 8, new TypeInfo("void")),
+                                SymbolKind.Function,
+                                [   new TypeNamePair("@void", "alloc") { ResolvedType = new TypeInfo("@void") },
+                                    new TypeNamePair("s64", "newSize") { ResolvedType = new TypeInfo("s64")   }]
+                                ));
 
+        globalScope.Declare("__th_free",
+                            new SymbolInfo("__th_free",
+                                new TypeInfo("void", 0),
+                                SymbolKind.Function,
+                                [new TypeNamePair("@void", "ptr") { ResolvedType = new TypeInfo("@void") }
+                            ]));
+
+        List<INode> nodes = [];
 
         while (!IsAtEnd())
             if (Match(TokenType.Keyword_struct))

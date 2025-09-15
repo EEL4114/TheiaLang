@@ -4,8 +4,6 @@ static class Elaboration
 {
     // the template we use for dynamic arrays
     const string DYNAMIC_ARRAY_HOOK = "Dynamic_Array";
-    const string ALLOCB_HOOK = "allocB";
-
 
     static Dictionary<string, SymbolInfo> DynamicArrayCache = [];
     static SymbolInfo DynamicArrayTemplate;
@@ -28,7 +26,9 @@ static class Elaboration
 
         currentScope = GlobalScope;
 
-        IncludeIntrinsicFn("allocB");
+        IncludeIntrinsicFn("AllocB");
+        IncludeIntrinsicFn("ReallocB");
+        IncludeIntrinsicFn("Free");
 
         for (int i = 0; i < ProgramAST.Nodes.Count; i++)
         {
@@ -52,10 +52,10 @@ static class Elaboration
              && functionDeclaration.Name == name)
             {
                 ProgramAST.Nodes.Add(node);
-                if (!PreloadScope.TryLookup(name, out SymbolInfo? allocB, out _))
+                if (!PreloadScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
                     throw new Exception($"Could not find template {name}");
                 functionDeclaration.Scope = new Scope(name, node, GlobalScope);
-                GlobalScope.Declare(name, allocB!);
+                GlobalScope.Declare(name, symbolInfo!);
             }
     }
 

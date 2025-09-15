@@ -1,6 +1,7 @@
 ; ModuleID = 'theia_module'
 target triple = "x86_64-pc-windows-msvc19.44.35211"
 
+declare noalias ptr @realloc(i64)
 declare noalias ptr @malloc(i64) nounwind willreturn
 declare void @free(ptr) nounwind
 
@@ -28,7 +29,38 @@ entry:
   ret ptr %user
 }
 
-define internal void @theia.__th_free(ptr %user) nounwind {
+define internal noalias ptr @__th_reallocB(ptr %user, i64 %newB) nounwind {
+entry:
+  ; user ptr == null → behaves like alloc
+  %isNull = icmp eq ptr %user, null
+  br i1 %isNull, label %alloc, label %have
+
+alloc:
+  %retA = call noalias ptr @__th_allocB(i64 %newB)
+  ret ptr %retA
+
+have:
+  ; newBytes == 0 → free and return null (so arrays can have data = null, cap = 0)
+  %isZero = icmp eq i64 %newB, 0
+  br i1 %isZero, label %freeNull, label %grow
+
+freeNull:
+  call void @__th_free(ptr %user)
+  ret ptr null
+
+grow:
+  %raw    = getelementptr i8, ptr %user, i64 -16
+  %total  = add i64 %newB, 16
+  %newRaw = call ptr @realloc(ptr %raw, i64 %total)
+  ; update header.size
+  %h_sz = getelementptr %theia.header, ptr %newRaw, i32 0, i32 0
+  store i64 %newB, ptr %h_sz
+  ; return user pointer
+  %user2 = getelementptr i8, ptr %newRaw, i64 16
+  ret ptr %user2
+}
+
+define internal void @__th_free(ptr %user) nounwind {
 entry:
   ; grab beginning of the allocation header
   %raw     = getelementptr i8, ptr %user, i64 -16
@@ -74,99 +106,101 @@ entry:
   %ptrToFloatArray_main = alloca ptr
   %arrOfFloatPtrs_main = alloca [4 x ptr]
   %v_main = alloca ptr
-  %tmp1 = call ptr @allocB(i64 4)
+  %tmp1 = call ptr @AllocB(i64 4)
   store ptr %tmp1, ptr %v_main
+  %tmp2 = load ptr, ptr %v_main
+  call void @Free(ptr %tmp2)
   %voidPtr_main = alloca ptr
   %dynamicArray_main = alloca %Dynamic_Array_s8
   %dynamicArray2_main = alloca %Dynamic_Array_s8
   %z_main = alloca float
-  %tmp2 = getelementptr inbounds [4 x float], ptr %Vec4_main, i32 0, i32 2
-  %tmp3 = load float, ptr %tmp2
-  store float %tmp3, ptr %z_main
+  %tmp4 = getelementptr inbounds [4 x float], ptr %Vec4_main, i32 0, i32 2
+  %tmp5 = load float, ptr %tmp4
+  store float %tmp5, ptr %z_main
   %entity_main = alloca %Entity
-  %tmp4 = alloca %Transform
-  %tmp5 = alloca %Vector3
-  %tmp6 = getelementptr %Vector3, ptr %tmp5, i32 0, i32 0
-  store float 0.0, ptr %tmp6
-  %tmp7 = getelementptr %Vector3, ptr %tmp5, i32 0, i32 1
-  store float 0.0, ptr %tmp7
-  %tmp8 = getelementptr %Vector3, ptr %tmp5, i32 0, i32 2
+  %tmp6 = alloca %Transform
+  %tmp7 = alloca %Vector3
+  %tmp8 = getelementptr %Vector3, ptr %tmp7, i32 0, i32 0
   store float 0.0, ptr %tmp8
-  %tmp9 = load %Vector3, ptr %tmp5
-  %tmp10 = getelementptr %Transform, ptr %tmp4, i32 0, i32 0
-  store %Vector3 %tmp9, ptr %tmp10
-  %tmp11 = alloca %Vector3
-  %tmp12 = getelementptr %Vector3, ptr %tmp11, i32 0, i32 0
-  store float 0.0, ptr %tmp12
-  %tmp13 = getelementptr %Vector3, ptr %tmp11, i32 0, i32 1
-  store float 0.0, ptr %tmp13
-  %tmp14 = getelementptr %Vector3, ptr %tmp11, i32 0, i32 2
+  %tmp9 = getelementptr %Vector3, ptr %tmp7, i32 0, i32 1
+  store float 0.0, ptr %tmp9
+  %tmp10 = getelementptr %Vector3, ptr %tmp7, i32 0, i32 2
+  store float 0.0, ptr %tmp10
+  %tmp11 = load %Vector3, ptr %tmp7
+  %tmp12 = getelementptr %Transform, ptr %tmp6, i32 0, i32 0
+  store %Vector3 %tmp11, ptr %tmp12
+  %tmp13 = alloca %Vector3
+  %tmp14 = getelementptr %Vector3, ptr %tmp13, i32 0, i32 0
   store float 0.0, ptr %tmp14
-  %tmp15 = load %Vector3, ptr %tmp11
-  %tmp16 = getelementptr %Transform, ptr %tmp4, i32 0, i32 1
-  store %Vector3 %tmp15, ptr %tmp16
-  %tmp17 = alloca %Vector3
-  %tmp18 = getelementptr %Vector3, ptr %tmp17, i32 0, i32 0
-  store float 0.0, ptr %tmp18
-  %tmp19 = getelementptr %Vector3, ptr %tmp17, i32 0, i32 1
-  store float 0.0, ptr %tmp19
-  %tmp20 = getelementptr %Vector3, ptr %tmp17, i32 0, i32 2
+  %tmp15 = getelementptr %Vector3, ptr %tmp13, i32 0, i32 1
+  store float 0.0, ptr %tmp15
+  %tmp16 = getelementptr %Vector3, ptr %tmp13, i32 0, i32 2
+  store float 0.0, ptr %tmp16
+  %tmp17 = load %Vector3, ptr %tmp13
+  %tmp18 = getelementptr %Transform, ptr %tmp6, i32 0, i32 1
+  store %Vector3 %tmp17, ptr %tmp18
+  %tmp19 = alloca %Vector3
+  %tmp20 = getelementptr %Vector3, ptr %tmp19, i32 0, i32 0
   store float 0.0, ptr %tmp20
-  %tmp21 = load %Vector3, ptr %tmp17
-  %tmp22 = getelementptr %Transform, ptr %tmp4, i32 0, i32 2
-  store %Vector3 %tmp21, ptr %tmp22
-  %tmp23 = load %Transform, ptr %tmp4
-  %tmp24 = getelementptr %Entity, ptr %entity_main, i32 0, i32 0
-  store %Transform %tmp23, ptr %tmp24
-  %tmp25 = getelementptr %Entity, ptr %entity_main, i32 0, i32 1
-  store float 70.0, ptr %tmp25
-  %tmp26 = getelementptr %Entity, ptr %entity_main, i32 0, i32 2
-  store float 1.5, ptr %tmp26
-  %tmp27 = getelementptr %Entity, ptr %entity_main, i32 0, i32 3
-  store i1 0, ptr %tmp27
+  %tmp21 = getelementptr %Vector3, ptr %tmp19, i32 0, i32 1
+  store float 0.0, ptr %tmp21
+  %tmp22 = getelementptr %Vector3, ptr %tmp19, i32 0, i32 2
+  store float 0.0, ptr %tmp22
+  %tmp23 = load %Vector3, ptr %tmp19
+  %tmp24 = getelementptr %Transform, ptr %tmp6, i32 0, i32 2
+  store %Vector3 %tmp23, ptr %tmp24
+  %tmp25 = load %Transform, ptr %tmp6
+  %tmp26 = getelementptr %Entity, ptr %entity_main, i32 0, i32 0
+  store %Transform %tmp25, ptr %tmp26
+  %tmp27 = getelementptr %Entity, ptr %entity_main, i32 0, i32 1
+  store float 70.0, ptr %tmp27
+  %tmp28 = getelementptr %Entity, ptr %entity_main, i32 0, i32 2
+  store float 1.5, ptr %tmp28
+  %tmp29 = getelementptr %Entity, ptr %entity_main, i32 0, i32 3
+  store i1 0, ptr %tmp29
 
   %HP_main = alloca float
-  %tmp28 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
-  %tmp29 = load float, ptr %tmp28
-  store float %tmp29, ptr %HP_main
+  %tmp30 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
+  %tmp31 = load float, ptr %tmp30
+  store float %tmp31, ptr %HP_main
   %healthPtr_main = alloca ptr
   store ptr %HP_main, ptr %healthPtr_main
-  %tmp30 = load ptr, ptr %healthPtr_main
-  store float 5.0, ptr %tmp30
+  %tmp32 = load ptr, ptr %healthPtr_main
+  store float 5.0, ptr %tmp32
   %moreHealth_main = alloca float
-  %tmp31 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
-  %tmp32 = load float, ptr %tmp31
-  %tmp33 = fadd float 1.0, %tmp32
+  %tmp33 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
+  %tmp34 = load float, ptr %tmp33
+  %tmp35 = fadd float 1.0, %tmp34
 
-  store float %tmp33, ptr %moreHealth_main
+  store float %tmp35, ptr %moreHealth_main
   store ptr %moreHealth_main, ptr %healthPtr_main
-  %tmp34 = load ptr, ptr %healthPtr_main
-  store ptr %tmp34, ptr %voidPtr_main
-  %tmp35 = load ptr, ptr %healthPtr_main
-  %tmp36 = load float, ptr %tmp35
-  store float %tmp36, ptr %HP_main
-  %tmp37 = load float, ptr %moreHealth_main
-  %tmp38 = fadd float %tmp37, 1.0
+  %tmp36 = load ptr, ptr %healthPtr_main
+  store ptr %tmp36, ptr %voidPtr_main
+  %tmp37 = load ptr, ptr %healthPtr_main
+  %tmp38 = load float, ptr %tmp37
+  store float %tmp38, ptr %HP_main
+  %tmp39 = load float, ptr %moreHealth_main
+  %tmp40 = fadd float %tmp39, 1.0
 
-  store float %tmp38, ptr %moreHealth_main
-  %tmp39 = call i32 @m(i32 7)
-  %tmp40 = call i1 @n(i1 1)
-  %tmp41 = call i1 @n(i1 0)
+  store float %tmp40, ptr %moreHealth_main
+  %tmp41 = call i32 @m(i32 7)
+  %tmp42 = call i1 @n(i1 1)
+  %tmp43 = call i1 @n(i1 0)
   %t_main = alloca i32
-  %tmp42 = call i32 @m(i32 8)
-  store i32 %tmp42, ptr %t_main
+  %tmp44 = call i32 @m(i32 8)
+  store i32 %tmp44, ptr %t_main
   %u_main = alloca i32
-  %tmp43 = call i32 @m(i32 8)
-  %tmp44 = add i32 1, %tmp43
+  %tmp45 = call i32 @m(i32 8)
+  %tmp46 = add i32 1, %tmp45
 
-  %tmp45 = add i32 %tmp44, 9
+  %tmp47 = add i32 %tmp46, 9
 
-  store i32 %tmp45, ptr %u_main
+  store i32 %tmp47, ptr %u_main
   %defaultInt_main = alloca i32
   %defaultFloat_main = alloca float
   %defaultBool_main = alloca i1
-  %tmp46 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
-  store float 4.0, ptr %tmp46
+  %tmp48 = getelementptr inbounds %Entity, ptr %entity_main, i32 0, i32 1
+  store float 4.0, ptr %tmp48
   %default_s32_main = alloca i32
   %default_f32_main = alloca float
   %default_bool_main = alloca i1
@@ -174,11 +208,11 @@ entry:
   store fp128 0xL1C3, ptr %quad_main
   %i_main = alloca i32
   store i32 -1, ptr %i_main
-  %tmp47 = load i32, ptr %i_main
-  %tmp48 = call i32 @Abs(i32 %tmp47)
   %tmp49 = load i32, ptr %i_main
-  %tmp50 = sub i32 0, %tmp49
-  %tmp51 = call i32 @Abs(i32 %tmp50)
+  %tmp50 = call i32 @Abs(i32 %tmp49)
+  %tmp51 = load i32, ptr %i_main
+  %tmp52 = sub i32 0, %tmp51
+  %tmp53 = call i32 @Abs(i32 %tmp52)
   %j_main = alloca float
   store float -1.0, ptr %j_main
   %fg_main = alloca i1
@@ -190,41 +224,41 @@ entry:
   %b_main = alloca i32
   store i32 10, ptr %b_main
   %c_main = alloca i32
-  %tmp52 = load i32, ptr %a_main
-  %tmp53 = load i32, ptr %b_main
-  %tmp54 = add i32 %tmp52, %tmp53
+  %tmp54 = load i32, ptr %a_main
+  %tmp55 = load i32, ptr %b_main
+  %tmp56 = add i32 %tmp54, %tmp55
 
-  store i32 %tmp54, ptr %c_main
+  store i32 %tmp56, ptr %c_main
   %d_main = alloca i32
   store i32 4, ptr %d_main
-  %tmp55 = load i32, ptr %a_main
-  %tmp56 = load i32, ptr %c_main
-  %tmp57 = add i32 %tmp55, %tmp56
-
-  store i32 %tmp57, ptr %d_main
-  %tmp58 = load i32, ptr %d_main
-  %tmp59 = add i32 %tmp58, 42
+  %tmp57 = load i32, ptr %a_main
+  %tmp58 = load i32, ptr %c_main
+  %tmp59 = add i32 %tmp57, %tmp58
 
   store i32 %tmp59, ptr %d_main
+  %tmp60 = load i32, ptr %d_main
+  %tmp61 = add i32 %tmp60, 42
+
+  store i32 %tmp61, ptr %d_main
   %f_main = alloca float
   store float 2.5, ptr %f_main
-  %tmp60 = load float, ptr %f_main
-  %tmp61 = fmul float %tmp60, 2.0
+  %tmp62 = load float, ptr %f_main
+  %tmp63 = fmul float %tmp62, 2.0
 
-  store float %tmp61, ptr %f_main
+  store float %tmp63, ptr %f_main
   %g_main = alloca float
   store float 3.0, ptr %g_main
   %h_main = alloca float
-  %tmp62 = load float, ptr %f_main
-  %tmp63 = load float, ptr %g_main
-  %tmp64 = fsub float %tmp62, %tmp63
+  %tmp64 = load float, ptr %f_main
+  %tmp65 = load float, ptr %g_main
+  %tmp66 = fsub float %tmp64, %tmp65
 
-  store float %tmp64, ptr %h_main
+  store float %tmp66, ptr %h_main
   %ok_main = alloca i1
-  %tmp65 = load i32, ptr %c_main
-  %tmp66 = icmp sgt i32 %tmp65, 5
+  %tmp67 = load i32, ptr %c_main
+  %tmp68 = icmp sgt i32 %tmp67, 5
 
-  store i1 %tmp66, ptr %ok_main
+  store i1 %tmp68, ptr %ok_main
   call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_main_str, i32 0, i32 0), i32 0)
   ret i32 0
 }
@@ -232,140 +266,166 @@ entry:
 @.fn_fn_str = private constant [3 x i8] c"fn\00"
 define void @fn(i32 %i) {
 entry:
-  %tmp67 = alloca i32
-  store i32 %i, ptr %tmp67
+  %tmp69 = alloca i32
+  store i32 %i, ptr %tmp69
   %j_fn = alloca i32
-  %tmp68 = load i32, ptr %tmp67
-  %tmp69 = sdiv i32 %tmp68, 7
+  %tmp70 = load i32, ptr %tmp69
+  %tmp71 = sdiv i32 %tmp70, 7
 
-  store i32 %tmp69, ptr %j_fn
+  store i32 %tmp71, ptr %j_fn
   ret void 
 }
 
 @.fn_Branchy_str = private constant [8 x i8] c"Branchy\00"
 define i32 @Branchy(i32 %value) {
 entry:
-  %tmp70 = alloca i32
-  store i32 %value, ptr %tmp70
-  %tmp71 = load i32, ptr %tmp70
-  %tmp72 = icmp eq i32 %tmp71, 0
+  %tmp72 = alloca i32
+  store i32 %value, ptr %tmp72
+  %tmp73 = load i32, ptr %tmp72
+  %tmp74 = icmp eq i32 %tmp73, 0
 
-  br i1 %tmp72, label %if_then_0, label %if_else_0
+  br i1 %tmp74, label %if_then_0, label %if_else_0
 if_then_0:
-  store i32 42, ptr %tmp70
-  %f_if_then413 = alloca float
-  store float 0.0, ptr %f_if_then413
-  store float -1.0, ptr %f_if_then413
+  store i32 42, ptr %tmp72
+  %f_if_then418 = alloca float
+  store float 0.0, ptr %f_if_then418
+  store float -1.0, ptr %f_if_then418
   br label %if_end_0
 if_else_0:
-  store i32 -42, ptr %tmp70
-  %f_if_else429 = alloca float
-  store float 78.0, ptr %f_if_else429
+  store i32 -42, ptr %tmp72
+  %f_if_else434 = alloca float
+  store float 78.0, ptr %f_if_else434
   br label %if_end_0
 if_end_0:
-  %tmp73 = load i32, ptr %tmp70
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Branchy_str, i32 0, i32 0), i32 %tmp73)
-  ret i32 %tmp73
+  %tmp75 = load i32, ptr %tmp72
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Branchy_str, i32 0, i32 0), i32 %tmp75)
+  ret i32 %tmp75
 }
 
 @.fn_Abs_str = private constant [4 x i8] c"Abs\00"
 define i32 @Abs(i32 %value) {
 entry:
-  %tmp74 = alloca i32
-  store i32 %value, ptr %tmp74
-  %tmp75 = load i32, ptr %tmp74
-  %tmp76 = icmp slt i32 %tmp75, 0
+  %tmp76 = alloca i32
+  store i32 %value, ptr %tmp76
+  %tmp77 = load i32, ptr %tmp76
+  %tmp78 = icmp slt i32 %tmp77, 0
 
-  br i1 %tmp76, label %if_then_1, label %if_end_1
+  br i1 %tmp78, label %if_then_1, label %if_end_1
 if_then_1:
-  %tmp77 = load i32, ptr %tmp74
-  %tmp78 = sub i32 0, %tmp77
-  ret i32 %tmp78
+  %tmp79 = load i32, ptr %tmp76
+  %tmp80 = sub i32 0, %tmp79
+  ret i32 %tmp80
   br label %if_end_1
 if_end_1:
-  %tmp79 = load i32, ptr %tmp74
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Abs_str, i32 0, i32 0), i32 %tmp79)
-  ret i32 %tmp79
+  %tmp81 = load i32, ptr %tmp76
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Abs_str, i32 0, i32 0), i32 %tmp81)
+  ret i32 %tmp81
 }
 
 @.fn_Loopy_str = private constant [6 x i8] c"Loopy\00"
 define i32 @Loopy(i32 %value) {
 entry:
-  %tmp80 = alloca i32
-  store i32 %value, ptr %tmp80
+  %tmp82 = alloca i32
+  store i32 %value, ptr %tmp82
   %i_Loopy = alloca i32
   store i32 0, ptr %i_Loopy
   br label %for_cond2
 for_cond2:
-  %tmp81 = load i32, ptr %i_Loopy
-  %tmp82 = load i32, ptr %tmp80
-  %tmp83 = icmp slt i32 %tmp81, %tmp82
+  %tmp83 = load i32, ptr %i_Loopy
+  %tmp84 = load i32, ptr %tmp82
+  %tmp85 = icmp slt i32 %tmp83, %tmp84
 
-  br i1 %tmp83, label %for_body2, label %for_end2
+  br i1 %tmp85, label %for_body2, label %for_end2
 for_body2:
-  %tmp84 = load i32, ptr %tmp80
-  %tmp85 = load i32, ptr %i_Loopy
-  %tmp86 = add i32 %tmp84, %tmp85
+  %tmp86 = load i32, ptr %tmp82
+  %tmp87 = load i32, ptr %i_Loopy
+  %tmp88 = add i32 %tmp86, %tmp87
 
-  store i32 %tmp86, ptr %tmp80
+  store i32 %tmp88, ptr %tmp82
   br label %for_iter2
 for_iter2:
-  %tmp87 = load i32, ptr %i_Loopy
-  %tmp88 = sub i32 %tmp87, 3
+  %tmp89 = load i32, ptr %i_Loopy
+  %tmp90 = sub i32 %tmp89, 3
 
-  store i32 %tmp88, ptr %i_Loopy
+  store i32 %tmp90, ptr %i_Loopy
   br label %for_cond2
 for_end2:
-  %tmp89 = load i32, ptr %tmp80
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Loopy_str, i32 0, i32 0), i32 %tmp89)
-  ret i32 %tmp89
+  %tmp91 = load i32, ptr %tmp82
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_Loopy_str, i32 0, i32 0), i32 %tmp91)
+  ret i32 %tmp91
 }
 
 @.fn_n_str = private constant [2 x i8] c"n\00"
 define i1 @n(i1 %b) {
 entry:
-  %tmp90 = alloca i1
-  store i1 %b, ptr %tmp90
-  %tmp91 = load i1, ptr %tmp90
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([3 x i8], ptr @.fn_n_str, i32 0, i32 0), i1 %tmp91)
-  ret i1 %tmp91
+  %tmp92 = alloca i1
+  store i1 %b, ptr %tmp92
+  %tmp93 = load i1, ptr %tmp92
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([3 x i8], ptr @.fn_n_str, i32 0, i32 0), i1 %tmp93)
+  ret i1 %tmp93
 }
 
 @.fn_m_str = private constant [2 x i8] c"m\00"
 define i32 @m(i32 %j) {
 entry:
-  %tmp92 = alloca i32
-  store i32 %j, ptr %tmp92
+  %tmp94 = alloca i32
+  store i32 %j, ptr %tmp94
   %i_m = alloca i32
   store i32 3, ptr %i_m
-  %tmp93 = load i32, ptr %tmp92
-  %tmp94 = add i32 %tmp93, 4
+  %tmp95 = load i32, ptr %tmp94
+  %tmp96 = add i32 %tmp95, 4
 
-  store i32 %tmp94, ptr %tmp92
+  store i32 %tmp96, ptr %tmp94
   %health_m = alloca i32
   store i32 7, ptr %health_m
-  %tmp95 = load i32, ptr %tmp92
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_m_str, i32 0, i32 0), i32 %tmp95)
-  ret i32 %tmp95
+  %tmp97 = load i32, ptr %tmp94
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_m_str, i32 0, i32 0), i32 %tmp97)
+  ret i32 %tmp97
 }
 
 @.fn_IsAlive_str = private constant [8 x i8] c"IsAlive\00"
 define i1 @Entity.IsAlive(ptr %this) {
 entry:
-  %tmp96 = getelementptr %Entity, ptr %this, i32 0, i32 1
-  %tmp97 = load float, ptr %tmp96
-  %tmp98 = fcmp ogt float %tmp97, 0.0
+  %tmp98 = getelementptr %Entity, ptr %this, i32 0, i32 1
+  %tmp99 = load float, ptr %tmp98
+  %tmp100 = fcmp ogt float %tmp99, 0.0
 
-  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([3 x i8], ptr @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp98)
-  ret i1 %tmp98
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([3 x i8], ptr @.fn_IsAlive_str, i32 0, i32 0), i1 %tmp100)
+  ret i1 %tmp100
 }
 
-define ptr @allocB(i64 %size) {
+@.fn_AllocB_str = private constant [7 x i8] c"AllocB\00"
+define ptr @AllocB(i64 %size) {
 entry:
-  %tmp99 = alloca i64
-  store i64 %size, ptr %tmp99
-  %tmp100 = load i64, ptr %tmp99
-  %tmp101 = call ptr @__th_allocB(i64 %tmp100)
-  ret ptr %tmp101
+  %tmp101 = alloca i64
+  store i64 %size, ptr %tmp101
+  %tmp102 = load i64, ptr %tmp101
+  %tmp103 = call ptr @__th_allocB(i64 %tmp102)
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_AllocB_str, i32 0, i32 0), ptr %tmp103)
+  ret ptr %tmp103
+}
+
+@.fn_ReallocB_str = private constant [9 x i8] c"ReallocB\00"
+define ptr @ReallocB(ptr %ptr, i64 %newSize) {
+entry:
+  %tmp104 = alloca ptr
+  store ptr %ptr, ptr %tmp104
+  %tmp105 = alloca i64
+  store i64 %newSize, ptr %tmp105
+  %tmp106 = load ptr, ptr %tmp104
+  %tmp107 = load i64, ptr %tmp105
+  %tmp108 = call ptr @__th_reallocB(ptr %tmp106, i64 %tmp107)
+  call i32 (ptr, ...) @printf(ptr getelementptr inbounds ([16 x i8], ptr @.print_ret_fmt, i32 0, i32 0), ptr getelementptr inbounds ([4 x i8], ptr @.fn_ReallocB_str, i32 0, i32 0), ptr %tmp108)
+  ret ptr %tmp108
+}
+
+@.fn_Free_str = private constant [5 x i8] c"Free\00"
+define void @Free(ptr %ptr) {
+entry:
+  %tmp109 = alloca ptr
+  store ptr %ptr, ptr %tmp109
+  %tmp110 = load ptr, ptr %tmp109
+  call void @__th_free(ptr %tmp110)
+  ret void 
 }
 

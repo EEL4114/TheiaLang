@@ -1,5 +1,5 @@
 Program: Example
-Generated at 27.08.2025 05:13:19
+Generated at 15.09.2025 22:51:01
 
 UnionDeclaration: StringData (8 B) | Scope: 'StringData' 
     [0]s8 dataPtr
@@ -29,9 +29,14 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: @[4]f32 (8 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (32 B) arrOfFloatPtrs
         VariableDeclaration: @void (8 B) v =
-            Call: @void (8 B)  allocB
+            Call: @void (8 B)  AllocB
                 Arguments:
                     Literal: s64 (8 B) 4
+        Expression:
+            Call: void (0 B)  Free
+                Arguments:
+                    Identifier: @void (8 B) v
+
         VariableDeclaration: @void (8 B) voidPtr
         VariableDeclaration: Dynamic_Array_s8 (24 B) dynamicArray
         VariableDeclaration: Dynamic_Array_s8 (24 B) dynamicArray2
@@ -217,7 +222,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then413' 
+            Then: | Scope: 'if_then418' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -228,7 +233,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else429' 
+            Else: | Scope: 'if_else434' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -248,7 +253,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then459' 
+            Then: | Scope: 'if_then464' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -262,7 +267,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_477' 
+        For: | Scope: 'for_482' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0
@@ -329,7 +334,7 @@ StructDeclaration: Vector3 (12 B) | Scope: 'Vector3'
         f32 y
         f32 z
 
-FunctionDeclaration: @void allocB | Scope: 'allocB' 
+FunctionDeclaration: @void AllocB | Scope: 'AllocB' 
     Arguments:
         s64 size
     BlockSatement:
@@ -337,6 +342,29 @@ FunctionDeclaration: @void allocB | Scope: 'allocB'
             Call: @void (8 B)  __th_allocB
                 Arguments:
                     Identifier: s64 (8 B) size
+
+FunctionDeclaration: @void ReallocB | Scope: 'ReallocB' 
+    Arguments:
+        @void ptr
+        s64 newSize
+    BlockSatement:
+        Return: @void (8 B) 
+            Call: @void (8 B)  __th_reallocB
+                Arguments:
+                    Identifier: @void (8 B) ptr
+                    Identifier: s64 (8 B) newSize
+
+FunctionDeclaration: void Free | Scope: 'Free' 
+    Arguments:
+        @void ptr
+    BlockSatement:
+        Expression:
+            Call: void (0 B)  __th_free
+                Arguments:
+                    Identifier: @void (8 B) ptr
+
+        Return: void (0 B) 
+            Literal: void (0 B) void
 
 StructDeclaration: Dynamic_Array_s8 (24 B) | Scope: 'Dynamic_Array_s8' 
     Fields:

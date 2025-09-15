@@ -625,8 +625,12 @@ public static class IRGenerator
 
         string tmp = $"%{NewTempVar()}";
 
-        code.AppendLine(
-            $"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+        if (retTy != "void")
+            code.AppendLine(
+                $"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+        else
+            code.AppendLine(
+        $"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
     }
 

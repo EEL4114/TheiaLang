@@ -279,11 +279,12 @@ public static class SemanticAnalyser
                 TypeInfo identifierInfo = GetTypeInfo(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
                 if (identifierInfo.Pointee != null)     // ptr variable: dereference is default
-                    expression = new UnaryExpression(UnaryOperator.Dereference, identifier, true) { ResolvedType = identifierInfo.Pointee };
+                    expression = new UnaryExpression(UnaryOperator.Dereference, identifier, true)
+                                                    { ResolvedType = identifierInfo.Pointee };
                 break;
             case CallExpression call:
                 if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
-                        || function!.Kind != SymbolKind.Function)
+                 || function!.Kind != SymbolKind.Function)
                         throw new Exception($"Unknown function '{call.CalleeName}'");
 
                 if (call.Arguments.Count != function.Parameters!.Count)

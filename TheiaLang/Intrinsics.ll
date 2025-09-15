@@ -1,6 +1,7 @@
 ; ModuleID = 'theia_module'
 target triple = "x86_64-pc-windows-msvc19.44.35211"
 
+declare noalias ptr @realloc(i64)
 declare noalias ptr @malloc(i64) nounwind willreturn
 declare void @free(ptr) nounwind
 
@@ -28,7 +29,38 @@ entry:
   ret ptr %user
 }
 
-define internal void @theia.__th_free(ptr %user) nounwind {
+define internal noalias ptr @__th_reallocB(ptr %user, i64 %newB) nounwind {
+entry:
+  ; user ptr == null → behaves like alloc
+  %isNull = icmp eq ptr %user, null
+  br i1 %isNull, label %alloc, label %have
+
+alloc:
+  %retA = call noalias ptr @__th_allocB(i64 %newB)
+  ret ptr %retA
+
+have:
+  ; newBytes == 0 → free and return null (so arrays can have data = null, cap = 0)
+  %isZero = icmp eq i64 %newB, 0
+  br i1 %isZero, label %freeNull, label %grow
+
+freeNull:
+  call void @__th_free(ptr %user)
+  ret ptr null
+
+grow:
+  %raw    = getelementptr i8, ptr %user, i64 -16
+  %total  = add i64 %newB, 16
+  %newRaw = call ptr @realloc(ptr %raw, i64 %total)
+  ; update header.size
+  %h_sz = getelementptr %theia.header, ptr %newRaw, i32 0, i32 0
+  store i64 %newB, ptr %h_sz
+  ; return user pointer
+  %user2 = getelementptr i8, ptr %newRaw, i64 16
+  ret ptr %user2
+}
+
+define internal void @__th_free(ptr %user) nounwind {
 entry:
   ; grab beginning of the allocation header
   %raw     = getelementptr i8, ptr %user, i64 -16
