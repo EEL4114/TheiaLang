@@ -28,8 +28,8 @@ int main()
     @[4]f32 ptrToFloatArray;    // this is much less ambiguous / error-prone
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
-
-    //v = ReallocB(@v, 8);        // grow the allocation 'v' to 8 B
+    @void v = AllocB(4);
+    @v = ReallocB(@v, 8);       // grow the allocation 'v' to 8 B
 
     //Free(v);
 

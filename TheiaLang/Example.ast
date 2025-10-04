@@ -1,5 +1,5 @@
 Program: Example
-Generated at 04.10.2025 23:48:35
+Generated at 05.10.2025 00:36:26
 
 UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
     [0]s8 dataPtr
@@ -28,6 +28,20 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
         VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
+        VariableDeclaration: @void (0 B) v =
+            Call:  AllocB
+                Arguments:
+                    Literal: int (0 B) 4
+        Assignment:
+            UnaryExpression: AddressOf
+                Operand:
+                    Identifier: v
+            Call:  ReallocB
+                Arguments:
+                    UnaryExpression: AddressOf
+                        Operand:
+                            Identifier: v
+                    Literal: int (0 B) 8
         VariableDeclaration: @void (0 B) voidPtr
         VariableDeclaration: dynamicArray
         VariableDeclaration: dynamicArray2
@@ -226,7 +240,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then420' 
+            Then: | Scope: 'if_then440' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -239,7 +253,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else436' 
+            Else: | Scope: 'if_else456' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -261,7 +275,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then466' 
+            Then: | Scope: 'if_then486' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -275,7 +289,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_484' 
+        For: | Scope: 'for_504' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0
@@ -359,7 +373,9 @@ FunctionDeclaration: @void ReallocB | Scope: 'ReallocB'
         Return: 
             Call:  __th_reallocB
                 Arguments:
-                    Identifier: ptr
+                    UnaryExpression: AddressOf
+                        Operand:
+                            Identifier: ptr
                     Identifier: newSize
 
 FunctionDeclaration: void Free | Scope: 'Free' 
@@ -369,7 +385,9 @@ FunctionDeclaration: void Free | Scope: 'Free'
         Expression:
             Call:  __th_free
                 Arguments:
-                    Identifier: ptr
+                    UnaryExpression: AddressOf
+                        Operand:
+                            Identifier: ptr
 
         Return: 
 
