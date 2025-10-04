@@ -29,10 +29,9 @@ int main()
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
 
-    @void v = AllocB(4);
     //v = ReallocB(@v, 8);        // grow the allocation 'v' to 8 B
 
-    Free(v);
+    //Free(v);
 
     // @f32 floatPtr;
     // s64 voidPtrVirtAddr = @floatPtr;
@@ -49,14 +48,23 @@ int main()
 */
     f32 z = Vec4[2];
 
+    //Entity heapEntity = Alloc(Entity);
+    
     Entity entity = Entity{
         Transform{
-            Vector3{0, 0, 0},
-            Vector3{0, 0, 0},
-            Vector3{0, 0, 0}},
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1}},
         70,
         1.5,
         false};
+
+    s32 ii = SizeOf(Entity);
+    s32 jj = SizeOf(s32);
+    //s32 ll = SizeOf([2]s32);
+    //s32 kk = SizeOf(arrX);
+
+
 
     f32 HP = entity.health;
     @f32 healthPtr = @HP;       // address of 'HP'

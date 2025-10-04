@@ -5,64 +5,66 @@ namespace TheiaLang;
 // TODO handle single char tokens by their ASCII value?
 public enum TokenType
 {
-    Identifier,
+    Identifier      = 300,
 
-    Literal,
+    Literal         = 400,
 
-    Keyword_bool,
+    Keyword_bool    = 500,
 
-    Keyword_s8,
-    Keyword_s16,
-    Keyword_s32,
-    Keyword_s64,
-    Keyword_s128,
-    Keyword_s256,
+    Keyword_s8      = 510,
+    Keyword_s16     = 511,
+    Keyword_s32     = 512,
+    Keyword_s64     = 513,
+    Keyword_s128    = 514,
+    Keyword_s256    = 515,
 
-    Keyword_f16,
-    Keyword_f32,
-    Keyword_f64,
-    Keyword_f128,
+    // 52X reserved for signed int
 
-    Keyword_struct,
-    Keyword_union,
+    Keyword_f16     = 530,
+    Keyword_f32     = 531,
+    Keyword_f64     = 532,
+    Keyword_f128    = 533,
 
-    Keyword_if,
-    Keyword_else,
-    Keyword_for,
-    Keyword_new,
-    Keyword_return,
+    Keyword_struct  = 540,
+    Keyword_union   = 541,
 
-    Operator_Equal,
-    Operator_Plus,
-    Operator_Minus,
-    Operator_Mult,
-    Operator_Div,
-    Operator_Greater,
-    Operator_Less,
+    Keyword_if      = 542,
+    Keyword_else    = 543,
+    Keyword_for     = 544,
+    Keyword_new     = 545,
+    Keyword_return  = 546,
 
-    Operator_AND,
-    Operator_OR,
-    Operator_EqualEqual,
-    Operator_Inequal,
-    Operator_Invert,
+    Operator_Equal  = 600,
+    Operator_Plus   = 601,
+    Operator_Minus  = 602,
+    Operator_Mult   = 603,
+    Operator_Div    = 604,
+    Operator_Greater    = 605,
+    Operator_Less   = 606,
 
-    Operator_PlusEqual,
-    Operator_MinusEqual,
-    Operator_MultEqual,
-    Operator_DivEqual,
+    Operator_AND    = 610,
+    Operator_OR     = 611,
+    Operator_EqualEqual = 612,
+    Operator_Inequal    = 613,
+    Operator_Invert = 614,
 
-    Punctuation_At,
-    Punctuation_Comma,
-    Punctuation_Dot,
-    Punctuation_Semicolon,
-    Punctuation_ParenthesisL,
-    Punctuation_ParenthesisR,
-    Punctuation_BraceL,
-    Punctuation_BraceR,
-    Punctuation_BracketL,
-    Punctuation_BracketR,
+    Operator_PlusEqual  = 620,
+    Operator_MinusEqual = 621,
+    Operator_MultEqual  = 622,
+    Operator_DivEqual   = 623,
 
-    EOF
+    Punctuation_At              = 700,
+    Punctuation_Comma           = 701,
+    Punctuation_Dot             = 702,
+    Punctuation_Semicolon       = 703,
+    Punctuation_ParenthesisL    = 704,
+    Punctuation_ParenthesisR    = 705,
+    Punctuation_BraceL          = 706,
+    Punctuation_BraceR          = 707,
+    Punctuation_BracketL        = 708,
+    Punctuation_BracketR        = 709,
+
+    EOF                         = 65535
 }
 
 public sealed record Token(

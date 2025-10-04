@@ -7,7 +7,7 @@ public class Parser(List<Token> tokens)
     Scope? globalScope;
     Scope? currentScope;
 
-    string programName;
+    string programName = "";
 
 
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
@@ -40,6 +40,13 @@ public class Parser(List<Token> tokens)
                                 SymbolKind.Function,
                                 [new TypeNamePair("@void", "ptr") { ResolvedType = new TypeInfo("@void") }
                             ]));
+
+        globalScope.Declare(new SymbolInfo(
+                                "__th_alloc",
+                                new TypeInfo("@void", 8, new TypeInfo("void")),
+                                SymbolKind.Function,
+                                [new TypeNamePair("s64", "size") { ResolvedType = new TypeInfo("s64") }]
+                            ));
 
         List<INode> nodes = [];
 
@@ -655,13 +662,15 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
             expression = inner;
         }
+        else if (MatchTypeDefinition(out TypeInfo typeInfo))
+            expression = new IdentifierExpression(typeInfo.TypeName);
 
         while (Match(TokenType.Punctuation_BracketL))
-        {
-            IExpression index = ParseExpression();
-            Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
-            expression = new IndexExpression(expression, index);
-        }
+            {
+                IExpression index = ParseExpression();
+                Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
+                expression = new IndexExpression(expression, index);
+            }
 
         if (expression != null)
             return expression;
@@ -728,6 +737,7 @@ public class Parser(List<Token> tokens)
     Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
+        throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         Log.Error(3, $"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         Environment.Exit(1);
         return null;
@@ -741,8 +751,7 @@ public class Parser(List<Token> tokens)
         return null!;
     }
 
-    // 2 == Keyword_bool; 12 == Keyword_f128
-    static bool IsBuiltinType(TokenType tokenType) => (int)tokenType >= 2 && (int)tokenType <= 12;
+    static bool IsBuiltinType(TokenType tokenType) => (int)tokenType >= 500 && (int)tokenType <= 539;
 
     int Line() => tokens[pos].Line + 1;
     int Column() => tokens[pos].Column;

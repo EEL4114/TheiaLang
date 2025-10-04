@@ -1,5 +1,5 @@
 Program: Example
-Generated at 15.09.2025 22:59:16
+Generated at 04.10.2025 23:31:21
 
 UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
     [0]s8 dataPtr
@@ -28,15 +28,6 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
         VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
         VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
-        VariableDeclaration: @void (0 B) v =
-            Call:  AllocB
-                Arguments:
-                    Literal: int (0 B) 4
-        Expression:
-            Call:  Free
-                Arguments:
-                    Identifier: v
-
         VariableDeclaration: @void (0 B) voidPtr
         VariableDeclaration: dynamicArray
         VariableDeclaration: dynamicArray2
@@ -53,22 +44,30 @@ FunctionDeclaration: s32 main | Scope: 'main'
                         Arguments:
                             Instantiation: Vector3
                                 Arguments:
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
                             Instantiation: Vector3
                                 Arguments:
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
                             Instantiation: Vector3
                                 Arguments:
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
-                                    Literal: int (0 B) 0
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
+                                    Literal: int (0 B) 1
                     Literal: int (0 B) 70
                     Literal: float (0 B) 1.5
                     Literal: bool (1 B) false
+        VariableDeclaration: s32 (4 B) ii =
+            Call:  SizeOf
+                Arguments:
+                    Identifier: Entity
+        VariableDeclaration: s32 (4 B) jj =
+            Call:  SizeOf
+                Arguments:
+                    Identifier: s32
         VariableDeclaration: f32 (4 B) HP =
             MemberAccess: entity.health
                 Target: entity
@@ -227,7 +226,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: EqualEqual
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then418' 
+            Then: | Scope: 'if_then420' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -240,7 +239,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else434' 
+            Else: | Scope: 'if_else436' 
                 BlockSatement:
                     Assignment:
                         Identifier: value
@@ -262,7 +261,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: Less
                     Identifier: value
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then464' 
+            Then: | Scope: 'if_then466' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
@@ -276,7 +275,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_482' 
+        For: | Scope: 'for_484' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0

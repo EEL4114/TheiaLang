@@ -109,6 +109,7 @@ public class Scope : INode
     }
 
     // TODO it may be useful to have a version of this function that always returns or errors
+    // can we remove symbolScope as return value here?
     public bool TryLookup(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
         if (Symbols.TryGetValue(name, out symbolInfo))
@@ -129,6 +130,25 @@ public class Scope : INode
         }
     }
 
+    public bool TryFindChild(string name, out SymbolInfo? symbolInfo)
+    {
+        if (Children.ContainsKey(name))
+        {
+            symbolInfo = Symbols[name];
+            return true;
+        }
+        else
+        {
+            if (Parent == null)
+            {
+                symbolInfo = null;
+                return false;
+            }
+            else
+                return Parent.TryFindChild(name, out symbolInfo);
+        }
+    }
+
     public bool GetParentOf(Scope scope, out Scope? parent)
     {
         if (Children.ContainsValue(scope))
@@ -140,7 +160,7 @@ public class Scope : INode
     }
 
     public override string ToString() => string.IsNullOrEmpty(FullName) ? "Global" 
-                                                                          : FullName;
+                                                                        : FullName;
 
     #endregion
 }

@@ -159,35 +159,6 @@ static class Elaboration
         }
     }
 
-    static TypeInfo LowerType(TypeInfo type)
-    {
-        if (type?.Pointee != null)
-        {
-            TypeInfo pointeeType = LowerType(type.Pointee);
-
-            return new TypeInfo($"@{pointeeType.TypeName}",
-                                0,
-                                pointeeType);
-        }
-
-        if (type?.ArrayLength != 0)
-        {
-            TypeInfo elementType = LowerType(type?.ElementType!);
-        }
-
-
-
-
-
-
-
-
-
-
-        Log.Info(type?.TypeName);
-        return type;
-    }
-
     #region Helpers
 
     static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo, string name = "")

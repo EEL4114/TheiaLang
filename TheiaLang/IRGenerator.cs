@@ -442,7 +442,7 @@ public static class IRGenerator
             return typeInfo.TypeName switch
             {
                 "f16" or "f32" or "f64" => (code, $"{i}.0"),// decimal is fine
-                "f128" => (code, ToHexFP128(i)),
+                "f128" => (code, FP128ToHex(i)),
                 _ => (code, literalExpression.Lexeme),
             };
         }
@@ -452,7 +452,7 @@ public static class IRGenerator
         {
             return typeInfo.TypeName switch
             {
-                "f128" => (code, ToHexFP128(d)),        // the original Lexeme is decimal; convert to hex‐float
+                "f128" => (code, FP128ToHex(d)),        // the original Lexeme is decimal; convert to hex‐float
                 _ => (code, literalExpression.Lexeme),  // leave as written for f32/f64
             };
         }
@@ -750,7 +750,7 @@ public static class IRGenerator
         return false;
     }
 
-    static string ToHexFP128(double v)
+    static string FP128ToHex(double v)
     {
         if (v == 0.0) return "0xL00";
 

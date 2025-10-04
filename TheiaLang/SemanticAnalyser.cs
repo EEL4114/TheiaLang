@@ -280,32 +280,59 @@ public static class SemanticAnalyser
                 identifier.ResolvedType = identifierInfo;
                 if (identifierInfo.Pointee != null)     // ptr variable: dereference is default
                     expression = new UnaryExpression(UnaryOperator.Dereference, identifier, true)
-                                                    { ResolvedType = identifierInfo.Pointee };
+                    { ResolvedType = identifierInfo.Pointee };
                 break;
             case CallExpression call:
-                if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
-                 || function!.Kind != SymbolKind.Function)
+                if (call.CalleeName == "SizeOf")
+                {
+                    if (call.Arguments.Count != 1)
+                        throw new Exception($"Function 'SizeOf' expects 1 argument, got {call.Arguments.Count}");
+
+                    if (call.Arguments[0] is not IdentifierExpression id)
+                        throw new Exception($"Unexpected argument in call 'SizeOf': expected identifer, got: {call.Arguments[0].GetType()}");
+
+                    TypeInfo typeInfo;
+                    if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
+                        typeInfo = symbolInfo!.Type;
+                    else
+                        throw new Exception($"Could not resolve {id.Name}");
+
+                    // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
+                    uint sizeValue = SizeOf(id.Name);
+
+                    expression = new LiteralExpression((int)sizeValue, sizeValue.ToString());
+                    expression.ResolvedType = new TypeInfo("s32", 4);
+                }
+                else if (call.CalleeName == "Alloc")
+                {
+                    Log.Info("ALLOC");
+                }
+                else
+                {
+                    if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
+                        || function!.Kind != SymbolKind.Function)
                         throw new Exception($"Unknown function '{call.CalleeName}'");
 
-                if (call.Arguments.Count != function.Parameters!.Count)
-                    throw new Exception($"Function '{function.Name}' expects {function.Parameters.Count}"
-                                        + $" arguments, got {call.Arguments.Count}");
+                    if (call.Arguments.Count != function.Parameters!.Count)
+                        throw new Exception($"Function '{function.Name}' expects {function.Parameters.Count}"
+                                            + $" arguments, got {call.Arguments.Count}");
 
-                foreach (IExpression arg in call.Arguments)
-                    AnalyseExpression(arg);
+                    foreach (IExpression arg in call.Arguments)
+                        AnalyseExpression(arg);
 
-                for (int i = 0; i < call.Arguments.Count; i++)
-                {
-                    string actual = call.Arguments[i].ResolvedType!.TypeName;
-                    string expected = function.Parameters[i].ResolvedType!.TypeName;
-                    call.Arguments[i].ResolvedType = PromoteIfLiteral(call.Arguments[i].ResolvedType!,
-                                                                      function.Parameters[i].ResolvedType!.TypeName);
-                    if (!CanImplicitlyCast(actual, expected))
-                        throw new Exception(
-                          $"Cannot implicitly convert {actual} to {expected}");
+                    for (int i = 0; i < call.Arguments.Count; i++)
+                    {
+                        string actual = call.Arguments[i].ResolvedType!.TypeName;
+                        string expected = function.Parameters[i].ResolvedType!.TypeName;
+                        call.Arguments[i].ResolvedType = PromoteIfLiteral(call.Arguments[i].ResolvedType!,
+                                                                        function.Parameters[i].ResolvedType!.TypeName);
+                        if (!CanImplicitlyCast(actual, expected))
+                            throw new Exception(
+                            $"Cannot implicitly convert {actual} to {expected}");
+                    }
+
+                    call.ResolvedType = function.Type;
                 }
-
-                call.ResolvedType = function.Type;
                 break;
             case MemberAccessExpression memberAccess:
                 AnalyseExpression(memberAccess.Target);
@@ -481,6 +508,7 @@ public static class SemanticAnalyser
     public static uint SizeOf(string typeName)
     {
         int i = IRGenerator.BuiltinTypeIndex(typeName);
+
         if (typeName.StartsWith('@'))
             return 8;   // ptrs are 64-bit == 8 B
         if (i >= 0)
