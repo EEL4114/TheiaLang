@@ -283,7 +283,7 @@ public static class SemanticAnalyser
                     { ResolvedType = identifierInfo.Pointee };
                 break;
             case CallExpression call:
-                if (call.CalleeName == "SizeOf")
+                if (call.CalleeName == "TypeSize")
                 {
                     if (call.Arguments.Count != 1)
                         throw new Exception($"Function 'SizeOf' expects 1 argument, got {call.Arguments.Count}");

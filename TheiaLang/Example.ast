@@ -1,5 +1,5 @@
 Program: Example
-Generated at 04.10.2025 23:31:21
+Generated at 04.10.2025 23:48:35
 
 UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
     [0]s8 dataPtr
@@ -61,11 +61,11 @@ FunctionDeclaration: s32 main | Scope: 'main'
                     Literal: float (0 B) 1.5
                     Literal: bool (1 B) false
         VariableDeclaration: s32 (4 B) ii =
-            Call:  SizeOf
+            Call:  TypeSize
                 Arguments:
                     Identifier: Entity
         VariableDeclaration: s32 (4 B) jj =
-            Call:  SizeOf
+            Call:  TypeSize
                 Arguments:
                     Identifier: s32
         VariableDeclaration: f32 (4 B) HP =

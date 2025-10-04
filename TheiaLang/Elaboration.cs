@@ -13,6 +13,13 @@ static class Elaboration
     static Scope GlobalScope;
     static Scope PreloadScope;
 
+    static readonly string[] intrinsicFunctions =
+    [
+        "AllocB",
+        "ReallocB",
+        "Free",
+    ];
+
     public static (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
                                                                      Scope programScope, ProgramNode programAST)
     {
@@ -26,20 +33,19 @@ static class Elaboration
 
         currentScope = GlobalScope;
 
-        IncludeIntrinsicFn("AllocB");
-        IncludeIntrinsicFn("ReallocB");
-        IncludeIntrinsicFn("Free");
+        foreach (string functionName in intrinsicFunctions)
+            IncludeIntrinsicFn(functionName);
 
         for (int i = 0; i < ProgramAST.Nodes.Count; i++)
-        {
-            INode node = ProgramAST.Nodes[i];
+            {
+                INode node = ProgramAST.Nodes[i];
 
-            if (node is StructDeclaration sd)
-                AnalyseStruct(sd);
+                if (node is StructDeclaration sd)
+                    AnalyseStruct(sd);
 
-            if (node is FunctionDeclaration fn)
-                AnalyseFunctionBody(fn);
-        }
+                if (node is FunctionDeclaration fn)
+                    AnalyseFunctionBody(fn);
+            }
 
         return (ProgramAST, GlobalScope);
     }
