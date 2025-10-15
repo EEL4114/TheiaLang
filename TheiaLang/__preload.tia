@@ -17,7 +17,7 @@ struct Dynamic_Array
 
     void RemoveAt(s64 index)
     {
-
+        return;
     }
 
 */

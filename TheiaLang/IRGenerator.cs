@@ -39,6 +39,10 @@ public static class IRGenerator
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
 
+    static bool IsSIntegerType(int i) => i >= 2 && i <= 7;
+    static bool IsFloatIdx(int i) => i >= 9 && i <= 12;
+
+
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
     {
         if (!File.Exists(INTRINSICS_PATH))
@@ -375,6 +379,7 @@ public static class IRGenerator
             CallExpression call                   => EmitCallExpression(call, code),
             MemberAccessExpression memberAccess   => EmitMemberAccessExpression(memberAccess, code),
             IndexExpression index                 => EmitIndexExpression(index, code),
+            CastExpression cast                   => EmitCastExpression(cast, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
@@ -626,13 +631,53 @@ public static class IRGenerator
         string tmp = $"%{NewTempVar()}";
 
         if (retTy != "void")
-            code.AppendLine(
-                $"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+            code.AppendLine($"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
         else
-            code.AppendLine(
-        $"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+            code.AppendLine($"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
         return (code, tmp);
     }
+
+    static (StringBuilder code, string value) EmitCastExpression(CastExpression cast, StringBuilder code)
+    {
+        (StringBuilder argCode, string argReg) = EmitExpression(cast.Target);
+        code.Append(argCode);
+
+        string sourceLLVMType = TypeToLLVM(cast.Target.ResolvedType!)!;
+        string targetLLVMType = TypeToLLVM(cast.ResolvedType!)!;
+
+        string tmp = $"%{NewTempVar()}";
+
+        switch (cast.CastKind)
+        {
+            // int <-> int
+            case CastOp.SExt:       code.AppendLine($"  {tmp} = sext {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+            case CastOp.Trunc:      code.AppendLine($"  {tmp} = trunc {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+
+            // float <-> float
+            case CastOp.FPExt:      code.AppendLine($"  {tmp} = fpext {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+            case CastOp.FPTrunc:    code.AppendLine($"  {tmp} = fptrunc {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+
+            // int <-> float
+            case CastOp.SIToFP:     code.AppendLine($"  {tmp} = sitofp {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+            case CastOp.FPToSI:     code.AppendLine($"  {tmp} = fptosi {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
+
+            // bool specials (bool lowers to i1)
+            case CastOp.BoolToInt:  code.AppendLine($"  {tmp} = zext i1 {argReg} to {targetLLVMType}"); break;
+            case CastOp.IntToBool:  code.AppendLine($"  {tmp} = icmp ne {sourceLLVMType} {argReg}, 0"); break;
+            case CastOp.BoolToFP:   code.AppendLine($"  {tmp} = uitofp i1 {argReg} to {targetLLVMType}"); break;
+            case CastOp.FPToBool:   code.AppendLine($"  {tmp} = fcmp une {sourceLLVMType} {argReg}, 0.0"); break;
+
+            // ptr <-> int / bool
+            case CastOp.PtrToInt:   code.AppendLine($"  {tmp} = ptrtoint ptr {argReg} to {targetLLVMType}"); break;
+            case CastOp.IntToPtr:   code.AppendLine($"  {tmp} = inttoptr {sourceLLVMType} {argReg} to ptr"); break;
+            case CastOp.PtrToBool:  code.AppendLine($"  {tmp} = icmp ne ptr {argReg}, null"); break;
+
+            default: throw new Exception($"Unhandled cast op {cast.CastKind}");
+        }
+
+        return (code, tmp);
+    }
+
 
     static (StringBuilder code, string value) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
@@ -757,7 +802,7 @@ public static class IRGenerator
         // Decompose a double into sign, exponent, and mantissa
         long bits = BitConverter.DoubleToInt64Bits(v);
         bool sign = (bits >> 63) != 0;
-        int exp = (int)((bits >> 52) & 0x7FF) - 1023;
+        int  exp  = (int)((bits >> 52) & 0x7FF) - 1023;
         long mant = bits & 0xFFFFFFFFFFFFFL;
         mant |= 1L << 52;
 
@@ -791,16 +836,16 @@ public static class IRGenerator
             {
                 "bool" => "i1",
 
-                "s8"   => "i8",
-                "s16"  => "i16",
-                "s32"  => "i32",
-                "s64"  => "i64",
+                "s8" => "i8",
+                "s16" => "i16",
+                "s32" => "i32",
+                "s64" => "i64",
                 "s128" => "i128",
                 "s256" => "i256",
 
-                "f16"  => "half",
-                "f32"  => "float",
-                "f64"  => "double",
+                "f16" => "half",
+                "f32" => "float",
+                "f64" => "double",
                 "f128" => "fp128",
 
                 "void" => "void",
@@ -850,14 +895,11 @@ public static class IRGenerator
 #if DEBUG   // this can only fail if there is a bug in the IRGen itself
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
-
-        if (currentScope.Parent == null)
-            Log.Error(9, $"Can't exit out of scope '{currentScope}'");
 #endif
         allocas.Pop();
         varTypes.Pop();
 
-        currentScope = currentScope.Parent;
+        currentScope = currentScope.Exit();
     }
     #endregion
 }

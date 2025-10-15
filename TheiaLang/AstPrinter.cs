@@ -191,6 +191,11 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + tab)}Index:");
                 PrintExpression(index.Index, w, indent + tab * 2);
                 break;
+            case CastExpression cast:
+                w.WriteLine($"{Indent(indent)}Cast: {TryType(cast.ResolvedType)} {cast.CastKind}");
+                w.WriteLine($"{Indent(indent + tab)}Target:");
+                PrintExpression(cast.Target, w, indent + tab * 2);
+                break;
             default:
                 w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>");
                 w.WriteLine($"{Indent(indent + tab)}<{expr}>");

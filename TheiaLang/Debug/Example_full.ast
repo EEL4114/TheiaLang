@@ -1,5 +1,5 @@
 Program: Example
-Generated at 05.10.2025 00:36:26
+Generated at 16.10.2025 00:43:42
 
 UnionDeclaration: StringData (8 B) | Scope: 'StringData' 
     [0]s8 dataPtr
@@ -13,6 +13,26 @@ StructDeclaration: Vector2 (8 B) | Scope: 'Vector2'
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
+        VariableDeclaration: f32 (4 B) fx =
+            Literal: f32 (4 B) 2.5
+        VariableDeclaration: s16 (2 B) sw =
+            Cast: s16 (2 B)  FPToSI
+                Target:
+                    Identifier: f32 (4 B) fx
+        VariableDeclaration: s32 (4 B) sx =
+            Cast: s32 (4 B)  SExt
+                Target:
+                    Identifier: s16 (2 B) sw
+        Assignment:
+            Identifier: s32 (4 B) sx
+            Identifier: s32 (4 B) sx
+        Assignment:
+            Identifier: s32 (4 B) sx
+            Cast: s32 (4 B)  SExt
+                Target:
+                    Cast: s8 (1 B)  Trunc
+                        Target:
+                            Identifier: s32 (4 B) sx
         VariableDeclaration: [4]f32 (16 B) Vec4
         Assignment:
             IndexExpression: f32 (4 B) 
@@ -227,7 +247,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                 BinaryExpression: bool (1 B) EqualEqual
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then440' 
+            Then: | Scope: 'if_then475' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -238,7 +258,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Identifier: f32 (4 B) f
                         Literal: f32 (4 B) -1
 
-            Else: | Scope: 'if_else456' 
+            Else: | Scope: 'if_else491' 
                 BlockSatement:
                     Assignment:
                         Identifier: s32 (4 B) value
@@ -258,7 +278,7 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
                 BinaryExpression: bool (1 B) Less
                     Identifier: s32 (4 B) value
                     Literal: s32 (4 B) 0
-            Then: | Scope: 'if_then486' 
+            Then: | Scope: 'if_then521' 
                 BlockSatement:
                     Return: s32 (4 B) 
                         UnaryExpression: s32 (4 B) Negate
@@ -272,7 +292,7 @@ FunctionDeclaration: s32 Loopy | Scope: 'Loopy'
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_504' 
+        For: | Scope: 'for_539' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: s32 (4 B) 0

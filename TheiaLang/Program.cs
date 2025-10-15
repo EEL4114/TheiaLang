@@ -24,18 +24,20 @@ Stopwatch LLVMTimer     = new Stopwatch();
 preloadTimer.Start();
 
 const string PRELOAD_PATH = "__preload.tia";
+const string OUTPUT_PATH = "Output/";
+const string DEBUG_PATH = "Debug/";
 
 if (!File.Exists(PRELOAD_PATH))
     Log.Error(18, "Preload module could not be located");
 
 string preloadCode = File.ReadAllText(PRELOAD_PATH);
-Lexer lexer = new Lexer(preloadCode);
+Lexer preloadLexer = new Lexer(preloadCode);
 List<Token> preloadTokens = [];
 Token token;
 
 do
 {
-    token = lexer.NextToken();
+    token = preloadLexer.NextToken();
     preloadTokens.Add(token);
     // Log.Info(token.ToString());
     // Log.Info(token.TokenType.ToString());
@@ -43,7 +45,7 @@ do
 
 Parser preloadParser = new Parser(preloadTokens);
 (ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
-using StreamWriter writer = new StreamWriter($"__preload__.ast");
+using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}__preload__.ast");
 // AstPrinter.Print(preloadAST, writer, false);
 
 preloadTimer.Stop();
@@ -108,7 +110,10 @@ else    // folder
 
 #region  Compilation
 
-int CompileFile(string programName, bool insertLogs = true, bool timestamps = true)
+int CompileFile(string programName,
+                bool insertLogs = true,
+                bool timestamps = true,
+                bool writeLexerOutput = false)
 {
     string code = File.ReadAllText(programName + ".tia");
 
@@ -118,12 +123,17 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
     List<Token> tokens = [];
     Token token;
 
+    using StreamWriter lexerWriter = new StreamWriter($"{DEBUG_PATH}{programName}.lex");
+
     do
     {
         token = lexer.NextToken();
         tokens.Add(token);
-        // Log.Info(token.ToString());
-        // Log.Info(token.TokenType.ToString());
+
+        lexerWriter.Write($"{token.TokenType} ");
+        if (token.TokenType == TokenType.Punctuation_Semicolon)
+            lexerWriter.WriteLine();
+
     } while (token.TokenType != TokenType.EOF);
 
     lexTimer.Stop();
@@ -139,7 +149,7 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
 
     (ast, globalScope) = Elaboration.Lower(preloadScope, preloadAST, globalScope, ast);
 
-    using StreamWriter writer = new StreamWriter($"{programName}.ast");
+    using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}{programName}.ast");
     AstPrinter.Print(ast, writer, timestamps);
 
     printTimer.Stop();
@@ -152,7 +162,7 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
     compileTimer.Stop();
     printTimer.Start();
 
-    using StreamWriter writer2 = new StreamWriter($"{programName}_full.ast");
+    using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH}{programName}_full.ast");
     AstPrinter.Print(ast, writer2, timestamps);
 
     compileTimer.Start();
@@ -163,7 +173,7 @@ int CompileFile(string programName, bool insertLogs = true, bool timestamps = tr
     IRGenTimer.Stop();
     LLVMTimer.Start();
 
-    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {programName}.exe")?.WaitForExit();
+    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {OUTPUT_PATH}{programName}.exe")?.WaitForExit();
 
     LLVMTimer.Stop();
     compileTimer.Stop();
@@ -224,9 +234,10 @@ public static class Log
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Error.Write($"Error #{code}: ");
         Console.ResetColor();
-        Console.Error.WriteLine(message);
-        if (exit)
-            Environment.Exit(1);
+        StackTrace stackTrace = new StackTrace();
+        throw new Exception(message);
+
+        Environment.Exit(1);
     }
 
     public static void Info(string text)

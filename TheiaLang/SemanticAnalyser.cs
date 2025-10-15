@@ -1,4 +1,5 @@
 namespace TheiaLang;
+using static TheiaLang.CastOp;
 
 public static class SemanticAnalyser
 {
@@ -183,12 +184,27 @@ public static class SemanticAnalyser
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType!,
                                                                       assignment.Target.ResolvedType!.TypeName);
 
-                if (!CanImplicitlyCast(assignment.Target.ResolvedType.TypeName,
-                       assignment.Expression.ResolvedType.TypeName))
+                if (!CanImplicitlyCast(assignment.Expression.ResolvedType.TypeName,
+                       assignment.Target.ResolvedType.TypeName))
                 {
                     Log.Info($"{assignment}");
                     throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName}" +
                                         $" and {assignment.Expression.ResolvedType.TypeName}");
+                }
+
+                if (assignment.Expression.ResolvedType.TypeName != assignment.Target.ResolvedType.TypeName)
+                {
+                    if (IRGenerator.BuiltinTypes.Contains(assignment.Expression.ResolvedType.TypeName)
+                    && IRGenerator.BuiltinTypes.Contains(assignment.Target.ResolvedType.TypeName))
+                    {
+                        CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(assignment.Expression.ResolvedType.TypeName),
+                                              IRGenerator.BuiltinTypeIndex(assignment.Target.ResolvedType.TypeName)];
+
+                        if (op == null)
+                            throw new Exception($"Invalit cast: {assignment.Expression.ResolvedType.TypeName} -> {assignment.Target.ResolvedType.TypeName}");
+                        assignment.Expression = new CastExpression((CastOp)op, assignment.Expression);
+                        assignment.Expression.ResolvedType = assignment.Target.ResolvedType;
+                    }
                 }
                 break;
             case CompoundAssignmentStatement compound:
@@ -307,6 +323,37 @@ public static class SemanticAnalyser
                 else if (call.CalleeName == "Alloc")
                 {
                     Log.Info("ALLOC");
+                }
+                else if (IRGenerator.BuiltinTypes.Contains(call.CalleeName))    // type cast; for now just primitives; this for now excludes ptrs!!
+                {
+
+                    for (int i = 0; i < call.Arguments.Count; i++)
+                    {
+                        IExpression argument = AnalyseExpression(call.Arguments[i]);
+                        call.Arguments[i] = argument;
+                    }
+                    if (IRGenerator.BuiltinTypes.Contains(call.CalleeName))
+                    {
+                        int targetTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.CalleeName);
+                        int sourceTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.Arguments[0].ResolvedType!.TypeName);
+                        TypeInfo typeInfo = GetTypeInfo(call.CalleeName);
+
+                        if (targetTypeIndex < 0 || sourceTypeIndex < 0)
+                            throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {call.CalleeName}");
+
+                        CastOp? op = TypeCast[sourceTypeIndex, targetTypeIndex];
+                        if (op == null)
+                            throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {call.CalleeName}");
+                        if (op == NoOp)
+                            expression = call.Arguments[0];
+                        else
+                        {
+                            expression = new CastExpression((CastOp)op, call.Arguments[0]);
+                            expression.ResolvedType = typeInfo;
+                        }
+                    }
+                    else
+                        call.ResolvedType = GetTypeInfo(call.CalleeName);
                 }
                 else
                 {
@@ -518,7 +565,7 @@ public static class SemanticAnalyser
         return SizeOf(type);
     }
 
-    static readonly uint[] SizeOfBuiltin =
+    public static readonly uint[] SizeOfBuiltin =
     [
         //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void
             1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0
@@ -537,10 +584,7 @@ public static class SemanticAnalyser
 
     static void ExitScope()
     {
-        if (currentScope.Parent == null)
-            throw new Exception($"Tried to exit scope {currentScope}");
-
-        currentScope = currentScope.Parent;
+        currentScope = currentScope.Exit();
     }
 
     #endregion
@@ -601,6 +645,24 @@ public static class SemanticAnalyser
         /*f128  */  {   "",     "f128", "",      "",     "",     "",     "",     "",    "f128", "",     "",     "",     "f128" },
     };
 
+    static readonly CastOp?[,] TypeCast = new CastOp?[13, 13]
+    {
+        //from   \  to   bool        int         s8          s16         s32         s64         s128        s256        float       f16         f32         f64         f128
+        /*bool  */  {   NoOp,       null,       BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  null,       BoolToFP,   BoolToFP,   BoolToFP,   BoolToFP},
+        /*int   */  {   null,       NoOp,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null    },
+        /*s8    */  {   IntToBool,  null,       NoOp,       SExt,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*s16   */  {   IntToBool,  null,       Trunc,      NoOp,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*s32   */  {   IntToBool,  null,       Trunc,      Trunc,      NoOp,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*s64   */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      NoOp,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*s128  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*s256  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
+        /*float */  {   null,       null,       null,       null,       null,       null,       null,       null,       NoOp,       null,       null,       null,       null    },
+        /*f16   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       NoOp,       FPExt,      FPExt,      FPExt,  },
+        /*f32   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    NoOp,       FPExt,      FPExt,  },
+        /*f64   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    NoOp,       FPExt,  },
+        /*f128  */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    FPTrunc,    NoOp    },
+    };
+
     static string GetBinaryOpReturnType(BinaryOperator binaryOperator, string typeA, string typeB)
     {
         string shared = GetImplicitPromotionType(typeA, typeB)!;
@@ -642,22 +704,22 @@ public static class SemanticAnalyser
         return ScalarTypeInterop[indexA, indexB];
     }
 
-    static bool CanImplicitlyCast(string typeA, string typeB)
+    static bool CanImplicitlyCast(string fromType, string toType)
     {
-        if (typeA.StartsWith('@') && typeB.StartsWith('@'))
+        if (fromType.StartsWith('@') && toType.StartsWith('@'))
         {
-            return CanImplicitlyCast(typeA.TrimStart('@'),
-                                     typeB.TrimStart('@'));
+            return CanImplicitlyCast(fromType.TrimStart('@'),
+                                     toType.TrimStart('@'));
         }
 
-        if (typeA == "s64" && typeB.StartsWith('@'))    // assigning ptr address to s64
+        if (fromType == "s64" && toType.StartsWith('@'))    // assigning ptr address to s64
             return true;
 
-        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
-        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
+        int indexA = IRGenerator.BuiltinTypeIndex(fromType);
+        int indexB = IRGenerator.BuiltinTypeIndex(toType);
 
         if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
-            return typeA == typeB;
+            return fromType == toType;
 
         return LosslessTypeInterop[indexA, indexB];
     }
@@ -726,4 +788,26 @@ public static class SemanticAnalyser
     }
 
     #endregion
+}
+
+public enum CastOp
+{
+    NoOp,
+    SExt,
+    Trunc,
+
+    FPExt,
+    FPTrunc,
+
+    SIToFP,
+    FPToSI,
+
+    PtrToInt,
+    IntToPtr,
+    PtrToBool,
+
+    BoolToInt,
+    IntToBool,
+    BoolToFP,
+    FPToBool
 }

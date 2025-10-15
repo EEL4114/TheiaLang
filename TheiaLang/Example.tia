@@ -14,6 +14,14 @@ struct Vector2
 
 int main()
 {
+    f32 fx = 2.5;
+    s16 sw = s16(fx);
+    s32 sx = s32(sw);
+    sx = s32(sx);
+    sx = s8(sx);
+
+    //s8 sa = sx;
+
     [4]f32 Vec4;                // now [N]T instead of T[N] for less ambiguity
                                 // when using arr of ptrs vs ptr to arr
     Vec4[1] = 3;
@@ -30,6 +38,7 @@ int main()
 
     @void v = AllocB(4);
     @v = ReallocB(@v, 8);       // grow the allocation 'v' to 8 B
+
 
     //Free(v);
 
@@ -63,8 +72,6 @@ int main()
     s32 jj = TypeSize(s32);
     //s32 ll = SizeOf([2]s32);
     //s32 kk = SizeOf(arrX);
-
-
 
     f32 HP = entity.health;
     @f32 healthPtr = @HP;       // address of 'HP'

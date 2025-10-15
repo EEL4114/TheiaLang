@@ -272,6 +272,9 @@ public class Parser(List<Token> tokens)
 
             if (Match(TokenType.Operator_Equal))
                     init = ParseExpression();
+
+            //Log.Info($"{init}");
+            //Log.Info($"{Peek()}");
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
 
@@ -341,7 +344,7 @@ public class Parser(List<Token> tokens)
 
         // assignment: identifier '=' expr ';'
         if (Peek().TokenType == TokenType.Identifier
-        && PeekNext().TokenType == TokenType.Operator_Equal)
+         && PeekNext().TokenType == TokenType.Operator_Equal)
         {
             return ParseAssignment(requireSemicolon);
         }
@@ -576,24 +579,7 @@ public class Parser(List<Token> tokens)
     IExpression ParsePrimary()
     {
         IExpression expression = null!;
-        /*
-        if (Match(TokenType.Keyword_new))
-        {
-            Token typeToken = Consume(TokenType.Identifier, "Expected type name after 'new'");
-            string type = typeToken.Lexeme;   // composite type
 
-            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after type name");
-            List<IExpression> arguments = [];
-            if (!Check(TokenType.Punctuation_ParenthesisR))
-                do
-                {
-                    arguments.Add(ParseExpression());
-                } while (Match(TokenType.Punctuation_Comma));
-            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-            expression = new InstantiationExpression(type, arguments);
-        }
-        else 
-        */
         if (Match(TokenType.Literal))
         {
             (object Value, string Type) lit = Previous().Lexeme switch
@@ -663,7 +649,24 @@ public class Parser(List<Token> tokens)
             expression = inner;
         }
         else if (MatchTypeDefinition(out TypeInfo typeInfo))
-            expression = new IdentifierExpression(typeInfo.TypeName);
+        {
+            if (Peek().TokenType == TokenType.Punctuation_ParenthesisL)
+            {
+                Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
+
+                List<IExpression> arguments = [];
+                if (!Check(TokenType.Punctuation_ParenthesisR))
+                    do
+                    {
+                        arguments.Add(ParseExpression());
+                    } while (Match(TokenType.Punctuation_Comma));
+
+                Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
+                expression = new CallExpression(typeInfo.TypeName, arguments);
+            }
+            else
+                expression = new IdentifierExpression(typeInfo.TypeName);
+        }
 
         while (Match(TokenType.Punctuation_BracketL))
             {
@@ -700,6 +703,7 @@ public class Parser(List<Token> tokens)
         TokenType.Operator_MinusEqual => BinaryOperator.MinusEqual,
         TokenType.Operator_MultEqual  => BinaryOperator.MultEqual,
         TokenType.Operator_DivEqual   => BinaryOperator.DivEqual,
+        
         _ => throw new Exception($"Can't parse '{tokenType}' as Binary Operator"),
     };
 
@@ -737,10 +741,9 @@ public class Parser(List<Token> tokens)
     Token Consume(TokenType type, string message)
     {
         if (Check(type)) return Advance();
-        throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
+        //throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         Log.Error(3, $"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
-        Environment.Exit(1);
-        return null;
+        return null!;
     }
 
     Token ConsumeTypeKeyword()
@@ -760,8 +763,7 @@ public class Parser(List<Token> tokens)
         return $"at {Line()}:{Column()}";
     }
 
-    bool Check(TokenType type)
-        => !IsAtEnd() && Peek().TokenType == type;
+    bool Check(TokenType type) => !IsAtEnd() && Peek().TokenType == type;
 
     Token Advance() => pos < tokens.Count ? tokens[pos++] : tokens[^1];
 
@@ -782,9 +784,7 @@ public class Parser(List<Token> tokens)
 
     void ExitScope()
     {
-        if (currentScope!.Parent == null)
-            throw new InvalidOperationException("Attempted to exit global scope");
-        currentScope = currentScope.Parent;
+        currentScope = currentScope!.Exit();
     }
 
     void DeclareBuiltin(string typeName)

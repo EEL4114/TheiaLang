@@ -242,7 +242,20 @@ public sealed record CallExpression(
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+    public string CalleeName { get; set; } = CalleeName;
 }
+
+public sealed record CastExpression(
+    CastOp CastKind,
+    IExpression Target
+) : IExpression
+{
+    public TypeInfo? ResolvedType { get; set; }
+    public bool Assignable => false;
+    public CastOp CastKind { get; set; } = CastKind;
+
+}
+
 
 public sealed record InstantiationExpression(
     string TypeName,

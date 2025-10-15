@@ -88,7 +88,7 @@ static class Elaboration
         // 1 - declared directly:   []s32
         // 2 - as a pointee:        @[]s32
         // 3 - as an array element: [4][]s32
-        // or any combination of the above
+        // 4 - any combination of the above
 
         // for each dynamic array type, we need:
         // - struct type
@@ -184,10 +184,7 @@ static class Elaboration
 
     static void ExitScope()
     {
-        if (currentScope.Parent == null)
-            throw new Exception($"Tried to exit scope {currentScope}");
-
-        currentScope = currentScope.Parent;
+        currentScope = currentScope.Exit();
     }
 
     #endregion

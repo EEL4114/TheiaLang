@@ -100,12 +100,19 @@ public class Scope : INode
 
     #region Helpers
 
-    // TODO the name parameter seems redundant?
     public void Declare(SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(symbolInfo.Name))
             Log.Error(6, $"Identifier '{symbolInfo.Name}' already declared in the scope '{FullName}'");
         Symbols[symbolInfo.Name] = symbolInfo;
+    }
+
+    public Scope Exit()
+    {
+        if (Parent == null)
+            throw new Exception($"Attempted to exit scope {FullName}");
+
+        return Parent;
     }
 
     // TODO it may be useful to have a version of this function that always returns or errors
