@@ -1,4 +1,6 @@
 /TheiaLang/.vscode/
 /TheiaLang/bin/
 /TheiaLang/obj/
+/TheiaLang/Debug/
+/TheiaLang/Output/
 /out
