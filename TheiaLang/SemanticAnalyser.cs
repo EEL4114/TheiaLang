@@ -170,26 +170,7 @@ public static class SemanticAnalyser
                     variable.Init = AnalyseExpression(variable.Init);
                     variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType!, variable.ResolvedType.TypeName);
 
-                    if (!CanImplicitlyCast(variable.ResolvedType.TypeName,
-                                           variable.Init.ResolvedType.TypeName))
-                        throw new Exception($"Cannot initialise variable {variable.ResolvedType.TypeName} '{variable.Name}'"
-                                            + $" with type '{variable.Init.ResolvedType.TypeName}'"
-                                            + " due to incompatible types or possible loss of information");
-
-                    if (variable.Init.ResolvedType.TypeName != variable.ResolvedType.TypeName)
-                    {
-                        if (IRGenerator.BuiltinTypes.Contains(variable.Init.ResolvedType.TypeName)
-                         && IRGenerator.BuiltinTypes.Contains(variable.ResolvedType.TypeName))
-                        {
-                            CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(variable.Init.ResolvedType.TypeName),
-                                                  IRGenerator.BuiltinTypeIndex(variable.ResolvedType.TypeName)];
-
-                            if (op == null)
-                                throw new Exception($"Invalit cast: {variable.Init.ResolvedType.TypeName} -> {variable.ResolvedType.TypeName}");
-                            variable.Init = new CastExpression((CastOp)op, variable.Init);
-                            variable.Init.ResolvedType = variable.ResolvedType;
-                        }
-                    }
+                    variable.Init = GenerateImplicitCast(variable.Init, variable.ResolvedType);
                 }
                 break;
             case AssignmentStatement assignment:
@@ -199,28 +180,8 @@ public static class SemanticAnalyser
                 assignment.Expression.ResolvedType = PromoteIfLiteral(assignment.Expression.ResolvedType!,
                                                                       assignment.Target.ResolvedType!.TypeName);
 
-                if (!CanImplicitlyCast(assignment.Expression.ResolvedType.TypeName,
-                       assignment.Target.ResolvedType.TypeName))
-                {
-                    Log.Info($"{assignment}");
-                    throw new Exception($"Cannot implicitly convert between  {assignment.Target.ResolvedType.TypeName}" +
-                                        $" and {assignment.Expression.ResolvedType.TypeName}");
-                }
+                assignment.Expression = GenerateImplicitCast(assignment.Expression, assignment.Target.ResolvedType);
 
-                if (assignment.Expression.ResolvedType.TypeName != assignment.Target.ResolvedType.TypeName)
-                {
-                    if (IRGenerator.BuiltinTypes.Contains(assignment.Expression.ResolvedType.TypeName)
-                     && IRGenerator.BuiltinTypes.Contains(assignment.Target.ResolvedType.TypeName))
-                    {
-                        CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(assignment.Expression.ResolvedType.TypeName),
-                                              IRGenerator.BuiltinTypeIndex(assignment.Target.ResolvedType.TypeName)];
-
-                        if (op == null)
-                            throw new Exception($"Invalit cast: {assignment.Expression.ResolvedType.TypeName} -> {assignment.Target.ResolvedType.TypeName}");
-                        assignment.Expression = new CastExpression((CastOp)op, assignment.Expression);
-                        assignment.Expression.ResolvedType = assignment.Target.ResolvedType;
-                    }
-                }
                 break;
             case CompoundAssignmentStatement compound:
                 compound.Target = AnalyseExpression(compound.Target);
@@ -229,10 +190,8 @@ public static class SemanticAnalyser
                 compound.Expression.ResolvedType = PromoteIfLiteral(compound.Expression.ResolvedType!,
                                                                     compound.Target.ResolvedType!.TypeName);
 
-                if (!CanImplicitlyCast(compound.Target.ResolvedType.TypeName,
-                       compound.Expression.ResolvedType.TypeName))
-                    throw new Exception($"Cannot implicitly convert between  {compound.Target.ResolvedType.TypeName}" +
-                                        $" and {compound.Expression.ResolvedType.TypeName}");
+                compound.Expression = GenerateImplicitCast(compound.Expression, compound.Target.ResolvedType);
+
                 break;
             case ExpressionStatement expression:
                 expression.Expression = AnalyseExpression(expression.Expression);
@@ -284,10 +243,7 @@ public static class SemanticAnalyser
                 {
                     returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType!,
                                                                                function.ResolvedType.TypeName);
-                    if (!CanImplicitlyCast(function.ResolvedType.TypeName,
-                                           returnStatement.Expression.ResolvedType.TypeName))
-                        throw new Exception($"Invalid return type: '{returnStatement.Expression.ResolvedType.TypeName}'" +
-                                            $" cannot be implicitly converted to '{function.ResolvedType.TypeName}'");
+                    returnStatement.Expression = GenerateImplicitCast(returnStatement.Expression, function.ResolvedType);
                 }
                 break;
             default:
@@ -389,9 +345,8 @@ public static class SemanticAnalyser
                         string expected = function.Parameters[i].ResolvedType!.TypeName;
                         call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
                                                                           function.Parameters[i].ResolvedType!.TypeName);
-                        if (!CanImplicitlyCast(actual, expected))
-                            throw new Exception(
-                            $"Call {call.CalleeName}, argument {i}: Cannot implicitly convert {actual} to {expected}");
+
+                        call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], function.Parameters[i].ResolvedType!);
                     }
 
                     call.ResolvedType = function.Type;
@@ -479,9 +434,8 @@ public static class SemanticAnalyser
                     // check implicit cast from arg type → field type
                     instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
                                                                                typeSymbolInfo.Parameters![i].TypeName);
-                    if (!CanImplicitlyCast(instantiation.Arguments[i].ResolvedType!.TypeName!,
-                        typeSymbolInfo.Parameters![i].TypeName))
-                        throw new Exception("Type mismatch in ctor");
+
+                    instantiation.Arguments[i] = GenerateImplicitCast(instantiation.Arguments[i], typeSymbolInfo.Parameters![i].ResolvedType!);
                 }
                 instantiation.ResolvedType = typeSymbolInfo.Type;
                 break;
@@ -600,6 +554,30 @@ public static class SemanticAnalyser
     static void ExitScope()
     {
         currentScope = currentScope.Exit();
+    }
+
+    static IExpression GenerateImplicitCast(IExpression expression, TypeInfo target)
+    {
+        string sourceType = expression.ResolvedType!.TypeName;
+        string targetType = target.TypeName;
+
+        if (!CanImplicitlyCast(sourceType, targetType))
+            throw new Exception($"Cannot implicitly convert {sourceType} -> {targetType}");
+        
+        if (sourceType != targetType)
+        {
+            if (IRGenerator.BuiltinTypes.Contains(sourceType)
+             && IRGenerator.BuiltinTypes.Contains(targetType))
+            {
+                CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(sourceType),
+                                      IRGenerator.BuiltinTypeIndex(targetType)];
+                if (op == null)
+                    throw new Exception($"Invalit cast: {sourceType} -> {targetType}");
+                expression = new CastExpression((CastOp)op, expression);
+                expression.ResolvedType = target;
+            }
+        }
+        return expression;
     }
 
     #endregion

@@ -312,14 +312,14 @@ entry:
   br i1 %tmp84, label %if_then_0, label %if_else_0
 if_then_0:
   store i32 42, ptr %tmp82
-  %f_if_then480 = alloca float
-  store float 0.0, ptr %f_if_then480
-  store float -1.0, ptr %f_if_then480
+  %f_if_then483 = alloca float
+  store float 0.0, ptr %f_if_then483
+  store float -1.0, ptr %f_if_then483
   br label %if_end_0
 if_else_0:
   store i32 -42, ptr %tmp82
-  %f_if_else496 = alloca float
-  store float 78.0, ptr %f_if_else496
+  %f_if_else499 = alloca float
+  store float 78.0, ptr %f_if_else499
   br label %if_end_0
 if_end_0:
   %tmp85 = load i32, ptr %tmp82

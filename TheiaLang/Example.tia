@@ -20,7 +20,7 @@ int main()
     sx = s32(sx);
     sx = s8(sx);
 
-    s8 sa = sx;
+    s8 sa = s8(sx);
 
     [4]f32 Vec4;                // now [N]T instead of T[N] for less ambiguity
                                 // when using arr of ptrs vs ptr to arr
