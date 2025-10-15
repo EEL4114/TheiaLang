@@ -175,6 +175,21 @@ public static class SemanticAnalyser
                         throw new Exception($"Cannot initialise variable {variable.ResolvedType.TypeName} '{variable.Name}'"
                                             + $" with type '{variable.Init.ResolvedType.TypeName}'"
                                             + " due to incompatible types or possible loss of information");
+
+                    if (variable.Init.ResolvedType.TypeName != variable.ResolvedType.TypeName)
+                    {
+                        if (IRGenerator.BuiltinTypes.Contains(variable.Init.ResolvedType.TypeName)
+                         && IRGenerator.BuiltinTypes.Contains(variable.ResolvedType.TypeName))
+                        {
+                            CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(variable.Init.ResolvedType.TypeName),
+                                                  IRGenerator.BuiltinTypeIndex(variable.ResolvedType.TypeName)];
+
+                            if (op == null)
+                                throw new Exception($"Invalit cast: {variable.Init.ResolvedType.TypeName} -> {variable.ResolvedType.TypeName}");
+                            variable.Init = new CastExpression((CastOp)op, variable.Init);
+                            variable.Init.ResolvedType = variable.ResolvedType;
+                        }
+                    }
                 }
                 break;
             case AssignmentStatement assignment:
@@ -195,7 +210,7 @@ public static class SemanticAnalyser
                 if (assignment.Expression.ResolvedType.TypeName != assignment.Target.ResolvedType.TypeName)
                 {
                     if (IRGenerator.BuiltinTypes.Contains(assignment.Expression.ResolvedType.TypeName)
-                    && IRGenerator.BuiltinTypes.Contains(assignment.Target.ResolvedType.TypeName))
+                     && IRGenerator.BuiltinTypes.Contains(assignment.Target.ResolvedType.TypeName))
                     {
                         CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(assignment.Expression.ResolvedType.TypeName),
                                               IRGenerator.BuiltinTypeIndex(assignment.Target.ResolvedType.TypeName)];
