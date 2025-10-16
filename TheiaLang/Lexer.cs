@@ -5,66 +5,67 @@ namespace TheiaLang;
 // TODO handle single char tokens by their ASCII value?
 public enum TokenType
 {
-    Identifier      = 300,
+    Identifier = 300,
 
-    Literal         = 400,
+    Literal = 400,
 
-    Keyword_bool    = 500,
+    Keyword_bool = 500,
 
-    Keyword_s8      = 510,
-    Keyword_s16     = 511,
-    Keyword_s32     = 512,
-    Keyword_s64     = 513,
-    Keyword_s128    = 514,
-    Keyword_s256    = 515,
+    Keyword_s8 = 510,
+    Keyword_s16 = 511,
+    Keyword_s32 = 512,
+    Keyword_s64 = 513,
+    Keyword_s128 = 514,
+    Keyword_s256 = 515,
 
     // 52X reserved for signed int
 
-    Keyword_f16     = 530,
-    Keyword_f32     = 531,
-    Keyword_f64     = 532,
-    Keyword_f128    = 533,
+    Keyword_f16 = 530,
+    Keyword_f32 = 531,
+    Keyword_f64 = 532,
+    Keyword_f128 = 533,
 
-    Keyword_struct  = 540,
-    Keyword_union   = 541,
+    Keyword_struct = 540,
+    Keyword_union = 541,
 
-    Keyword_if      = 542,
-    Keyword_else    = 543,
-    Keyword_for     = 544,
-    Keyword_new     = 545,
-    Keyword_return  = 546,
+    Keyword_if = 542,
+    Keyword_else = 543,
+    Keyword_for = 544,
+    Keyword_new = 545,
+    Keyword_return = 546,
 
-    Operator_Equal  = 600,
-    Operator_Plus   = 601,
-    Operator_Minus  = 602,
-    Operator_Mult   = 603,
-    Operator_Div    = 604,
-    Operator_Greater    = 605,
-    Operator_Less   = 606,
+    Operator_Equal = 600,
+    Operator_Plus = 601,
+    Operator_Minus = 602,
+    Operator_Mult = 603,
+    Operator_Div = 604,
+    Operator_Greater = 605,
+    Operator_Less = 606,
 
-    Operator_AND    = 610,
-    Operator_OR     = 611,
+    Operator_AND = 610,
+    Operator_OR = 611,
     Operator_EqualEqual = 612,
-    Operator_Inequal    = 613,
+    Operator_Inequal = 613,
     Operator_Invert = 614,
 
-    Operator_PlusEqual  = 620,
+    Operator_PlusEqual = 620,
     Operator_MinusEqual = 621,
-    Operator_MultEqual  = 622,
-    Operator_DivEqual   = 623,
+    Operator_MultEqual = 622,
+    Operator_DivEqual = 623,
 
-    Punctuation_At              = 700,
-    Punctuation_Comma           = 701,
-    Punctuation_Dot             = 702,
-    Punctuation_Semicolon       = 703,
-    Punctuation_ParenthesisL    = 704,
-    Punctuation_ParenthesisR    = 705,
-    Punctuation_BraceL          = 706,
-    Punctuation_BraceR          = 707,
-    Punctuation_BracketL        = 708,
-    Punctuation_BracketR        = 709,
+    Punctuation_At = 700,
+    Punctuation_Comma = 701,
+    Punctuation_Dot = 702,
+    Punctuation_Semicolon = 703,
+    Punctuation_ParenthesisL = 704,
+    Punctuation_ParenthesisR = 705,
+    Punctuation_BraceL = 706,
+    Punctuation_BraceR = 707,
+    Punctuation_BracketL = 708,
+    Punctuation_BracketR = 709,
+    Punctuation_Dollar = 710,
 
-    EOF                         = 65535
+    EOF = 65535
 }
 
 public sealed record Token(
@@ -138,6 +139,7 @@ class Lexer(string sourceCode)
             case '}': return MakeToken(TokenType.Punctuation_BraceR, "}");
             case '[': return MakeToken(TokenType.Punctuation_BracketL, "[");
             case ']': return MakeToken(TokenType.Punctuation_BracketR, "]");
+            case '$': return MakeToken(TokenType.Punctuation_Dollar, "$");
         }
 
         if (char.IsDigit(c))

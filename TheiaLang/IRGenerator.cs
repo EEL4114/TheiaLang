@@ -618,7 +618,7 @@ public static class IRGenerator
             // infer the LLVM type of the argument
             TypeInfo actualType = argument.ResolvedType!;
             string actualLLVMType = TypeToLLVM(actualType)!;
-            string expectedLLVMType = TypeToLLVM(calleeInfo.Type)!;
+            string expectedLLVMType = TypeToLLVM(calleeInfo.Parameters[i].ResolvedType!)!;
 
             if (actualType.TypeName != call.Arguments[i].ResolvedType!.TypeName && AutoLog)
                 Log.Error(12,

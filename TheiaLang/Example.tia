@@ -37,14 +37,14 @@ int main()
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
     @void v = AllocB(4);
-    @v = ReallocB(@v, 8);       // grow the allocation 'v' to 8 B
+    v = ReallocB(v, 8);       // grow the allocation 'v' to 8 B
 
 
-    //Free(v);
+    Free(v);
 
-    // @f32 floatPtr;
-    // s64 voidPtrVirtAddr = @floatPtr;
-    // s64 voidPtrNextVirtAddr = @floatPtr + 1;
+    //@f32 floatPtr;
+    //s64 voidPtrVirtAddr = @floatPtr;
+    //s64 voidPtrNextVirtAddr = @floatPtr + 1;
 
     @void voidPtr;
     []s8 dynamicArray;          // implicit initialisation with '[]',
@@ -75,12 +75,19 @@ int main()
 
     f32 HP = entity.health;
     @f32 healthPtr = @HP;       // address of 'HP'
-    healthPtr = 5;              // implicit ptr dereference of 'healthPtr'
+    $healthPtr = 5;              // implicit ptr dereference of 'healthPtr'
     
     float moreHealth = 1 + entity.health;
-    @healthPtr = @moreHealth;
-    @voidPtr = @healthPtr;
-    HP = healthPtr;
+    healthPtr = @moreHealth;
+    voidPtr = @healthPtr;
+    HP = $healthPtr;
+
+    @[8]f32 FPptr;
+    [8]f32 FP;
+
+    f32 f5 = FP[5];
+    f5 = ($FPptr)[5];
+
 
     moreHealth += 1;
 

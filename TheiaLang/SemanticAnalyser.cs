@@ -265,9 +265,6 @@ public static class SemanticAnalyser
             case IdentifierExpression identifier:
                 TypeInfo identifierInfo = GetTypeInfo(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
-                if (identifierInfo.Pointee != null)     // ptr variable: dereference is default
-                    expression = new UnaryExpression(UnaryOperator.Dereference, identifier, true)
-                    { ResolvedType = identifierInfo.Pointee };
                 break;
             case CallExpression call:
                 if (call.CalleeName == "TypeSize")
@@ -394,15 +391,22 @@ public static class SemanticAnalyser
                         AnalyseExpression(expression);
                     }
                 }
-                if (unary.Op == UnaryOperator.AddressOf)
+                else if (unary.Op == UnaryOperator.AddressOf)
                 {
                     if (unary.Operand is UnaryExpression operandExpression      // reference of a dereference of a ptr
                         && operandExpression.Op == UnaryOperator.Dereference)   // -> redundant
+
                         expression = operandExpression.Operand;
                     else
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
+                }
+                else if (unary.Op == UnaryOperator.Dereference)
+                {
+                    if (unary.Operand.ResolvedType!.Pointee == null)
+                        Log.Error(20, $"Can't dereference non-pointer type {unary.Operand.ResolvedType}");
+                    unary.ResolvedType = unary.Operand.ResolvedType!.Pointee;
                 }
                 else
                     unary.ResolvedType = unary.Operand.ResolvedType;

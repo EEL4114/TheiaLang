@@ -570,7 +570,13 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Punctuation_At))
         {
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.AddressOf, operand, assignable: true);
+            return new UnaryExpression(UnaryOperator.AddressOf, operand, assignable: false);
+        }
+
+        if(Match(TokenType.Punctuation_Dollar))
+        {
+            IExpression operand = ParseUnary();
+            return new UnaryExpression(UnaryOperator.Dereference, operand, assignable: true);
         }
 
         return ParsePrimary();
@@ -669,11 +675,11 @@ public class Parser(List<Token> tokens)
         }
 
         while (Match(TokenType.Punctuation_BracketL))
-            {
-                IExpression index = ParseExpression();
-                Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
-                expression = new IndexExpression(expression, index);
-            }
+        {
+            IExpression index = ParseExpression();
+            Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
+            expression = new IndexExpression(expression, index);
+        }
 
         if (expression != null)
             return expression;
