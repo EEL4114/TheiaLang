@@ -86,8 +86,7 @@ int main()
     [8]f32 FP;
 
     f32 f5 = FP[5];
-    f5 = ($FPptr)[5];
-
+    f5 = ($FPptr)[5];   // this is a little bit nasty right now but acceptable
 
     moreHealth += 1;
 

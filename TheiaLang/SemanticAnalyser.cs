@@ -398,9 +398,13 @@ public static class SemanticAnalyser
 
                         expression = operandExpression.Operand;
                     else
+                    {
+                        if (unary.Operand.Assignable == false)
+                            Log.Error(21, $"Can't take address of non-assignable {unary.Operand}");
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
+                    }
                 }
                 else if (unary.Op == UnaryOperator.Dereference)
                 {
