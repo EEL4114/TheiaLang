@@ -226,23 +226,28 @@ public sealed record ReturnStatement(
 #region  Expressions
 
 public sealed record MemberAccessExpression(
-    IdentifierExpression Target,
-    IdentifierExpression Member
+    IExpression Target,
+    IdentifierExpression Member,
+    Scope? Scope = null
 ) : IExpression
 
 {
+    public IExpression Target = Target;
+    public IdentifierExpression Member = Member;
+    public Scope? Scope = Scope;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
 }
 
 public sealed record CallExpression(
-    string CalleeName,                // both functions and types
-    List<IExpression> Arguments       // positional & named args
+    IExpression Target,                // both functions and types
+    List<IExpression> Arguments,       // positional & named args
+    Scope? Scope = null
 ) : IExpression
 {
+    public IExpression Target { get; set; } = Target;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
-    public string CalleeName { get; set; } = CalleeName;
 }
 
 public sealed record CastExpression(
@@ -253,9 +258,7 @@ public sealed record CastExpression(
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public CastOp CastKind { get; set; } = CastKind;
-
 }
-
 
 public sealed record InstantiationExpression(
     string TypeName,
@@ -310,10 +313,12 @@ public sealed record LiteralExpression(
 }
 
 public sealed record IdentifierExpression(
-    string Name
+    string Name,
+    Scope? Scope = null
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
+    public Scope? Scope = Scope;
     public bool Assignable => true;
 }
 

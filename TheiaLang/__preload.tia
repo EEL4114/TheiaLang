@@ -37,12 +37,22 @@ struct Dynamic_Array
 
 @void ReallocB(@void ptr, s64 newSize)
 {
-    return __th_reallocB(@ptr, newSize);
+    return __th_reallocB(ptr, newSize);
 }
 
 
 void Free(@void ptr)
 {
-    __th_free(@ptr);
+    __th_free(ptr);
     return;
+}
+
+void TypeSize()
+{
+    return;
+}
+
+struct F32
+{
+    
 }

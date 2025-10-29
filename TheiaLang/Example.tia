@@ -14,6 +14,18 @@ struct Vector2
 
 int main()
 {
+    Entity entity = Entity{
+        Transform{
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1}},
+        70,
+        1.5,
+        false};
+
+    // bool entityAlive = entity.IsAlive();
+    f32 entityX = entity.transform.position.x;
+
     f32 fx = 2.5;
     s16 sw = s16(fx);
     s32 sx = s32(sw);
@@ -58,15 +70,13 @@ int main()
     f32 z = Vec4[2];
 
     //Entity heapEntity = Alloc(Entity);
-    
-    Entity entity = Entity{
-        Transform{
-            Vector3{1, 1, 1},
-            Vector3{1, 1, 1},
-            Vector3{1, 1, 1}},
-        70,
-        1.5,
-        false};
+
+
+    Transform tr = entity.transform;
+    //tr = (entity).transform;
+
+    @Entity entityPtr = @entity;
+    //tr = ($entityPtr).transform;
 
     s32 ii = TypeSize(Entity);
     s32 jj = TypeSize(s32);
@@ -115,7 +125,6 @@ int main()
 
     float j = -1;
     
-    bool fg = false;
     bool ffg = true;
     int a = 5;
     int b = 10;
@@ -195,12 +204,15 @@ struct Entity
     float health;
     float speed;
     bool canFly;
- 
+
     bool IsAlive()
     {
         return health > 0;
     }
 }
+
+//bool Entity.IsAlive(@Entity this) { return entity.health > 0; }
+
 
 struct Transform            // declared before 'Vector3' is
 {

@@ -1,11 +1,11 @@
 Program: Example
-Generated at 16.10.2025 00:43:42
+Generated at 29.10.2025 17:21:07
 
 UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
     [0]s8 dataPtr
     @s8 inlineData
 
-StructDeclaration: Vector2 (0 B) | Scope: 'Vector2' 
+StructDeclaration: Vector2 (0 B)  | Scope: 'Vector2' 
     Fields:
         f32 x
         f32 y
@@ -13,64 +13,6 @@ StructDeclaration: Vector2 (0 B) | Scope: 'Vector2'
 FunctionDeclaration: s32 main | Scope: 'main' 
     Arguments:
     BlockSatement:
-        VariableDeclaration: f32 (4 B) fx =
-            Literal: float (0 B) 2.5
-        VariableDeclaration: s16 (2 B) sw =
-            Call:  s16
-                Arguments:
-                    Identifier: fx
-        VariableDeclaration: s32 (4 B) sx =
-            Call:  s32
-                Arguments:
-                    Identifier: sw
-        Assignment:
-            Identifier: sx
-            Call:  s32
-                Arguments:
-                    Identifier: sx
-        Assignment:
-            Identifier: sx
-            Call:  s8
-                Arguments:
-                    Identifier: sx
-        VariableDeclaration: [4]f32 (0 B) Vec4
-        Assignment:
-            IndexExpression: 
-                Target:
-                    Identifier: Vec4
-                Index:
-                    Literal: int (0 B) 1
-            Literal: int (0 B) 3
-        VariableDeclaration: Dynamic_Array_s8 (0 B) ff
-        VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
-        VariableDeclaration: [4][6]@s8 (0 B) arrX
-        VariableDeclaration: [4]@[6]s8 (0 B) arrY
-        VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
-        VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
-        VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
-        VariableDeclaration: @void (0 B) v =
-            Call:  AllocB
-                Arguments:
-                    Literal: int (0 B) 4
-        Assignment:
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: v
-            Call:  ReallocB
-                Arguments:
-                    UnaryExpression: AddressOf
-                        Operand:
-                            Identifier: v
-                    Literal: int (0 B) 8
-        VariableDeclaration: @void (0 B) voidPtr
-        VariableDeclaration: dynamicArray
-        VariableDeclaration: dynamicArray2
-        VariableDeclaration: f32 (4 B) z =
-            IndexExpression: 
-                Target:
-                    Identifier: Vec4
-                Index:
-                    Literal: int (0 B) 2
         VariableDeclaration: Entity (0 B) entity =
             Instantiation: Entity
                 Arguments:
@@ -94,75 +36,207 @@ FunctionDeclaration: s32 main | Scope: 'main'
                     Literal: int (0 B) 70
                     Literal: float (0 B) 1.5
                     Literal: bool (1 B) false
+        VariableDeclaration: f32 (4 B) entityX =
+            MemberAccess: 
+                Target: 
+                    MemberAccess: 
+                        Target: 
+                            MemberAccess: 
+                                Target: 
+                                    Identifier: entity | Scope: ---
+                                Member: transform
+                        Member: position
+                Member: x
+        VariableDeclaration: f32 (4 B) fx =
+            Literal: float (0 B) 2.5
+        VariableDeclaration: s16 (2 B) sw =
+            Call: 
+                Target:
+                    Identifier: s16 | Scope: ---
+                Arguments:
+                    Identifier: fx | Scope: ---
+        VariableDeclaration: s32 (4 B) sx =
+            Call: 
+                Target:
+                    Identifier: s32 | Scope: ---
+                Arguments:
+                    Identifier: sw | Scope: ---
+        Assignment:
+            Identifier: sx | Scope: ---
+            Call: 
+                Target:
+                    Identifier: s32 | Scope: ---
+                Arguments:
+                    Identifier: sx | Scope: ---
+        Assignment:
+            Identifier: sx | Scope: ---
+            Call: 
+                Target:
+                    Identifier: s8 | Scope: ---
+                Arguments:
+                    Identifier: sx | Scope: ---
+        VariableDeclaration: s8 (1 B) sa =
+            Call: 
+                Target:
+                    Identifier: s8 | Scope: ---
+                Arguments:
+                    Identifier: sx | Scope: ---
+        VariableDeclaration: [4]f32 (0 B) Vec4
+        Assignment:
+            IndexExpression: 
+                Target:
+                    Identifier: Vec4 | Scope: ---
+                Index:
+                    Literal: int (0 B) 1
+            Literal: int (0 B) 3
+        VariableDeclaration: Dynamic_Array_s8 (0 B) ff
+        VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
+        VariableDeclaration: [4][6]@s8 (0 B) arrX
+        VariableDeclaration: [4]@[6]s8 (0 B) arrY
+        VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
+        VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
+        VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
+        VariableDeclaration: @void (0 B) v =
+            Call: 
+                Target:
+                    Identifier: AllocB | Scope: ---
+                Arguments:
+                    Literal: int (0 B) 4
+        Assignment:
+            Identifier: v | Scope: ---
+            Call: 
+                Target:
+                    Identifier: ReallocB | Scope: ---
+                Arguments:
+                    Identifier: v | Scope: ---
+                    Literal: int (0 B) 8
+        Expression:
+            Call: 
+                Target:
+                    Identifier: Free | Scope: ---
+                Arguments:
+                    Identifier: v | Scope: ---
+
+        VariableDeclaration: @void (0 B) voidPtr
+        VariableDeclaration: dynamicArray
+        VariableDeclaration: dynamicArray2
+        VariableDeclaration: f32 (4 B) z =
+            IndexExpression: 
+                Target:
+                    Identifier: Vec4 | Scope: ---
+                Index:
+                    Literal: int (0 B) 2
+        VariableDeclaration: Transform (0 B) tr =
+            MemberAccess: 
+                Target: 
+                    Identifier: entity | Scope: ---
+                Member: transform
+        VariableDeclaration: @Entity (0 B) entityPtr =
+            UnaryExpression: AddressOf
+                Operand:
+                    Identifier: entity | Scope: ---
         VariableDeclaration: s32 (4 B) ii =
-            Call:  TypeSize
+            Call: 
+                Target:
+                    Identifier: TypeSize | Scope: ---
                 Arguments:
-                    Identifier: Entity
+                    Identifier: Entity | Scope: ---
         VariableDeclaration: s32 (4 B) jj =
-            Call:  TypeSize
+            Call: 
+                Target:
+                    Identifier: TypeSize | Scope: ---
                 Arguments:
-                    Identifier: s32
+                    Identifier: s32 | Scope: ---
         VariableDeclaration: f32 (4 B) HP =
-            MemberAccess: entity.health
-                Target: entity
+            MemberAccess: 
+                Target: 
+                    Identifier: entity | Scope: ---
                 Member: health
         VariableDeclaration: @f32 (0 B) healthPtr =
             UnaryExpression: AddressOf
                 Operand:
-                    Identifier: HP
+                    Identifier: HP | Scope: ---
         Assignment:
-            Identifier: healthPtr
+            UnaryExpression: Dereference
+                Operand:
+                    Identifier: healthPtr | Scope: ---
             Literal: int (0 B) 5
         VariableDeclaration: f32 (4 B) moreHealth =
             BinaryExpression: Add
                 Literal: int (0 B) 1
-                MemberAccess: entity.health
-                    Target: entity
+                MemberAccess: 
+                    Target: 
+                        Identifier: entity | Scope: ---
                     Member: health
         Assignment:
+            Identifier: healthPtr | Scope: ---
             UnaryExpression: AddressOf
                 Operand:
-                    Identifier: healthPtr
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: moreHealth
+                    Identifier: moreHealth | Scope: ---
         Assignment:
+            Identifier: voidPtr | Scope: ---
             UnaryExpression: AddressOf
                 Operand:
-                    Identifier: voidPtr
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: healthPtr
+                    Identifier: healthPtr | Scope: ---
         Assignment:
-            Identifier: HP
-            Identifier: healthPtr
+            Identifier: HP | Scope: ---
+            UnaryExpression: Dereference
+                Operand:
+                    Identifier: healthPtr | Scope: ---
+        VariableDeclaration: @[8]f32 (0 B) FPptr
+        VariableDeclaration: [8]f32 (0 B) FP
+        VariableDeclaration: f32 (4 B) f5 =
+            IndexExpression: 
+                Target:
+                    Identifier: FP | Scope: ---
+                Index:
+                    Literal: int (0 B) 5
+        Assignment:
+            Identifier: f5 | Scope: ---
+            IndexExpression: 
+                Target:
+                    UnaryExpression: Dereference
+                        Operand:
+                            Identifier: FPptr | Scope: ---
+                Index:
+                    Literal: int (0 B) 5
         Compound Assignment: PlusEqual
-            Identifier: moreHealth
+            Identifier: moreHealth | Scope: ---
             Literal: int (0 B) 1
         Expression:
-            Call:  m
+            Call: 
+                Target:
+                    Identifier: m | Scope: ---
                 Arguments:
                     Literal: int (0 B) 7
 
         Expression:
-            Call:  n
+            Call: 
+                Target:
+                    Identifier: n | Scope: ---
                 Arguments:
                     Literal: bool (1 B) true
 
         Expression:
-            Call:  n
+            Call: 
+                Target:
+                    Identifier: n | Scope: ---
                 Arguments:
                     Literal: bool (1 B) false
 
         VariableDeclaration: s32 (4 B) t =
-            Call:  m
+            Call: 
+                Target:
+                    Identifier: m | Scope: ---
                 Arguments:
                     Literal: int (0 B) 8
         VariableDeclaration: s32 (4 B) u =
             BinaryExpression: Add
                 BinaryExpression: Add
                     Literal: int (0 B) 1
-                    Call:  m
+                    Call: 
+                        Target:
+                            Identifier: m | Scope: ---
                         Arguments:
                             Literal: int (0 B) 8
                 Literal: int (0 B) 9
@@ -170,8 +244,9 @@ FunctionDeclaration: s32 main | Scope: 'main'
         VariableDeclaration: f32 (4 B) defaultFloat
         VariableDeclaration: bool (1 B) defaultBool
         Assignment:
-            MemberAccess: entity.health
-                Target: entity
+            MemberAccess: 
+                Target: 
+                    Identifier: entity | Scope: ---
                 Member: health
             Literal: int (0 B) 4
         VariableDeclaration: s32 (4 B) default_s32
@@ -184,23 +259,25 @@ FunctionDeclaration: s32 main | Scope: 'main'
                 Operand:
                     Literal: int (0 B) 1
         Expression:
-            Call:  Abs
+            Call: 
+                Target:
+                    Identifier: Abs | Scope: ---
                 Arguments:
-                    Identifier: i
+                    Identifier: i | Scope: ---
 
         Expression:
-            Call:  Abs
+            Call: 
+                Target:
+                    Identifier: Abs | Scope: ---
                 Arguments:
                     UnaryExpression: Negate
                         Operand:
-                            Identifier: i
+                            Identifier: i | Scope: ---
 
         VariableDeclaration: f32 (4 B) j =
             UnaryExpression: Negate
                 Operand:
                     Literal: int (0 B) 1
-        VariableDeclaration: bool (1 B) fg =
-            Literal: bool (1 B) false
         VariableDeclaration: bool (1 B) ffg =
             Literal: bool (1 B) true
         VariableDeclaration: s32 (4 B) a =
@@ -209,34 +286,34 @@ FunctionDeclaration: s32 main | Scope: 'main'
             Literal: int (0 B) 10
         VariableDeclaration: s32 (4 B) c =
             BinaryExpression: Add
-                Identifier: a
-                Identifier: b
+                Identifier: a | Scope: ---
+                Identifier: b | Scope: ---
         VariableDeclaration: s32 (4 B) d =
             Literal: int (0 B) 4
         Assignment:
-            Identifier: d
+            Identifier: d | Scope: ---
             BinaryExpression: Add
-                Identifier: a
-                Identifier: c
+                Identifier: a | Scope: ---
+                Identifier: c | Scope: ---
         Assignment:
-            Identifier: d
+            Identifier: d | Scope: ---
             BinaryExpression: Add
-                Identifier: d
+                Identifier: d | Scope: ---
                 Literal: int (0 B) 42
         VariableDeclaration: f32 (4 B) f =
             Literal: float (0 B) 2.5
         Compound Assignment: MultEqual
-            Identifier: f
+            Identifier: f | Scope: ---
             Literal: int (0 B) 2
         VariableDeclaration: f32 (4 B) g =
             Literal: int (0 B) 3
         VariableDeclaration: f32 (4 B) h =
             BinaryExpression: Subtract
-                Identifier: f
-                Identifier: g
+                Identifier: f | Scope: ---
+                Identifier: g | Scope: ---
         VariableDeclaration: bool (1 B) ok =
             BinaryExpression: Greater
-                Identifier: c
+                Identifier: c | Scope: ---
                 Literal: int (0 B) 5
         Return: int (0 B) 
             Literal: int (0 B) 0
@@ -247,7 +324,7 @@ FunctionDeclaration: void fn | Scope: 'fn'
     BlockSatement:
         VariableDeclaration: s32 (4 B) j =
             BinaryExpression: Divide
-                Identifier: i
+                Identifier: i | Scope: ---
                 Literal: int (0 B) 7
         Return: 
 
@@ -258,25 +335,25 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
         If:
             Condition:
                 BinaryExpression: EqualEqual
-                    Identifier: value
+                    Identifier: value | Scope: ---
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then475' 
+            Then: | Scope: 'if_then537' 
                 BlockSatement:
                     Assignment:
-                        Identifier: value
+                        Identifier: value | Scope: ---
                         Literal: int (0 B) 42
                     VariableDeclaration: f32 (4 B) f =
                         Literal: int (0 B) 0
                     Assignment:
-                        Identifier: f
+                        Identifier: f | Scope: ---
                         UnaryExpression: Negate
                             Operand:
                                 Literal: int (0 B) 1
 
-            Else: | Scope: 'if_else491' 
+            Else: | Scope: 'if_else553' 
                 BlockSatement:
                     Assignment:
-                        Identifier: value
+                        Identifier: value | Scope: ---
                         UnaryExpression: Negate
                             Operand:
                                 Literal: int (0 B) 42
@@ -284,7 +361,7 @@ FunctionDeclaration: s32 Branchy | Scope: 'Branchy'
                         Literal: int (0 B) 78
 
         Return: 
-            Identifier: value
+            Identifier: value | Scope: ---
 
 FunctionDeclaration: s32 Abs | Scope: 'Abs' 
     Arguments:
@@ -293,48 +370,48 @@ FunctionDeclaration: s32 Abs | Scope: 'Abs'
         If:
             Condition:
                 BinaryExpression: Less
-                    Identifier: value
+                    Identifier: value | Scope: ---
                     Literal: int (0 B) 0
-            Then: | Scope: 'if_then521' 
+            Then: | Scope: 'if_then583' 
                 BlockSatement:
                     Return: 
                         UnaryExpression: Negate
                             Operand:
-                                Identifier: value
+                                Identifier: value | Scope: ---
 
         Return: 
-            Identifier: value
+            Identifier: value | Scope: ---
 
 FunctionDeclaration: s32 Loopy | Scope: 'Loopy' 
     Arguments:
         s32 value
     BlockSatement:
-        For: | Scope: 'for_539' 
+        For: | Scope: 'for_601' 
             Initialiser:
                 VariableDeclaration: s32 (4 B) i =
                     Literal: int (0 B) 0
             Condition:
                 BinaryExpression: Less
-                    Identifier: i
-                    Identifier: value
+                    Identifier: i | Scope: ---
+                    Identifier: value | Scope: ---
             Iterator:
                 Compound Assignment: MinusEqual
-                    Identifier: i
+                    Identifier: i | Scope: ---
                     Literal: int (0 B) 3
                 BlockSatement:
                     Compound Assignment: PlusEqual
-                        Identifier: value
-                        Identifier: i
+                        Identifier: value | Scope: ---
+                        Identifier: i | Scope: ---
 
         Return: 
-            Identifier: value
+            Identifier: value | Scope: ---
 
 FunctionDeclaration: bool n | Scope: 'n' 
     Arguments:
         bool b
     BlockSatement:
         Return: 
-            Identifier: b
+            Identifier: b | Scope: ---
 
 FunctionDeclaration: s32 m | Scope: 'm' 
     Arguments:
@@ -343,14 +420,14 @@ FunctionDeclaration: s32 m | Scope: 'm'
         VariableDeclaration: s32 (4 B) i =
             Literal: int (0 B) 3
         Compound Assignment: PlusEqual
-            Identifier: j
+            Identifier: j | Scope: ---
             Literal: int (0 B) 4
         VariableDeclaration: s32 (4 B) health =
             Literal: int (0 B) 7
         Return: 
-            Identifier: j
+            Identifier: j | Scope: ---
 
-StructDeclaration: Entity (0 B) | Scope: 'Entity' 
+StructDeclaration: Entity (0 B)  | Scope: 'Entity' 
     Fields:
         Transform transform
         f32 health
@@ -361,16 +438,16 @@ StructDeclaration: Entity (0 B) | Scope: 'Entity'
         BlockSatement:
             Return: 
                 BinaryExpression: Greater
-                    Identifier: health
+                    Identifier: health | Scope: ---
                     Literal: int (0 B) 0
 
-StructDeclaration: Transform (0 B) | Scope: 'Transform' 
+StructDeclaration: Transform (0 B)  | Scope: 'Transform' 
     Fields:
         Vector3 position
         Vector3 rotation
         Vector3 scale
 
-StructDeclaration: Vector3 (0 B) | Scope: 'Vector3' 
+StructDeclaration: Vector3 (0 B)  | Scope: 'Vector3' 
     Fields:
         f32 x
         f32 y
@@ -381,9 +458,11 @@ FunctionDeclaration: @void AllocB | Scope: 'AllocB'
         s64 size
     BlockSatement:
         Return: 
-            Call:  __th_allocB
+            Call: 
+                Target:
+                    Identifier: __th_allocB | Scope: ---
                 Arguments:
-                    Identifier: size
+                    Identifier: size | Scope: ---
 
 FunctionDeclaration: @void ReallocB | Scope: 'ReallocB' 
     Arguments:
@@ -391,27 +470,32 @@ FunctionDeclaration: @void ReallocB | Scope: 'ReallocB'
         s64 newSize
     BlockSatement:
         Return: 
-            Call:  __th_reallocB
+            Call: 
+                Target:
+                    Identifier: __th_reallocB | Scope: ---
                 Arguments:
-                    UnaryExpression: AddressOf
-                        Operand:
-                            Identifier: ptr
-                    Identifier: newSize
+                    Identifier: ptr | Scope: ---
+                    Identifier: newSize | Scope: ---
 
 FunctionDeclaration: void Free | Scope: 'Free' 
     Arguments:
         @void ptr
     BlockSatement:
         Expression:
-            Call:  __th_free
+            Call: 
+                Target:
+                    Identifier: __th_free | Scope: ---
                 Arguments:
-                    UnaryExpression: AddressOf
-                        Operand:
-                            Identifier: ptr
+                    Identifier: ptr | Scope: ---
 
         Return: 
 
-StructDeclaration: Dynamic_Array_s8 (0 B) | Scope: 'Dynamic_Array_s8' 
+FunctionDeclaration: void TypeSize | Scope: 'TypeSize' 
+    Arguments:
+    BlockSatement:
+        Return: 
+
+StructDeclaration: Dynamic_Array_s8 (0 B)  | Scope: 'Dynamic_Array_s8' 
     Fields:
         s64 Length
         @void Data

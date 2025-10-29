@@ -9,6 +9,8 @@ public class Parser(List<Token> tokens)
 
     string programName = "";
 
+    const int MAX_POSTFIX_DEPTH = 128;
+
 
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
@@ -280,12 +282,7 @@ public class Parser(List<Token> tokens)
 
             VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, varName, init);
             variable.ResolvedType = varInfo;
-            currentScope!.Declare(new SymbolInfo(
-                varName,
-                varInfo,
-                SymbolKind.Variable,
-                null
-            ));
+
             return variable;
         }
 
@@ -296,6 +293,7 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' to close condition of if statement");
 
             EnterNewScope($"if_then{pos}");
+            //currentScope.Declare(new SymbolInfo($"if_then{pos}", SymbolKind.))
             List<IStatement> thenBranch = ParseBlock();
             Scope thenScope = currentScope!;
             Scope? elseScope = null;
@@ -573,7 +571,7 @@ public class Parser(List<Token> tokens)
             return new UnaryExpression(UnaryOperator.AddressOf, operand, assignable: false);
         }
 
-        if(Match(TokenType.Punctuation_Dollar))
+        if (Match(TokenType.Punctuation_Dollar))
         {
             IExpression operand = ParseUnary();
             return new UnaryExpression(UnaryOperator.Dereference, operand, assignable: true);
@@ -600,92 +598,72 @@ public class Parser(List<Token> tokens)
             literal.ResolvedType = new TypeInfo(lit.Type, SemanticAnalyser.SizeOf(lit.Type));
             expression = literal;
         }
-        else if (Peek().TokenType == TokenType.Identifier
-             && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+        else if (Peek().TokenType == TokenType.Identifier)
         {
-            Token nameToken = Advance();
-            Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
-
-            List<IExpression> arguments = [];
-            if (!Check(TokenType.Punctuation_ParenthesisR))
-                do
-                {
-                    arguments.Add(ParseExpression());
-                } while (Match(TokenType.Punctuation_Comma));
-
-            Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-            expression = new CallExpression(nameToken.Lexeme, arguments);
-        }
-        else if (Peek().TokenType == TokenType.Identifier
-             && PeekNext().TokenType == TokenType.Punctuation_BraceL)
-        {
-            Token typeToken = Advance();
-            Consume(TokenType.Punctuation_BraceL, "Expected '{' after method call");
-
-            List<IExpression> arguments = [];
-            if (!Check(TokenType.Punctuation_BraceR))
-                do
-                {
-                    arguments.Add(ParseExpression());
-                } while (Match(TokenType.Punctuation_Comma)
-                     && !Check(TokenType.Punctuation_BraceR));
-
-            Consume(TokenType.Punctuation_BraceR, "Expected '}' after arguments");
-            expression = new InstantiationExpression(typeToken.Lexeme, arguments);
-        }
-        else if (Peek().TokenType == TokenType.Identifier
-            && PeekNext().TokenType == TokenType.Punctuation_Dot)
-        {
-            IdentifierExpression target = new IdentifierExpression(Advance().Lexeme);
-            Consume(TokenType.Punctuation_Dot, "Expected '.' after member access target");
-            IdentifierExpression member = new IdentifierExpression(Advance().Lexeme);
-            expression = new MemberAccessExpression(target, member);
-        }
-        else if (Match(TokenType.Identifier))
-        {
-            string name = Previous().Lexeme;
-            IdentifierExpression identifierExpression = new IdentifierExpression(name);
-
-            expression = identifierExpression;
+            expression = ParsePostfix(new IdentifierExpression(Advance().Lexeme));
         }
         else if (Match(TokenType.Punctuation_ParenthesisL))
         {
-            IExpression inner = ParseExpression();
+            IExpression inner = ParsePostfix(ParseExpression());
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
-            expression = inner;
+            expression = ParsePostfix(inner);
         }
         else if (MatchTypeDefinition(out TypeInfo typeInfo))
-        {
-            if (Peek().TokenType == TokenType.Punctuation_ParenthesisL)
-            {
-                Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after method call");
-
-                List<IExpression> arguments = [];
-                if (!Check(TokenType.Punctuation_ParenthesisR))
-                    do
-                    {
-                        arguments.Add(ParseExpression());
-                    } while (Match(TokenType.Punctuation_Comma));
-
-                Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after arguments");
-                expression = new CallExpression(typeInfo.TypeName, arguments);
-            }
-            else
-                expression = new IdentifierExpression(typeInfo.TypeName);
-        }
-
-        while (Match(TokenType.Punctuation_BracketL))
-        {
-            IExpression index = ParseExpression();
-            Consume(TokenType.Punctuation_BracketR, "Expected ']' after array index");
-            expression = new IndexExpression(expression, index);
-        }
+            expression = ParsePostfix(new IdentifierExpression(typeInfo.TypeName));
 
         if (expression != null)
             return expression;
 
         Log.Error(2, $"Unexpected token {Peek().TokenType} in expression {PrintCurrentPos()}");
         return null!;
+    }
+
+    IExpression ParsePostfix(IExpression prefix)
+    {
+        for (int i = 0; i < MAX_POSTFIX_DEPTH; i++)
+        {
+            if (Match(TokenType.Punctuation_ParenthesisL))
+            {
+                List<IExpression> arguments = [];
+                if (!Check(TokenType.Punctuation_ParenthesisR))
+                    do
+                    {
+                        arguments.Add(ParseExpression());
+                    } while (Match(TokenType.Punctuation_Comma));
+                Advance();
+                //if (prefix is MemberAccessExpression memberAccess)
+                //    prefix = new CallExpression(memberAccess.Member, arguments);
+                //else
+                prefix = new CallExpression(prefix, arguments);
+            }
+            else if (Match(TokenType.Punctuation_BracketL))
+            {
+                IExpression index = ParseExpression();
+                Consume(TokenType.Punctuation_BracketR);
+                prefix = new IndexExpression(prefix, index);
+            }
+            else if (Match(TokenType.Punctuation_BraceL))
+            {
+                if (prefix is IdentifierExpression identifier)
+                {
+                    List<IExpression> arguments = [];
+                    if (!Check(TokenType.Punctuation_BraceR))
+                        do
+                        {
+                            arguments.Add(ParsePostfix(ParseExpression()));
+                        } while (Match(TokenType.Punctuation_Comma)
+                             && !Check(TokenType.Punctuation_BraceR));
+                    Consume(TokenType.Punctuation_BraceR);
+                    prefix = new InstantiationExpression(identifier.Name, arguments);
+                }
+            }
+            else if (Match(TokenType.Punctuation_Dot))
+            {
+                string name = Consume(TokenType.Identifier, "member").Lexeme;
+                prefix = new MemberAccessExpression(prefix, new IdentifierExpression(name));
+            }
+        }
+        return prefix;
     }
 
     #endregion
@@ -744,7 +722,7 @@ public class Parser(List<Token> tokens)
         return false;
     }
 
-    Token Consume(TokenType type, string message)
+    Token Consume(TokenType type, string message = "")
     {
         if (Check(type)) return Advance();
         //throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");

@@ -31,7 +31,7 @@ static class AstPrinter
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name} ({structDeclaration.ResolvedType.Size} B) {PrintScope(structDeclaration.Scope!)}");
+        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name} ({structDeclaration.ResolvedType.Size} B) {TryScope(structDeclaration.Scope!)}");
         w.WriteLine($"{Indent(indent + tab)}Fields:");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
@@ -45,7 +45,7 @@ static class AstPrinter
 
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name} ({unionDeclaration.ResolvedType.Size} B) {PrintScope(unionDeclaration.Scope!)}");
+        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name} ({unionDeclaration.ResolvedType.Size} B){TryScope(unionDeclaration.Scope!)}");
         foreach (TypeNamePair variant in unionDeclaration.Variants)
             PrintTypeNamePair(variant, w, indent + tab);
         w.WriteLine();
@@ -58,7 +58,7 @@ static class AstPrinter
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name} {PrintScope(function.Scope!)}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{TryScope(function.Scope!)}");
         w.WriteLine($"{Indent(indent + tab)}Arguments:");
         foreach (TypeNamePair typeNamePair in function.Arguments)
             PrintTypeNamePair(typeNamePair, w, indent + tab * 2);
@@ -96,16 +96,16 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}If:");
                 w.WriteLine($"{Indent(indent + tab)}Condition:");
                 PrintExpression(ifStatement.Condition, w, indent + tab * 2);
-                w.WriteLine($"{Indent(indent + tab)}Then: {PrintScope(ifStatement.ThenScope)}");
+                w.WriteLine($"{Indent(indent + tab)}Then:{TryScope(ifStatement.ThenScope)}");
                 PrintBlock(ifStatement.ThenBranch, w, indent + tab * 2);
                 if (ifStatement.ElseBranch != null)
                 {
-                    w.WriteLine($"{Indent(indent + tab)}Else: {PrintScope(ifStatement.ElseScope!)}");
+                    w.WriteLine($"{Indent(indent + tab)}Else:{TryScope(ifStatement.ElseScope!)}");
                     PrintBlock(ifStatement.ElseBranch, w, indent + tab * 2);
                 }
                 break;
             case ForStatement forStatement:
-                w.WriteLine($"{Indent(indent)}For: {PrintScope(forStatement.Scope)}");
+                w.WriteLine($"{Indent(indent)}For:{TryScope(forStatement.Scope)}");
                 w.WriteLine($"{Indent(indent + tab)}Initialiser:");
                 PrintStatement(forStatement.Initialiser!, w, indent + tab * 2);
                 w.WriteLine($"{Indent(indent + tab)}Condition:");
@@ -150,7 +150,7 @@ static class AstPrinter
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}");
                 break;
 
             case BinaryExpression bin:
@@ -159,7 +159,9 @@ static class AstPrinter
                 PrintExpression(bin.Right, w, indent + tab);
                 break;
             case CallExpression call:
-                w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)} {call.CalleeName}");
+                w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)}");
+                w.WriteLine($"{Indent(indent + tab)}Target:");
+                PrintExpression(call.Target, w, indent + tab * 2);
                 w.WriteLine($"{Indent(indent + tab)}Arguments:");
 
                 foreach (IExpression arument in call.Arguments)
@@ -171,8 +173,9 @@ static class AstPrinter
                 PrintExpression(u.Operand, w, indent + tab * 2);
                 break;
             case MemberAccessExpression mem:
-                w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}{mem.Target.Name}.{mem.Member.Name}");
-                w.WriteLine($"{Indent(indent + tab)}Target: {TryType(mem.Target.ResolvedType)}{mem.Target.Name}");
+                w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}");
+                w.WriteLine($"{Indent(indent + tab)}Target: {TryType(mem.Target.ResolvedType)}");
+                PrintExpression(mem.Target, w, indent + tab * 2);
                 w.WriteLine($"{Indent(indent + tab)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
                 break;
             case InstantiationExpression isnt:
@@ -210,6 +213,6 @@ static class AstPrinter
     static string Indent(int n) => new string(' ', n);
 
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ({typeInfo.Size} B) ";
-    static string PrintScope(Scope scope) => $"| Scope: '{scope.Name}' ";
+    static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}' ";
     #endregion
 }

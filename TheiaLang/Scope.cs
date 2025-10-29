@@ -5,6 +5,7 @@ public enum SymbolKind
     Function,
     Type,
     Variable,
+    Namespace,
 }
 
 public class SymbolInfo(string name,
@@ -20,7 +21,7 @@ public class SymbolInfo(string name,
     public override string ToString()
     {
         string s = $"{Kind} {Name}: {type}";
-        if (Parameters != null)
+        if (Parameters != null && Parameters.Count > 0)
         {
             s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Identifier}";
             for (int i = 1; i < Parameters!.Count; i++)
@@ -110,7 +111,7 @@ public class Scope : INode
     public Scope Exit()
     {
         if (Parent == null)
-            throw new Exception($"Attempted to exit scope {FullName}");
+            throw new Exception("Attempted to exit global scope");
 
         return Parent;
     }
@@ -137,11 +138,13 @@ public class Scope : INode
         }
     }
 
-    public bool TryFindChild(string name, out SymbolInfo? symbolInfo)
+    public bool TryFindChild(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
-        if (Children.ContainsKey(name))
+        if (Children.TryGetValue(name, out Scope? scope))
         {
-            symbolInfo = Symbols[name];
+            symbolInfo = null;
+            Symbols.TryGetValue(name, out symbolInfo);
+            symbolScope = scope;
             return true;
         }
         else
@@ -149,10 +152,24 @@ public class Scope : INode
             if (Parent == null)
             {
                 symbolInfo = null;
+                symbolScope = null;
                 return false;
             }
             else
-                return Parent.TryFindChild(name, out symbolInfo);
+                return Parent.TryFindChild(name, out symbolInfo, out symbolScope);
+        }
+    }
+
+    public bool IsScopeDefined(Scope scope)
+    {
+        if (scope.Name == Name || Children.ContainsKey(scope.Name))
+            return true;
+        else
+        {
+            if (Parent == null)
+                return false;
+            else
+                return Parent.IsScopeDefined(scope);
         }
     }
 

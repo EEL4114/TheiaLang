@@ -145,11 +145,6 @@ public static class IRGenerator
         string returnTypeLLVM = TypeToLLVM(fn.ResolvedType)!;
 
         List<string> args = [];
-        if (fn.Scope!.Parent?.DeclaringNode is StructDeclaration parentStruct)
-        {
-            args.Add($"ptr %this");
-        }
-
         // this is messy but works for now?
 
         string paramList = "";
@@ -593,48 +588,55 @@ public static class IRGenerator
 
     static (StringBuilder code, string value) EmitCallExpression(CallExpression call, StringBuilder code)
     {
-        if (!currentScope!.TryLookup(call.CalleeName, out SymbolInfo? calleeInfo, out _))
-            throw new Exception($"Undefined identifier '{call.CalleeName}' in {currentScope.FullName}");
-
-        if (calleeInfo!.Kind != SymbolKind.Function)
-            throw new Exception($"'{call.CalleeName}' is not a function in scope '{currentScope.FullName}'");
-
-        if (call.Arguments.Count != calleeInfo.Parameters!.Count)
-            Log.Error(11,
-                $"Function '{call.CalleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
-                $"but got {call.Arguments.Count}");
-
-        string retTy = TypeToLLVM(calleeInfo.Type)!;
-
-        List<string> argumentList = [];
-
-        for (int i = 0; i < call.Arguments.Count; i++)
+        if (call.Target is IdentifierExpression id)
         {
-            IExpression argument = call.Arguments[i];
+            string calleeName = id.Name;
+            if (!currentScope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out _))
+                throw new Exception($"Undefined identifier '{calleeName}' in {currentScope.FullName}");
 
-            (StringBuilder argCode, string argReg) = EmitExpression(argument);
-            code.Append(argCode);
+            if (calleeInfo!.Kind != SymbolKind.Function)
+                throw new Exception($"'{calleeName}' is not a function in scope '{currentScope.FullName}'");
 
-            // infer the LLVM type of the argument
-            TypeInfo actualType = argument.ResolvedType!;
-            string actualLLVMType = TypeToLLVM(actualType)!;
-            string expectedLLVMType = TypeToLLVM(calleeInfo.Parameters[i].ResolvedType!)!;
+            if (call.Arguments.Count != calleeInfo.Parameters!.Count)
+                Log.Error(11,
+                    $"Function '{calleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
+                    $"but got {call.Arguments.Count}");
 
-            if (actualType.TypeName != call.Arguments[i].ResolvedType!.TypeName && AutoLog)
-                Log.Error(12,
-                    $"Type mismatch in call to '{call.CalleeName}.{calleeInfo.Parameters[i].Identifier}' " +
-                    $"expected {call.Arguments[i].ResolvedType!.TypeName}, got {actualType.TypeName}");
+            string retTy = TypeToLLVM(calleeInfo.Type)!;
 
-            argumentList.Add($"{actualLLVMType} {argReg}");
+            List<string> argumentList = [];
+
+            for (int i = 0; i < call.Arguments.Count; i++)
+            {
+                IExpression argument = call.Arguments[i];
+
+                (StringBuilder argCode, string argReg) = EmitExpression(argument);
+                code.Append(argCode);
+
+                // infer the LLVM type of the argument
+                TypeInfo actualType = argument.ResolvedType!;
+                string actualLLVMType = TypeToLLVM(actualType)!;
+                string expectedLLVMType = TypeToLLVM(calleeInfo.Parameters[i].ResolvedType!)!;
+
+                if (actualType.TypeName != call.Arguments[i].ResolvedType!.TypeName && AutoLog)
+                    Log.Error(12,
+                        $"Type mismatch in call to '{"call.CalleeName"}.{calleeInfo.Parameters[i].Identifier}' " +
+                        $"expected {call.Arguments[i].ResolvedType!.TypeName}, got {actualType.TypeName}");
+
+                argumentList.Add($"{actualLLVMType} {argReg}");
+            }
+
+            string tmp = $"%{NewTempVar()}";
+
+            if (retTy != "void")
+                code.AppendLine($"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+            else
+                code.AppendLine($"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+            return (code, tmp);
         }
 
-        string tmp = $"%{NewTempVar()}";
-
-        if (retTy != "void")
-            code.AppendLine($"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
-        else
-            code.AppendLine($"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
-        return (code, tmp);
+        Log.Info("ZZZ");
+        return (null, null);
     }
 
     static (StringBuilder code, string value) EmitCastExpression(CastExpression cast, StringBuilder code)
@@ -678,7 +680,6 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-
     static (StringBuilder code, string value) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
         (string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
@@ -721,40 +722,65 @@ public static class IRGenerator
                 string irElemTy = TypeToLLVM(ti.Pointee!)!;
                 return (reg, irElemTy);
             case MemberAccessExpression memberAccess:
-                string targetName = memberAccess.Target.Name;
                 string memberName = memberAccess.Member.Name;
 
-                if (!TryResolveSlot(targetName, out alloc, out TypeInfo? structInfo))
-                    throw new Exception($"Undefined variable '{targetName}'");
+                if (memberAccess.Target is IdentifierExpression id)
+                {
+                    string targetName = id.Name;
 
-                if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
-                    throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
+                    // TODO get rid of redundancy here
+                    if (!TryResolveSlot(targetName, out alloc, out TypeInfo? structInfo))
+                        throw new Exception($"Undefined variable '{targetName}'");
 
-                if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
-                    throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
+                    if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
+                        throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
 
-                // the scope the target defines
-                Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
+                    if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
+                        throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
 
-                if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
-                    throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
+                    Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
 
-                if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
-                    throw new Exception($"Variable {targetName} does not define any fields");
+                    if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
+                        throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
+                    
+                    if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
+                        throw new Exception($"Variable {targetName} does not define any fields");
 
-                int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
-                if (memberIndex < 0)
-                    throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
+                    int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
+                    if (memberIndex < 0)
+                        throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
 
-                string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
-                string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
+                    string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
+                    string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
 
-                string gep = $"%{NewTempVar()}";
+                    string temp = $"%{NewTempVar()}";
 
-                code.AppendLine(
-                    $"  {gep} = getelementptr inbounds {LLVMType}, ptr {alloc.ptr}, i32 0, i32 {memberIndex}");
+                    code.AppendLine(
+                        $"  {temp} = getelementptr inbounds {LLVMType}, ptr {alloc.ptr}, i32 0, i32 {memberIndex}");
+                    return (temp, memberLLVMType);
+                }
+                else
+                {
+                    (string targetAddr, string targetLLVMType) = EmitAddressOf(memberAccess.Target, code);
 
-                return (gep, memberLLVMType);
+                    TypeInfo targetTypeInfo = memberAccess.Target.ResolvedType!;
+                    Scope targetScope = memberAccess.Scope!;
+
+                    if (!currentScope!.TryLookup(targetTypeInfo.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
+                        throw new Exception($"Could not find type '{targetTypeInfo.TypeName}' in Scope {currentScope.FullName}");
+
+                    int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
+                    string memberLLVMType = TypeToLLVM(memberAccess.Member.ResolvedType!)!;
+
+                    string temp = $"%{NewTempVar()}";
+
+                    code.AppendLine(
+                        $"  {temp} = getelementptr inbounds {targetLLVMType}, ptr {targetAddr}, i32 0, i32 {memberIndex}");
+
+                    return (temp, memberLLVMType);
+                }
+
+
             case IndexExpression index:
                 (string targetPtr, string arrayTypeLLVM) = EmitAddressOf(index.Target, code);
 
@@ -764,7 +790,7 @@ public static class IRGenerator
                 string elementType = TypeToLLVM(index.Target.ResolvedType!.ElementType!)!;
                 string indexType = TypeToLLVM(index.Index.ResolvedType!)!;
 
-                gep = $"%{NewTempVar()}";
+                string gep = $"%{NewTempVar()}";
 
                 code.AppendLine(
                     $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, ptr {targetPtr}, i32 0, i32 {indexReg}");

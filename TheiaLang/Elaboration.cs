@@ -13,11 +13,12 @@ static class Elaboration
     static Scope GlobalScope;
     static Scope PreloadScope;
 
-    static readonly string[] intrinsicFunctions =
+    static readonly string[] builtinFunctions =
     [
         "AllocB",
         "ReallocB",
         "Free",
+        "TypeSize",
     ];
 
     public static (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
@@ -33,24 +34,24 @@ static class Elaboration
 
         currentScope = GlobalScope;
 
-        foreach (string functionName in intrinsicFunctions)
-            IncludeIntrinsicFn(functionName);
+        foreach (string functionName in builtinFunctions)
+            IncludeBuiltinFn(functionName);
 
         for (int i = 0; i < ProgramAST.Nodes.Count; i++)
-            {
-                INode node = ProgramAST.Nodes[i];
+        {
+            INode node = ProgramAST.Nodes[i];
 
-                if (node is StructDeclaration sd)
-                    AnalyseStruct(sd);
+            if (node is StructDeclaration sd)
+                AnalyseStruct(sd);
 
-                if (node is FunctionDeclaration fn)
-                    AnalyseFunctionBody(fn);
-            }
+            if (node is FunctionDeclaration fn)
+                AnalyseFunctionBody(fn);
+        }
 
         return (ProgramAST, GlobalScope);
     }
 
-    static void IncludeIntrinsicFn(string name)
+    static void IncludeBuiltinFn(string name)
     {
         // TODO this is very slow ofc but should work for now
         foreach (INode node in PreloadAST.Nodes)
@@ -122,7 +123,7 @@ static class Elaboration
                     statements[i] = new VariableDeclaration(structName,
                                                             varDeclaration.Name,
                                                             null);
-                    currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
+                    //currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
                 }
                 // (2) if no -> declare the struct
                 else
@@ -143,7 +144,7 @@ static class Elaboration
                                                         sd.ResolvedType,
                                                         SymbolKind.Variable,
                                                         null);
-                    currentScope!.Symbols[vd.Name] = varInfo;
+                    //currentScope!.Symbols[vd.Name] = varInfo;
                     DynamicArrayCache.Add(typeName, varInfo);
                     statements[i] = vd;
 

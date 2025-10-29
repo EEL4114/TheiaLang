@@ -107,7 +107,10 @@ public static class SemanticAnalyser
     {
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
+        {
+            function.Arguments.Insert(0, new TypeNamePair("@" + structDeclaration.Name, "this"));
             ResolveFunctionTypeAndArgs(function);
+        }
         ExitScope();
     }
 
@@ -155,19 +158,28 @@ public static class SemanticAnalyser
         switch (statement)
         {
             case VariableDeclaration variable:
-                currentScope.TryLookup(variable.Name, out SymbolInfo? symbolInfo, out _);
-                // Log.Info(symbolInfo.Type.TypeName + " " + variable.Name + " " + (symbolInfo.Type.Pointee != null).ToString());
-                if (symbolInfo == null)
-                    throw new Exception($"Could not find variable '{variable.Name}' in {currentScope.FullName}");
+                //Log.Info($"{variable.Name}");
+                if (currentScope.TryLookup(variable.Name, out _, out _))
+                    throw new Exception($"A Variable with the name '{variable.Name}' is already defined in {currentScope.FullName}");
+
                 if (variable.ResolvedType != null)
-                    symbolInfo.Type = UpdateTypeInfo(variable.ResolvedType);
+                    variable.ResolvedType = UpdateTypeInfo(variable.ResolvedType);
                 else
-                    symbolInfo.Type = ResolveType(variable.TypeName);
-                variable.ResolvedType = symbolInfo.Type;
+                    variable.ResolvedType = ResolveType(variable.TypeName);
+
+                currentScope!.Declare(new SymbolInfo(
+                    variable.Name,
+                    variable.ResolvedType,
+                    SymbolKind.Variable,
+                    
+                    null
+                ));
 
                 if (variable.Init != null)
                 {
                     variable.Init = AnalyseExpression(variable.Init);
+                    if (variable.Init.ResolvedType == null)
+                        Log.Error(23, variable.Name);
                     variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType!, variable.ResolvedType.TypeName);
 
                     variable.Init = GenerateImplicitCast(variable.Init, variable.ResolvedType);
@@ -263,106 +275,166 @@ public static class SemanticAnalyser
                 // these have already been resolved in the Parser
                 break;
             case IdentifierExpression identifier:
+                if (!currentScope.TryLookup(identifier.Name, out _, out Scope? symbolScope))
+                    Log.Error(21, $"{identifier.Name} is not defined in {currentScope.Name}");
+
                 TypeInfo identifierInfo = GetTypeInfo(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
+                identifier.Scope = symbolScope;
                 break;
             case CallExpression call:
-                if (call.CalleeName == "TypeSize")
+                foreach (IExpression arg in call.Arguments)
+                    AnalyseExpression(arg);
+                if (call.Target is IdentifierExpression id)
                 {
-                    if (call.Arguments.Count != 1)
-                        throw new Exception($"Function 'SizeOf' expects 1 argument, got {call.Arguments.Count}");
-
-                    if (call.Arguments[0] is not IdentifierExpression id)
-                        throw new Exception($"Unexpected argument in call 'SizeOf': expected identifer, got: {call.Arguments[0].GetType()}");
-
-                    /*TypeInfo typeInfo;
-                    if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
-                        typeInfo = symbolInfo!.Type;
-                    else
-                        throw new Exception($"Could not resolve {id.Name}");
-                    */
-                    // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
-
-                    uint sizeValue = SizeOf(id.Name);
-
-                    expression = new LiteralExpression((int)sizeValue, sizeValue.ToString());
-                    expression.ResolvedType = new TypeInfo("s32", 4);
-                }
-                else if (call.CalleeName == "Alloc")
-                {
-                    Log.Info("ALLOC");
-                }
-                else if (IRGenerator.BuiltinTypes.Contains(call.CalleeName))    // type cast; for now just primitives; this for now excludes ptrs!!
-                {
-
-                    for (int i = 0; i < call.Arguments.Count; i++)
+                    call.Target = AnalyseExpression(call.Target);
+                    if (id.Name == "TypeSize")
                     {
-                        IExpression argument = AnalyseExpression(call.Arguments[i]);
-                        call.Arguments[i] = argument;
+                        if (call.Arguments.Count != 1)
+                            throw new Exception($"Function 'SizeOf' expects 1 argument, got {call.Arguments.Count}");
+
+                        if (call.Arguments[0] is not IdentifierExpression i)
+                            throw new Exception($"Unexpected argument in call 'SizeOf': expected identifer, got: {call.Arguments[0].GetType()}");
+
+                        /*TypeInfo typeInfo;
+                        if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
+                            typeInfo = symbolInfo!.Type;
+                        else
+                            throw new Exception($"Could not resolve {id.Name}");
+                        */
+                        // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
+
+                        uint sizeValue = SizeOf(i.Name);
+
+                        expression = new LiteralExpression((int)sizeValue, sizeValue.ToString());
+                        expression.ResolvedType = new TypeInfo("s32", 4);
                     }
-                    if (IRGenerator.BuiltinTypes.Contains(call.CalleeName))
+                    else if (id.Name == "Alloc")
                     {
-                        int targetTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.CalleeName);
-                        int sourceTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.Arguments[0].ResolvedType!.TypeName);
-                        TypeInfo typeInfo = GetTypeInfo(call.CalleeName);
+                        Log.Info("ALLOC");
+                    }
+                    else if (IRGenerator.BuiltinTypes.Contains(id.Name))    // type cast; for now just primitives; this for now excludes ptrs!!
+                    {
 
-                        if (targetTypeIndex < 0 || sourceTypeIndex < 0)
-                            throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {call.CalleeName}");
+                        for (int i = 0; i < call.Arguments.Count; i++)
+                        {
+                            IExpression argument = AnalyseExpression(call.Arguments[i]);
+                            call.Arguments[i] = argument;
+                        }
+                        if (IRGenerator.BuiltinTypes.Contains(id.Name))
+                        {
+                            int targetTypeIndex = IRGenerator.BuiltinTypes.IndexOf(id.Name);
+                            int sourceTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.Arguments[0].ResolvedType!.TypeName);
+                            TypeInfo typeInfo = GetTypeInfo(id.Name);
 
-                        CastOp? op = TypeCast[sourceTypeIndex, targetTypeIndex];
-                        if (op == null)
-                            throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {call.CalleeName}");
-                        if (op == NoOp)
-                            expression = call.Arguments[0];
+                            if (targetTypeIndex < 0 || sourceTypeIndex < 0)
+                                throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
+
+                            CastOp? op = TypeCast[sourceTypeIndex, targetTypeIndex];
+                            if (op == null)
+                                throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
+                            if (op == NoOp)
+                                expression = call.Arguments[0];
+                            else
+                            {
+                                expression = new CastExpression((CastOp)op, call.Arguments[0]);
+                                expression.ResolvedType = typeInfo;
+                            }
+                        }
+                        else
+                            call.ResolvedType = GetTypeInfo(id.Name);
+                    }
+                    else
+                    {
+                        if (id.Scope != null)
+                        {
+                            if (id.Scope.TryLookup(id.Name, out SymbolInfo? sInfo, out _)
+                             && sInfo!.Kind == SymbolKind.Function)
+                            {
+                                if (call.Arguments.Count != sInfo.Parameters.Count)
+                                    throw new Exception($"Function '{sInfo.Name}' expects {sInfo.Parameters.Count}"
+                                        + $" arguments, got {call.Arguments.Count}");
+                                for (int i = 0; i < call.Arguments.Count; i++)
+                                {
+                                    IExpression argument = AnalyseExpression(call.Arguments[i]);
+                                    string expected = sInfo.Parameters[i].ResolvedType!.TypeName;
+                                    argument.ResolvedType = PromoteIfLiteral(argument.ResolvedType!, expected);
+                                    GenerateImplicitCast(argument, sInfo.Parameters[i].ResolvedType!);
+
+                                    call.Arguments[i] = argument;
+                                    string actual = argument.ResolvedType!.TypeName;
+                                    string name = sInfo.Parameters[i].Identifier;
+                                    if (actual != expected)
+                                        Log.Error(22, $"Function {sInfo.Name} expects type {expected} for argument {name}, got: {actual}");
+                                    call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
+                                                                                    sInfo.Parameters[i].ResolvedType!.TypeName);
+                                    call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], sInfo.Parameters[i].ResolvedType!);
+                                }
+                                call.ResolvedType = sInfo.Type;
+                            }
+                        }
                         else
                         {
-                            expression = new CastExpression((CastOp)op, call.Arguments[0]);
-                            expression.ResolvedType = typeInfo;
+                            if (!currentScope.TryLookup(id.Name, out SymbolInfo? info, out _)
+                                || info!.Kind != SymbolKind.Function)
+                                throw new Exception($"Unknown function '{id.Name}'");
+
+                            if (call.Arguments.Count != info.Parameters!.Count)
+                                throw new Exception($"Function '{info.Name}' expects {info.Parameters.Count}"
+                                                    + $" arguments, got {call.Arguments.Count}");
+
+                            for (int i = 0; i < call.Arguments.Count; i++)
+                            {
+                                IExpression argument = AnalyseExpression(call.Arguments[i]);
+                                call.Arguments[i] = argument;
+                                string actual = argument.ResolvedType!.TypeName;
+
+                                string expected = info.Parameters[i].ResolvedType!.TypeName;
+                                call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
+                                                                                info.Parameters[i].ResolvedType!.TypeName);
+
+                                call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], info.Parameters[i].ResolvedType!);
+                            }
+
+                            call.ResolvedType = info.Type;
                         }
                     }
-                    else
-                        call.ResolvedType = GetTypeInfo(call.CalleeName);
+                }
+                else if (call.Target is MemberAccessExpression memberAccess)
+                {
+                    Log.Info("XXXXXXXXXX");
+                    Log.Info(memberAccess.ToString());
                 }
                 else
                 {
-                    if (!currentScope.TryLookup(call.CalleeName, out SymbolInfo? function, out _)
-                        || function!.Kind != SymbolKind.Function)
-                        throw new Exception($"Unknown function '{call.CalleeName}'");
-
-                    if (call.Arguments.Count != function.Parameters!.Count)
-                        throw new Exception($"Function '{function.Name}' expects {function.Parameters.Count}"
-                                            + $" arguments, got {call.Arguments.Count}");
-
-                    for (int i = 0; i < call.Arguments.Count; i++)
-                    {
-                        IExpression argument = AnalyseExpression(call.Arguments[i]);
-                        call.Arguments[i] = argument;
-                        string actual = argument.ResolvedType!.TypeName;
-
-                        string expected = function.Parameters[i].ResolvedType!.TypeName;
-                        call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
-                                                                          function.Parameters[i].ResolvedType!.TypeName);
-
-                        call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], function.Parameters[i].ResolvedType!);
-                    }
-
-                    call.ResolvedType = function.Type;
+                    Log.Info("DD");
                 }
                 break;
             case MemberAccessExpression memberAccess:
+                Scope s = currentScope;
                 AnalyseExpression(memberAccess.Target);
-                TypeInfo targetInfo = memberAccess.Target.ResolvedType!;
+                if (memberAccess.Target is IdentifierExpression targetEx
+                 && targetEx.ResolvedType != null)
+                {
+                    if (!currentScope.TryFindChild(targetEx.ResolvedType.TypeName, out _, out Scope? targetScope))
+                        throw new Exception($"Could not find {targetEx.ResolvedType.TypeName} in {currentScope.FullName}");
+                    EnterScope(targetScope!);
+                }
+                else if (memberAccess.Target is MemberAccessExpression mem && mem.Scope != null)
+                    EnterScope(mem.Scope);  
+                else
+                    throw new Exception("ff");
 
-                if (targetInfo.FieldNames == null)
-                    throw new Exception($"{memberAccess.Target.Name} has no fields");
+                AnalyseExpression(memberAccess.Member);
+                memberAccess.ResolvedType = memberAccess.Member.ResolvedType;
+                if (!IRGenerator.BuiltinTypes.Contains(memberAccess.Member.ResolvedType!.TypeName))
+                {
+                    if (!currentScope.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out _, out Scope? memberScope))
+                        throw new Exception($"Could not find {memberAccess.Member.ResolvedType!.TypeName} in {currentScope.FullName}");
 
-                int memberIndex = targetInfo.FieldNames!.IndexOf(memberAccess.Member.Name);
-                if (memberIndex < 0)
-                    throw new Exception($"Field '{memberAccess.Member.Name}' is not defined in {targetInfo.TypeName}");
-
-                currentScope.TryLookup(targetInfo.FieldTypes![memberIndex], out SymbolInfo? memberInfo, out _);
-                memberAccess.Member.ResolvedType = memberInfo!.Type;
-                memberAccess.ResolvedType = memberInfo!.Type;
+                    memberAccess.Scope = memberScope;
+                }
+                currentScope = s;
                 break;
             case UnaryExpression unary:
                 unary.Operand = AnalyseExpression(unary.Operand);
@@ -497,13 +569,16 @@ public static class SemanticAnalyser
 
     static TypeInfo GetTypeInfo(string typeOrName)
     {
+        if (typeOrName.StartsWith('@'))
+            return new TypeInfo(typeOrName, 8, GetTypeInfo(typeOrName[1..]));
+        
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
 
         return symbolInfo!.Type;
     }
 
-    static uint SizeOf(TypeInfo type)
+    public static uint SizeOf(TypeInfo type)
     {
         int i = IRGenerator.BuiltinTypeIndex(type.TypeName);
         if (i >= 0)
@@ -553,7 +628,7 @@ public static class SemanticAnalyser
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
-        if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
+        if(!currentScope.TryFindChild(scope.Name, out _, out _) && currentScope.Parent != scope)
             Log.Error(14, $"Scope '{scope}' does not exist in '{currentScope}'");
 
         currentScope = scope;
@@ -571,7 +646,7 @@ public static class SemanticAnalyser
 
         if (!CanImplicitlyCast(sourceType, targetType))
             throw new Exception($"Cannot implicitly convert {sourceType} -> {targetType}");
-        
+
         if (sourceType != targetType)
         {
             if (IRGenerator.BuiltinTypes.Contains(sourceType)
@@ -591,6 +666,7 @@ public static class SemanticAnalyser
     #endregion
 
     #region Interop
+    
     static readonly bool[,] LosslessTypeInterop = new bool[14, 14]
     {
         //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void

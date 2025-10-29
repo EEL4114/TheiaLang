@@ -168,12 +168,12 @@ int CompileFile(string programName,
     compileTimer.Start();
     IRGenTimer.Start();
 
-    IRGenerator.Emit(ast, globalScope, $"{programName}.ll", insertLogs);
+    IRGenerator.Emit(ast, globalScope, $"{OUTPUT_PATH}{programName}.ll", insertLogs);
 
     IRGenTimer.Stop();
     LLVMTimer.Start();
 
-    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {programName}.ll -O0 -o {OUTPUT_PATH}{programName}.exe")?.WaitForExit();
+    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {OUTPUT_PATH}{programName}.ll -O0 -o {OUTPUT_PATH}{programName}.exe")?.WaitForExit();
 
     LLVMTimer.Stop();
     compileTimer.Stop();
@@ -236,8 +236,6 @@ public static class Log
         Console.ResetColor();
         StackTrace stackTrace = new StackTrace();
         throw new Exception(message);
-
-        Environment.Exit(1);
     }
 
     public static void Info(string text)

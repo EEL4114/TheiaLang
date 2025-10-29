@@ -1,0 +1,7 @@
+over/underflow to 0
+cstring;
+Bf16;
+[?] array;
+&!
+
+    []s32 a = [3]i; // dynamic array of s32 'a': initialize with `i` broadcast 3

@@ -13,7 +13,9 @@ basic ptrs                              done
 basic arrays                            done
 testing                                 done
 comments                                done
-dynamic arrays
+dynamic arrays                          partial
+namespaces
+improve parser debugging
 operator overloading
 strings
 scope annotations for functions
