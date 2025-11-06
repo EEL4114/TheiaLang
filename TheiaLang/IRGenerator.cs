@@ -120,7 +120,8 @@ public static class IRGenerator
 
         string llvmName = $"%{sd.Name}";
 
-        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.TypeName);
+        // TODO: simplify??
+        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.ResolvedType.TypeName);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
@@ -491,12 +492,10 @@ public static class IRGenerator
             {
                 string LLVMType = TypeToLLVM(sd.Fields[index].ResolvedType!)!;
 
-                string gep = $"%{NewTempVar()}";
+                string tmp = $"%{NewTempVar()}";
                 code.AppendLine(
-                    $"  {gep} = getelementptr %{sd.ResolvedType.TypeName}, ptr %this, i32 0, i32 {index}");
-                string tempIdentifier = $"%{NewTempVar()}";
-                code.AppendLine($"  {tempIdentifier} = load {LLVMType}, ptr {gep}");
-                return (code, tempIdentifier);
+                    $"  {tmp} = extractvalue %{sd.ResolvedType.TypeName} %this, {index}");
+                return (code, tmp);
             }
         }
 

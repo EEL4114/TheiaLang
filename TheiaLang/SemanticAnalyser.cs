@@ -60,6 +60,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
+            // TODO: simplify!!
             currentScope.TryLookup(field.Identifier, out SymbolInfo? fieldInfo, out _);
 #if DEBUG
             if (fieldInfo == null)
@@ -68,7 +69,7 @@ public static class SemanticAnalyser
             if (fieldInfo.Type != null)
                 fieldInfo.Type = UpdateTypeInfo(fieldInfo.Type);
             else
-                fieldInfo.Type = ResolveType(field.TypeName);
+                fieldInfo.Type = ResolveType(field.ResolvedType.TypeName);
             size += fieldInfo.Type.Size;
             field.ResolvedType = fieldInfo.Type;
         }
@@ -84,6 +85,7 @@ public static class SemanticAnalyser
 
         foreach (TypeNamePair variant in unionDeclaration.Variants)
         {
+            // TODO: simplify!!
             currentScope.TryLookup(variant.Identifier, out SymbolInfo? variantInfo, out _);
 #if DEBUG
             if (variantInfo == null)
@@ -92,7 +94,7 @@ public static class SemanticAnalyser
             if (variantInfo.Type != null)
                 variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
             else
-                variantInfo.Type = ResolveType(variant.TypeName);
+                variantInfo.Type = ResolveType(variant.ResolvedType.TypeName);
             size = Math.Max(variantInfo.Type.Size, size);
             variant.ResolvedType = variantInfo.Type;
         }
@@ -108,7 +110,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            function.Arguments.Insert(0, new TypeNamePair("@" + structDeclaration.Name, "this"));
+            function.Arguments.Insert(0, new TypeNamePair(structDeclaration.ResolvedType, "this"));
             ResolveFunctionTypeAndArgs(function);
         }
         ExitScope();
@@ -123,7 +125,8 @@ public static class SemanticAnalyser
 
         foreach (TypeNamePair arg in function.Arguments)
         {
-            arg.ResolvedType = GetTypeInfo(arg.TypeName);
+            // TODO: simplify!!
+            arg.ResolvedType = GetTypeInfo(arg.ResolvedType.TypeName);
             // function arguments do not get declared in the Parser so we do it here
             currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
@@ -513,7 +516,7 @@ public static class SemanticAnalyser
                     instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
                     // check implicit cast from arg type → field type
                     instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
-                                                                               typeSymbolInfo.Parameters![i].TypeName);
+                                                                               typeSymbolInfo.Parameters![i].ResolvedType.TypeName);
 
                     instantiation.Arguments[i] = GenerateImplicitCast(instantiation.Arguments[i], typeSymbolInfo.Parameters![i].ResolvedType!);
                 }

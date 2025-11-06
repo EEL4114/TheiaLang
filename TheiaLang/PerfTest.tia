@@ -1,0 +1,57 @@
+struct Entity
+{
+    Transform transform;
+    float health;
+    float speed;
+    bool canFly;
+
+    bool IsAlive()
+    {
+        return health > 0;
+    }
+}
+
+struct Transform
+{
+    Vector3 position;
+    Vector3 rotation;
+    Vector3 scale;
+}
+
+struct Vector3
+{
+    f32 x;
+    f32 y;
+    f32 z;
+}
+
+float AliveBoost(Entity e) {
+    f32 x = e.transform.position.x;
+    f32 h = e.health;
+    if (h > 0)
+    {
+        x = x * 2;
+    }
+    return x + h;
+}
+
+float Sum([]f32 a, int n) {
+    float s = 0;
+    for (int i = 0; i < n; i+=1)
+    {
+        s += a[i];
+    }
+    return s;
+}
+
+float main()
+{
+    return AliveBoost(Entity{
+    Transform{
+        Vector3{1, 1, 1},
+        Vector3{1, 1, 1},
+        Vector3{1, 1, 1}},
+    70,
+    1.5,
+    false});
+}

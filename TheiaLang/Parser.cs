@@ -25,29 +25,29 @@ public class Parser(List<Token> tokens)
                                 "__th_allocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [new TypeNamePair("s64", "size") { ResolvedType = new TypeInfo("s64") }]
+                                [new TypeNamePair(new TypeInfo("s64"), "size")]
                             ));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_reallocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [   new TypeNamePair("@void", "alloc") { ResolvedType = new TypeInfo("@void") },
-                                    new TypeNamePair("s64", "newSize") { ResolvedType = new TypeInfo("s64")   }]
+                                [   new TypeNamePair(new TypeInfo("@void"), "alloc"),
+                                    new TypeNamePair(new TypeInfo("s64"), "newSize")]
                                 ));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_free",
                                 new TypeInfo("void", 0),
                                 SymbolKind.Function,
-                                [new TypeNamePair("@void", "ptr") { ResolvedType = new TypeInfo("@void") }
+                                [new TypeNamePair(new TypeInfo("@void"), "ptr")
                             ]));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_alloc",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [new TypeNamePair("s64", "size") { ResolvedType = new TypeInfo("s64") }]
+                                [new TypeNamePair(new TypeInfo("s64"), "size")]
                             ));
 
         List<INode> nodes = [];
@@ -87,9 +87,8 @@ public class Parser(List<Token> tokens)
                 if (!MatchTypeDefinition(out TypeInfo parameterInfo))
                     throw new Exception("Can't resolve type");
 
-                string parameterType = parameterInfo.TypeName;
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                TypeNamePair parameter = new TypeNamePair(parameterType, identifierToken.Lexeme);
+                TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
             } while (Match(TokenType.Punctuation_Comma));
@@ -150,9 +149,8 @@ public class Parser(List<Token> tokens)
                 }
                 else
                 {
-                    string fieldType = fieldInfo.TypeName;
                     Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                    TypeNamePair parameter = new TypeNamePair(fieldType, identifierToken.Lexeme);
+                    TypeNamePair parameter = new TypeNamePair(fieldInfo, identifierToken.Lexeme);
 
                     currentScope.Declare(new SymbolInfo(
                                             identifierToken.Lexeme,
@@ -163,7 +161,7 @@ public class Parser(List<Token> tokens)
 
                     fields.Add(parameter);
                     fieldNames.Add(parameter.Identifier);
-                    fieldTypes.Add(parameter.TypeName);
+                    fieldTypes.Add(fieldInfo.TypeName);
                 }
 
 
@@ -212,21 +210,20 @@ public class Parser(List<Token> tokens)
         {
             do
             {
-                if (!MatchTypeDefinition(out TypeInfo variantInfo))
+                if (!MatchTypeDefinition(out TypeInfo variantType))
                     throw new Exception($"Can't resolve type");
 
-                string variantType = variantInfo.TypeName;
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
                 TypeNamePair parameter = new TypeNamePair(variantType, identifierToken.Lexeme);
 
                 variants.Add(parameter);
                 variantNames.Add(identifierToken.Lexeme);
-                variantTypes.Add(variantType);
+                variantTypes.Add(variantType.TypeName);
 
                 currentScope.Declare(
                      new SymbolInfo(
                         identifierToken.Lexeme,
-                        variantInfo,
+                        variantType,
                         SymbolKind.Variable,
                         null
                      ));

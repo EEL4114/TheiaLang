@@ -4,6 +4,11 @@ struct Dynamic_Array
     @void Data;
     s64 Size;
 
+    void __index(u64 index)
+    {
+        return ($Data)[index];
+    }
+
 /*
     void Add(@void item)
     {

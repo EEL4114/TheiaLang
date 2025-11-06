@@ -23,9 +23,9 @@ public class SymbolInfo(string name,
         string s = $"{Kind} {Name}: {type}";
         if (Parameters != null && Parameters.Count > 0)
         {
-            s += $" (\n    {Parameters[0].TypeName} {Parameters[0].Identifier}";
+            s += $" (\n    {Parameters[0].ResolvedType.TypeName} {Parameters[0].Identifier}";
             for (int i = 1; i < Parameters!.Count; i++)
-                s += $",\n    {Parameters[i].TypeName} {Parameters[i].Identifier}";
+                s += $",\n    {Parameters[i].ResolvedType.TypeName} {Parameters[i].Identifier}";
             s += ")";
         }
         return s;

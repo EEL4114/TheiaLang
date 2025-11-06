@@ -111,7 +111,7 @@ else    // folder
 #region  Compilation
 
 int CompileFile(string programName,
-                bool insertLogs = true,
+                bool insertLogs = false,
                 bool timestamps = true,
                 bool writeLexerOutput = false)
 {

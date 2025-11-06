@@ -12,6 +12,12 @@ struct Vector2
     f32 y;
 }
 
+float Foo(Entity entity)
+{
+    float f = entity.transform.position.x;
+    return f * 2;
+}
+
 int main()
 {
     Entity entity = Entity{
@@ -174,16 +180,6 @@ int Abs(int value)
     }
     return value;
 }
-
-int Loopy(int value)
-{
-    for(int i = 0; i < value; i -= 3)
-    {
-        value += i;
-    }
-    return value;
-}
-
 
 bool n(bool b)
 {

@@ -45,7 +45,17 @@ static class Elaboration
                 AnalyseStruct(sd);
 
             if (node is FunctionDeclaration fn)
+            {
+                currentScope = fn.Scope!;
+                for (int j = 0; j < fn.Arguments.Count; j++)
+                {
+                    if(fn.Arguments[j].ResolvedType?.ArrayLength == 0)
+                        fn.Arguments[j] = SubstituteDynamicArray(fn.Arguments[j]);
+                }
+                ExitScope();
+
                 AnalyseFunctionBody(fn);
+            }
         }
 
         return (ProgramAST, GlobalScope);
@@ -85,19 +95,19 @@ static class Elaboration
 
     static void AnalyseStatements(List<IStatement> statements)
     {
-        // we could have dynamic arrays occur in the following places
-        // 1 - declared directly:   []s32
-        // 2 - as a pointee:        @[]s32
-        // 3 - as an array element: [4][]s32
-        // 4 - any combination of the above
+        /// we could have dynamic arrays occur in the following places
+        /// 1 - declared directly:   []s32
+        /// 2 - as a pointee:        @[]s32
+        /// 3 - as an array element: [4][]s32
+        /// 4 - any combination of the above
 
-        // for each dynamic array type, we need:
-        // - struct type
-        // - array read fn
-        // - array write fn
-        // for the struct type, we can use a void ptr
-        // but for array manipulation, we will need to monomorphise,
-        // so we will need to generate a proper TypeInfo too
+        /// for each dynamic array type, we need:
+        /// - struct type
+        /// - array read fn
+        /// - array write fn
+        /// for the struct type, we can use a void ptr
+        /// but for array manipulation, we will need to monomorphise,
+        /// so we will need to generate a proper TypeInfo too
 
         for (int i = 0; i < statements.Count; i++)
         {
@@ -110,59 +120,61 @@ static class Elaboration
                 LowerType(variable.ResolvedType);
             }
             */
-
             if (statement is VariableDeclaration varDeclaration
                  && varDeclaration.ResolvedType?.ArrayLength == 0)
             {
-                string typeName = varDeclaration.ResolvedType.ElementType!.TypeName;
-                string structName = $"{DYNAMIC_ARRAY_HOOK}_{typeName}";
-                // Log.Info(typeName);
-                // (1) check if that kind of array is already declared as struct
-                if (DynamicArrayCache.TryGetValue(typeName, out SymbolInfo? symbolInfo))
-                {
-                    statements[i] = new VariableDeclaration(structName,
-                                                            varDeclaration.Name,
-                                                            null);
-                    //currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
-                }
-                // (2) if no -> declare the struct
-                else
-                {
-                    Scope variableScope = currentScope;
-                    StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
-                    sd.Name = structName;
-                    sd.Scope = new Scope(structName, sd, GlobalScope);
-                    sd.Scope.DeclaringNode = sd;
-
-                    // TODO: make this work with inits once we have them for arrays
-                    VariableDeclaration vd = new VariableDeclaration(structName,
-                                                                     varDeclaration.Name,
-                                                                     null);
-
-                    vd.ResolvedType = sd.ResolvedType;
-                    SymbolInfo varInfo = new SymbolInfo(vd.Name,
-                                                        sd.ResolvedType,
-                                                        SymbolKind.Variable,
-                                                        null);
-                    //currentScope!.Symbols[vd.Name] = varInfo;
-                    DynamicArrayCache.Add(typeName, varInfo);
-                    statements[i] = vd;
-
-                    ProgramAST.Nodes.Add(sd);
-                    GlobalScope.Declare(new SymbolInfo(sd.Name,
-                                                       sd.ResolvedType,
-                                                       SymbolKind.Type,
-                                                       sd.Fields));
-
-                    currentScope = sd.Scope;
-                    foreach (TypeNamePair field in sd.Fields)
-                        currentScope.Declare(new SymbolInfo(field.Identifier,
-                                                            new TypeInfo(field.TypeName),
-                                                            SymbolKind.Variable,
-                                                            null));
-                    currentScope = variableScope;
-                }
+                TypeNamePair newVar = SubstituteDynamicArray(new TypeNamePair(varDeclaration.ResolvedType, varDeclaration.Name));
+                VariableDeclaration vd = new VariableDeclaration(newVar.ResolvedType.TypeName, newVar.Identifier, null);
+                vd.ResolvedType = newVar.ResolvedType;
+                statements[i] = vd;
             }
+        }
+    }
+
+    static TypeNamePair SubstituteDynamicArray(TypeNamePair sourceVar)
+    {
+        TypeInfo sourceType = sourceVar.ResolvedType;
+        string structName = $"{DYNAMIC_ARRAY_HOOK}_{sourceType.ElementType.TypeName}";
+        // Log.Info(typeName);
+        // (1) check if that kind of array is already declared as struct
+        if (DynamicArrayCache.TryGetValue(sourceType.TypeName, out SymbolInfo? symbolInfo))
+        {
+            return new TypeNamePair(symbolInfo.Type, sourceVar.Identifier);
+            //currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
+        }
+        // (2) if no -> declare the struct
+        else
+        {
+            Scope variableScope = currentScope;
+            StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
+            sd.Name = structName;
+            sd.Scope = new Scope(structName, sd, GlobalScope);
+            sd.Scope.DeclaringNode = sd;
+
+            // TODO: make this work with inits once we have them for arrays
+            TypeNamePair newVar = new TypeNamePair(sd.ResolvedType, sourceVar.Identifier);
+            newVar.ResolvedType = sd.ResolvedType;
+            SymbolInfo varInfo = new SymbolInfo(sourceVar.Identifier,
+                                                sd.ResolvedType,
+                                                SymbolKind.Variable,
+                                                null);
+            //currentScope!.Symbols[vd.Name] = varInfo;
+            DynamicArrayCache.Add(sourceType.TypeName, varInfo);
+
+            ProgramAST.Nodes.Add(sd);
+            GlobalScope.Declare(new SymbolInfo(sd.Name,
+                                               sd.ResolvedType,
+                                               SymbolKind.Type,
+                                               sd.Fields));
+
+            currentScope = sd.Scope;
+            foreach (TypeNamePair field in sd.Fields)
+                currentScope.Declare(new SymbolInfo(field.Identifier,
+                                                    new TypeInfo(field.ResolvedType.TypeName),
+                                                    SymbolKind.Variable,
+                                                    null));
+            currentScope = variableScope;
+            return newVar;
         }
     }
 
@@ -175,12 +187,13 @@ static class Elaboration
 
         List<TypeNamePair> fields = [];
         for (int i = 0; i < symbolInfo.Type.FieldNames!.Count; i++)
-            fields.Add(new TypeNamePair(symbolInfo.Type.FieldTypes![i],
+        {
+            currentScope.TryLookup(symbolInfo.Type.FieldTypes![i], out SymbolInfo? fieldInfo, out _);
+            fields.Add(new TypeNamePair(fieldInfo.Type,
                                         symbolInfo.Type.FieldNames[i]));
+        }
 
-        return new StructDeclaration(name,
-                                     fields,
-                                     []);
+        return new StructDeclaration(name, fields, []);
     }
 
     static void ExitScope()
