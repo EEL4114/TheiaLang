@@ -1,6 +1,7 @@
-namespace TheiaLang;
+using System.Collections.Generic;
 using static TheiaLang.CastOp;
 
+namespace TheiaLang;
 public static class SemanticAnalyser
 {
     static Scope currentScope = new Scope("");
@@ -419,7 +420,7 @@ public static class SemanticAnalyser
                 if (memberAccess.Target is IdentifierExpression targetEx
                  && targetEx.ResolvedType != null)
                 {
-                    if (!currentScope.TryFindChild(targetEx.ResolvedType.TypeName, out _, out Scope? targetScope))
+                    if (!currentScope.TryFindChild(targetEx.ResolvedType.TypeName, out Scope? targetScope))
                         throw new Exception($"Could not find {targetEx.ResolvedType.TypeName} in {currentScope.FullName}");
                     EnterScope(targetScope!);
                 }
@@ -432,7 +433,7 @@ public static class SemanticAnalyser
                 memberAccess.ResolvedType = memberAccess.Member.ResolvedType;
                 if (!IRGenerator.BuiltinTypes.Contains(memberAccess.Member.ResolvedType!.TypeName))
                 {
-                    if (!currentScope.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out _, out Scope? memberScope))
+                    if (!currentScope.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out Scope? memberScope))
                         throw new Exception($"Could not find {memberAccess.Member.ResolvedType!.TypeName} in {currentScope.FullName}");
 
                     memberAccess.Scope = memberScope;
@@ -514,7 +515,7 @@ public static class SemanticAnalyser
                 for (int i = 0; i < instantiation.Arguments.Count; i++)
                 {
                     instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
-                    // check implicit cast from arg type → field type
+                    // check implicit cast from arg type -> field type
                     instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
                                                                                typeSymbolInfo.Parameters![i].ResolvedType.TypeName);
 
@@ -531,8 +532,18 @@ public static class SemanticAnalyser
                 if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
                 if (indexExpression.Target.ResolvedType!.ArrayLength == null)
+                {
+                    if(currentScope.TryFindChild(indexExpression.Target.ResolvedType.TypeName, out Scope? definitionScope))
+                    {
+                        
+                        Log.Info(definitionScope.FullName.ToString());
+            
+                        Log.Info("DD");
+                    }
                     throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
-                indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
+                }
+                else
+                    indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
                 break;
             default: throw new Exception($"Unsupported expression: {expression.GetType()}");
         }
@@ -574,7 +585,10 @@ public static class SemanticAnalyser
     {
         if (typeOrName.StartsWith('@'))
             return new TypeInfo(typeOrName, 8, GetTypeInfo(typeOrName[1..]));
-        
+
+        if(typeOrName.StartsWith("__dynamic_array"))
+            return new TypeInfo(typeOrName, 24);
+
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
 
@@ -602,6 +616,8 @@ public static class SemanticAnalyser
         }
         else if (type.ArrayLength is uint length && type.ElementType != null)
             return length! * SizeOf(type.ElementType);
+        else
+            return type.Size;
 
         throw new Exception($"Cannot determine size of type '{type.TypeName}'");
     }
@@ -631,7 +647,7 @@ public static class SemanticAnalyser
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
 
-        if(!currentScope.TryFindChild(scope.Name, out _, out _) && currentScope.Parent != scope)
+        if(!currentScope.TryFindChild(scope.Name, out _) && currentScope.Parent != scope)
             Log.Error(14, $"Scope '{scope}' does not exist in '{currentScope}'");
 
         currentScope = scope;

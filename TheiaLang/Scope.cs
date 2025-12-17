@@ -138,25 +138,22 @@ public class Scope : INode
         }
     }
 
-    public bool TryFindChild(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
+    public bool TryFindChild(string name, out Scope? childScope)
     {
         if (Children.TryGetValue(name, out Scope? scope))
         {
-            symbolInfo = null;
-            Symbols.TryGetValue(name, out symbolInfo);
-            symbolScope = scope;
+            childScope = scope;
             return true;
         }
         else
         {
             if (Parent == null)
             {
-                symbolInfo = null;
-                symbolScope = null;
+                childScope = null;
                 return false;
             }
             else
-                return Parent.TryFindChild(name, out symbolInfo, out symbolScope);
+                return Parent.TryFindChild(name, out childScope);
         }
     }
 
@@ -185,6 +182,5 @@ public class Scope : INode
 
     public override string ToString() => string.IsNullOrEmpty(FullName) ? "Global" 
                                                                         : FullName;
-
     #endregion
 }

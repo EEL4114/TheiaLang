@@ -39,8 +39,9 @@ static class AstPrinter
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
 
+        w.WriteLine($"{Indent(indent + tab)}Functions:");
         foreach (FunctionDeclaration function in structDeclaration.Functions)
-            PrintFunction(function, w, indent + tab);
+            PrintFunction(function, w, indent + tab * 2);
     }
 
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)

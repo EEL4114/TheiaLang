@@ -163,8 +163,6 @@ public class Parser(List<Token> tokens)
                     fieldNames.Add(parameter.Identifier);
                     fieldTypes.Add(fieldInfo.TypeName);
                 }
-
-
             } while (Match(TokenType.Punctuation_Semicolon)
                  && !Check(TokenType.Punctuation_BraceR));
         }

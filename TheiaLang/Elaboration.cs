@@ -3,10 +3,11 @@ namespace TheiaLang;
 static class Elaboration
 {
     // the template we use for dynamic arrays
-    const string DYNAMIC_ARRAY_HOOK = "Dynamic_Array";
+    public const string DYNAMIC_ARRAY_HOOK = "__dynamic_array";
 
     static Dictionary<string, SymbolInfo> DynamicArrayCache = [];
     static SymbolInfo DynamicArrayTemplate;
+    static StructDeclaration DynamicArrayStruct;
     static Scope currentScope;
     static ProgramNode PreloadAST;
     static ProgramNode ProgramAST;
@@ -29,9 +30,13 @@ static class Elaboration
         PreloadAST = preloadAST;
         PreloadScope = preloadScope;
 
+        foreach(INode node in preloadAST.Nodes)
+            if(node is StructDeclaration structDeclaration && structDeclaration.Name == DYNAMIC_ARRAY_HOOK)
+                DynamicArrayStruct = structDeclaration;
+
         if (!preloadScope.TryLookup(DYNAMIC_ARRAY_HOOK, out DynamicArrayTemplate!, out _))
             throw new Exception($"Could not find template {DYNAMIC_ARRAY_HOOK}");
-
+        
         currentScope = GlobalScope;
 
         foreach (string functionName in builtinFunctions)
@@ -146,7 +151,7 @@ static class Elaboration
         else
         {
             Scope variableScope = currentScope;
-            StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, structName);
+            StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, DynamicArrayStruct, sourceType.ElementType);
             sd.Name = structName;
             sd.Scope = new Scope(structName, sd, GlobalScope);
             sd.Scope.DeclaringNode = sd;
@@ -180,10 +185,9 @@ static class Elaboration
 
     #region Helpers
 
-    static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo, string name = "")
+    static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo, StructDeclaration originStruct, TypeInfo elementType)
     {
-        if (name == "")
-            name = symbolInfo.Name;
+        string name = $"{DYNAMIC_ARRAY_HOOK}_{elementType.TypeName}";
 
         List<TypeNamePair> fields = [];
         for (int i = 0; i < symbolInfo.Type.FieldNames!.Count; i++)
