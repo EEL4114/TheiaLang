@@ -1,13 +1,14 @@
-using System.Collections.Generic;
 using static TheiaLang.CastOp;
 
 namespace TheiaLang;
 public static class SemanticAnalyser
 {
     static Scope currentScope = new Scope("");
+    static Scope GlobalScope;
     public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         currentScope = globalScope;
+        GlobalScope = currentScope;
 
         // Struct types are already fully resolved in the parser,
         // however, their Fields still aren't as they may be structs themselves
@@ -111,7 +112,8 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            function.Arguments.Insert(0, new TypeNamePair(structDeclaration.ResolvedType, "this"));
+            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", 8, structDeclaration.ResolvedType);
+            function.Arguments.Insert(0, new TypeNamePair(ptrType, "this"));
             ResolveFunctionTypeAndArgs(function);
         }
         ExitScope();
@@ -183,7 +185,7 @@ public static class SemanticAnalyser
                 {
                     variable.Init = AnalyseExpression(variable.Init);
                     if (variable.Init.ResolvedType == null)
-                        Log.Error(23, variable.Name);
+                        Log.Error(23, $"{variable.Name} gets initialized with an expression that didn't resolve to a type correctly");
                     variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType!, variable.ResolvedType.TypeName);
 
                     variable.Init = GenerateImplicitCast(variable.Init, variable.ResolvedType);
@@ -317,9 +319,8 @@ public static class SemanticAnalyser
                     {
                         Log.Info("ALLOC");
                     }
-                    else if (IRGenerator.BuiltinTypes.Contains(id.Name))    // type cast; for now just primitives; this for now excludes ptrs!!
+                    else if (IRGenerator.BuiltinTypes.Contains(id.Name)|| id.Name.StartsWith('@'))    // type cast; for now just primitives; this for now excludes ptrs!!
                     {
-
                         for (int i = 0; i < call.Arguments.Count; i++)
                         {
                             IExpression argument = AnalyseExpression(call.Arguments[i]);
@@ -329,30 +330,55 @@ public static class SemanticAnalyser
                         {
                             int targetTypeIndex = IRGenerator.BuiltinTypes.IndexOf(id.Name);
                             int sourceTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.Arguments[0].ResolvedType!.TypeName);
-                            TypeInfo typeInfo = GetTypeInfo(id.Name);
 
                             if (targetTypeIndex < 0 || sourceTypeIndex < 0)
-                                throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
+                            {
+                                if(targetTypeIndex == IRGenerator.BuiltinTypeIndex("s64") && call.Arguments[0].ResolvedType!.TypeName.StartsWith('@') )
+                                    sourceTypeIndex = 13;
+                                else
+                                    throw new Exception($"Invalid cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
+                            }                            
 
                             CastOp? op = TypeCast[sourceTypeIndex, targetTypeIndex];
                             if (op == null)
-                                throw new Exception($"Invalit cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
+                                throw new Exception($"Invalid cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
                             if (op == NoOp)
+                            {    
                                 expression = call.Arguments[0];
+                                expression.ResolvedType = GetTypeInfo(id.Name);
+                            }
                             else
                             {
                                 expression = new CastExpression((CastOp)op, call.Arguments[0]);
-                                expression.ResolvedType = typeInfo;
+                                expression.ResolvedType = GetTypeInfo(id.Name);
                             }
                         }
+                        else if(id.Name.StartsWith('@'))
+                        {
+                            if(call.Arguments[0].ResolvedType!.Pointee != null)
+                            {   
+                                expression = call.Arguments[0];
+                                expression.ResolvedType = GetTypeInfo(id.Name);
+                            }
+                            else if(call.Arguments[0].ResolvedType!.TypeName == "s64")
+                            {
+                                expression = new CastExpression(IntToPtr, call.Arguments[0]);
+                                expression.ResolvedType = GetTypeInfo(id.Name);
+                            }
+                            else
+                                Log.Error(24, $"Invalid tpye cast: {call.Target.ResolvedType.TypeName} -> {id.Name}");
+                        }
                         else
+                        {
                             call.ResolvedType = GetTypeInfo(id.Name);
+                            call.Scope = GlobalScope;
+                        }
                     }
                     else
                     {
                         if (id.Scope != null)
                         {
-                            if (id.Scope.TryLookup(id.Name, out SymbolInfo? sInfo, out _)
+                            if (id.Scope.TryLookup(id.Name, out SymbolInfo? sInfo, out Scope? defScope)
                              && sInfo!.Kind == SymbolKind.Function)
                             {
                                 if (call.Arguments.Count != sInfo.Parameters.Count)
@@ -375,11 +401,12 @@ public static class SemanticAnalyser
                                     call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], sInfo.Parameters[i].ResolvedType!);
                                 }
                                 call.ResolvedType = sInfo.Type;
+                                call.Scope = defScope;
                             }
                         }
                         else
                         {
-                            if (!currentScope.TryLookup(id.Name, out SymbolInfo? info, out _)
+                            if (!currentScope.TryLookup(id.Name, out SymbolInfo? info, out Scope? defScope)
                                 || info!.Kind != SymbolKind.Function)
                                 throw new Exception($"Unknown function '{id.Name}'");
 
@@ -401,13 +428,26 @@ public static class SemanticAnalyser
                             }
 
                             call.ResolvedType = info.Type;
+                            call.Scope = defScope;
                         }
                     }
                 }
-                else if (call.Target is MemberAccessExpression memberAccess)
+                else if (call.Target is MemberAccessExpression memberAccess)    // convert to method call
                 {
-                    Log.Info("XXXXXXXXXX");
-                    Log.Info(memberAccess.ToString());
+                    memberAccess.Target = AnalyseExpression(memberAccess.Target);
+                    currentScope.TryFindChild(memberAccess.Target.ResolvedType.TypeName, out Scope? defScope);
+                    
+                    Scope scope = currentScope;
+                    EnterScope(defScope!);
+                    memberAccess.Member = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
+                    currentScope = scope;
+
+                    IExpression addressOfExpression = AnalyseExpression(new UnaryExpression(UnaryOperator.AddressOf, memberAccess.Target));
+
+                    call.Arguments.Insert(0, addressOfExpression);
+                    call.Target = memberAccess.Member;
+                    call.ResolvedType = memberAccess.Member.ResolvedType;
+                    call.Scope = defScope;
                 }
                 else
                 {
@@ -527,7 +567,7 @@ public static class SemanticAnalyser
                 indexExpression.Target = AnalyseExpression(indexExpression.Target);
                 indexExpression.Index = AnalyseExpression(indexExpression.Index);
                 // TODO this is kinda unsafe
-                indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s32");
+                //indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s32");
 
                 if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
@@ -535,15 +575,25 @@ public static class SemanticAnalyser
                 {
                     if(currentScope.TryFindChild(indexExpression.Target.ResolvedType.TypeName, out Scope? definitionScope))
                     {
-                        
-                        Log.Info(definitionScope.FullName.ToString());
-            
-                        Log.Info("DD");
+                        if(definitionScope.Children.ContainsKey(Elaboration.DYNAMIC_ARRAY_INDEX))
+                        {
+                            IExpression ex = new CallExpression(
+                                                new MemberAccessExpression(
+                                                    indexExpression.Target, 
+                                                    new IdentifierExpression($"{Elaboration.DYNAMIC_ARRAY_INDEX}")), 
+                                                [indexExpression.Index],
+                                                definitionScope);
+                            expression = AnalyseExpression(ex);
+                        }        
                     }
-                    throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
+                    else
+                        throw new Exception($"Expected array type, got: {indexExpression.Target.ResolvedType.TypeName}");
                 }
                 else
                     indexExpression.ResolvedType = indexExpression.Target.ResolvedType.ElementType;
+                break;
+            case CastExpression cast:
+                    
                 break;
             default: throw new Exception($"Unsupported expression: {expression.GetType()}");
         }
@@ -586,7 +636,7 @@ public static class SemanticAnalyser
         if (typeOrName.StartsWith('@'))
             return new TypeInfo(typeOrName, 8, GetTypeInfo(typeOrName[1..]));
 
-        if(typeOrName.StartsWith("__dynamic_array"))
+        if(typeOrName.StartsWith(Elaboration.DYNAMIC_ARRAY_PREFIX))
             return new TypeInfo(typeOrName, 24);
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
@@ -674,7 +724,7 @@ public static class SemanticAnalyser
                 CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(sourceType),
                                       IRGenerator.BuiltinTypeIndex(targetType)];
                 if (op == null)
-                    throw new Exception($"Invalit cast: {sourceType} -> {targetType}");
+                    throw new Exception($"Invalid cast: {sourceType} -> {targetType}");
                 expression = new CastExpression((CastOp)op, expression);
                 expression.ResolvedType = target;
             }
@@ -689,20 +739,20 @@ public static class SemanticAnalyser
     static readonly bool[,] LosslessTypeInterop = new bool[14, 14]
     {
         //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true},
-        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  true},
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
-        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
-        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  true},
-        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  true},
-        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  true},
-        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  true},
-        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   true},
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  true},
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  true},
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  true},
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   true},
-        /*void  */  {   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true},
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false},
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  false},
+        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false},
+        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false},
+        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false},
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false},
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false},
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false},
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false},
+        /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true },
     };
 
     static readonly bool[,] ScalarTypeInterop = new bool[13, 13]
@@ -741,22 +791,23 @@ public static class SemanticAnalyser
         /*f128  */  {   "",     "f128", "",      "",     "",     "",     "",     "",    "f128", "",     "",     "",     "f128" },
     };
 
-    static readonly CastOp?[,] TypeCast = new CastOp?[13, 13]
+    static readonly CastOp?[,] TypeCast = new CastOp?[14, 14]
     {
-        //from   \  to   bool        int         s8          s16         s32         s64         s128        s256        float       f16         f32         f64         f128
-        /*bool  */  {   NoOp,       null,       BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  null,       BoolToFP,   BoolToFP,   BoolToFP,   BoolToFP},
-        /*int   */  {   null,       NoOp,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null    },
-        /*s8    */  {   IntToBool,  null,       NoOp,       SExt,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*s16   */  {   IntToBool,  null,       Trunc,      NoOp,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*s32   */  {   IntToBool,  null,       Trunc,      Trunc,      NoOp,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*s64   */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      NoOp,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*s128  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*s256  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP  },
-        /*float */  {   null,       null,       null,       null,       null,       null,       null,       null,       NoOp,       null,       null,       null,       null    },
-        /*f16   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       NoOp,       FPExt,      FPExt,      FPExt,  },
-        /*f32   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    NoOp,       FPExt,      FPExt,  },
-        /*f64   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    NoOp,       FPExt,  },
-        /*f128  */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    FPTrunc,    NoOp    },
+        //from   \  to   bool        int         s8          s16         s32         s64         s128        s256        float       f16         f32         f64         f128       @void
+        /*bool  */  {   NoOp,       null,       BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  null,       BoolToFP,   BoolToFP,   BoolToFP,   BoolToFP,   null},
+        /*int   */  {   null,       NoOp,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null},
+        /*s8    */  {   IntToBool,  null,       NoOp,       SExt,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
+        /*s16   */  {   IntToBool,  null,       Trunc,      NoOp,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
+        /*s32   */  {   IntToBool,  null,       Trunc,      Trunc,      NoOp,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
+        /*s64   */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      NoOp,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     IntToPtr},
+        /*s128  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
+        /*s256  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
+        /*float */  {   null,       null,       null,       null,       null,       null,       null,       null,       NoOp,       null,       null,       null,       null,       null},
+        /*f16   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       NoOp,       FPExt,      FPExt,      FPExt,      null},
+        /*f32   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    NoOp,       FPExt,      FPExt,      null},
+        /*f64   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    NoOp,       FPExt,      null},
+        /*f128  */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    FPTrunc,    NoOp,       null},
+        /*@void */  {   null,       null,       null,       null,       null,       PtrToInt,   null,       null,       null,       null,       null,       null,       null,       NoOp},
     };
 
     static string GetBinaryOpReturnType(BinaryOperator binaryOperator, string typeA, string typeB)

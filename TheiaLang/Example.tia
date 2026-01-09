@@ -29,7 +29,7 @@ int main()
         1.5,
         false};
 
-    // bool entityAlive = entity.IsAlive();
+    bool entityAlive = entity.IsAlive();
     f32 entityX = entity.transform.position.x;
 
     f32 fx = 2.5;
@@ -55,7 +55,7 @@ int main()
     [4]@f32 arrOfFloatPtrs;     // than how it'd be with C-stlye syntax
 
     @void v = AllocB(4);
-    v = ReallocB(v, 8);       // grow the allocation 'v' to 8 B
+    v = ReallocB(v, 8);         // grow the allocation 'v' to 8 B
 
 
     Free(v);
@@ -222,4 +222,6 @@ struct Vector3
     f32 x;
     f32 y;
     f32 z;
+
+    //const Vector3 Zero = Vector3{0, 0, 0};
 }

@@ -25,9 +25,10 @@ struct Vector3
     f32 z;
 }
 
-float AliveBoost(Entity e) {
-    f32 x = e.transform.position.x;
-    f32 h = e.health;
+float AliveBoost(Entity entity) {
+    f32 x = entity.transform.position.x;
+    f32 h = entity.health;
+    bool b = entity.IsAlive();
     if (h > 0)
     {
         x = x * 2;
@@ -37,7 +38,7 @@ float AliveBoost(Entity e) {
 
 float Sum([]f32 a, int n) {
     float s = 0;
-    for (int i = 0; i < n; i+=1)
+    for (int i = 0; i < n; i+=1)    //i++
     {
         s += a[i];
     }

@@ -17,6 +17,7 @@ public interface IExpression : INode
 {
     TypeInfo? ResolvedType { get; set; }
     bool Assignable { get; }
+    // (long row, long column) Position { get; set;}
 }
 
 #region  Operators
@@ -78,9 +79,21 @@ public class FunctionDeclaration : IDeclaration
 
         ResolvedType = new TypeInfo(TypeName);
     }
+
+    public override string ToString()
+    {
+        string s = $"{TypeName} {Name} (";
+
+        if (Arguments != null)
+            for (int i = 0; i < Arguments.Count; i++)
+                s += $"{Arguments[i].ResolvedType.TypeName} {Arguments[i].Identifier}";
+
+        s += ")";
+        return s;
+    }
 }
 
-public class StructDeclaration : IDeclaration
+public struct StructDeclaration : IDeclaration
 {
     public Scope? Scope;
     public string Name { get; set; }
@@ -111,6 +124,14 @@ public class StructDeclaration : IDeclaration
                 s += $"    {Fields[i]}\n";
         }
         s += ")";
+        if(Functions != null)
+        {
+            s += $"{{\n    {Functions[0]}\n";
+            for (int i = 1; i < Functions.Count; i++)
+                s += $"    {Functions[i]}\n";
+        }
+        s+="}";
+
         return s;
     }
 }
@@ -245,6 +266,7 @@ public sealed record CallExpression(
     public IExpression Target { get; set; } = Target;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+    public Scope? Scope { get; set; } = Scope;
 }
 
 public sealed record CastExpression(

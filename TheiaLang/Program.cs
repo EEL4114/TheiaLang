@@ -47,6 +47,8 @@ Parser preloadParser = new Parser(preloadTokens);
 (ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
 using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}__preload__.ast");
 AstPrinter.Print(preloadAST, writer, false);
+using StreamWriter scopeWriter = new StreamWriter($"{DEBUG_PATH}__preload__.scope");
+ScopePrinter.Print("__preload", preloadScope, scopeWriter);
 
 preloadTimer.Stop();
 
@@ -151,6 +153,9 @@ int CompileFile(string programName,
 
     using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}{programName}.ast");
     AstPrinter.Print(ast, writer, timestamps);
+
+    using StreamWriter sw2 = new StreamWriter($"{DEBUG_PATH}{programName}.scope");
+    ScopePrinter.Print(programName, globalScope, sw2);
 
     printTimer.Stop();
     compileTimer.Start();

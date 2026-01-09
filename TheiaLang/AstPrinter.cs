@@ -54,7 +54,7 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{typeNamePair.ResolvedType.TypeName} {typeNamePair.Identifier}");
+        w.WriteLine($"{Indent(indent)}{TryType(typeNamePair.ResolvedType)}{typeNamePair.Identifier}");
     }
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
@@ -127,7 +127,7 @@ static class AstPrinter
                 w.WriteLine();
                 break;
             case CompoundAssignmentStatement compound:
-                w.WriteLine($"{Indent(indent)}Compound Assignment: {compound.Op}");
+                w.WriteLine($"{Indent(indent)}CompoundAssignment: {compound.Op}");
                 PrintExpression(compound.Target, w, indent + tab);
                 PrintExpression(compound.Expression, w, indent + tab);
                 break;

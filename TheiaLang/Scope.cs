@@ -90,13 +90,15 @@ public class Scope : INode
         Name = name;
         DeclaringNode = declaringNode;
         Parent = parent;
-        if (parent == null)
+        if (Parent == null)
             return;
 
-        if (!parent.Children.ContainsKey(name))
-            parent.Children.Add(name, this);
+        if (!Parent.Children.ContainsKey(name))
+            Parent.Children.Add(name, this);   
         else
             Log.Error(7, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
+
+        //Log.Info($"Declare Scope '{name}' in parent scope '{Parent.FullName}'.\n\tAdded to parent children: {Parent.Children.ContainsKey(name)}");
     }
 
     #region Helpers
@@ -118,9 +120,9 @@ public class Scope : INode
 
     // TODO it may be useful to have a version of this function that always returns or errors
     // can we remove symbolScope as return value here?
-    public bool TryLookup(string name, out SymbolInfo? symbolInfo, out Scope? symbolScope)
+    public bool TryLookup(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
-        if (Symbols.TryGetValue(name, out symbolInfo))
+        if (Symbols.TryGetValue(identifier, out symbolInfo))
         {
             symbolScope = this;
             return true;
@@ -134,7 +136,7 @@ public class Scope : INode
                 return false;
             }
             else
-                return Parent.TryLookup(name, out symbolInfo, out symbolScope);
+                return Parent.TryLookup(identifier, out symbolInfo, out symbolScope);
         }
     }
 

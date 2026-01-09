@@ -1,13 +1,13 @@
 struct __dynamic_array  // 24 B
 {
     s64 Length;         // 8 B
-    @void Data;         // 8 B
+    @f32 Data;          // 8 B
     s64 Size;           // 8 B
 
-    void __index(u64 index)
-    {
-        return ($Data)[index];
-    }
+    //f32 __index(s64 index)
+    //{
+    //    return $(@f32(@void(s64(Data) + TypeSize(f32) * index)));
+    //}
 
 /*
     void Add(@void item)
@@ -25,12 +25,9 @@ struct __dynamic_array  // 24 B
         return;
     }
 
-*/
-
-/*
     void RemoveAtUnordered(s64 index, s32 elementSize)
     {
-        
+        return;s
     }
 */
 }
@@ -55,9 +52,4 @@ void Free(@void ptr)
 void TypeSize()
 {
     return;
-}
-
-struct F32
-{
-    
 }

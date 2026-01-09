@@ -31,6 +31,7 @@ public static class IRGenerator
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
+    static Dictionary<(string, Scope), string> MethodsToFunctions = [];
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;
@@ -50,6 +51,10 @@ public static class IRGenerator
 
         string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH);
         StringBuilder sb = new StringBuilder();
+
+        sb.AppendLine($"; Creaded at: {DateTime.Now}'");
+        sb.AppendLine("; =============================================================================");
+
         sb.Append(intrinsicsIR);
 
         AutoLog = autoLog;
@@ -83,6 +88,20 @@ public static class IRGenerator
         sb.AppendLine();
 
         foreach (INode node in program.Nodes)
+        {
+            if(node is not StructDeclaration sd)
+                continue;
+                
+            foreach (FunctionDeclaration function in sd.Functions)
+            {
+                // create a synthetic FunctionDeclaration with a mangled name
+                string mangle = $"{function.Scope!.FullName}";
+                MethodsToFunctions.Add((function.Name, function.Scope!.Parent!), mangle);
+                function.Name = mangle;
+            }
+        }
+
+        foreach (INode node in program.Nodes)
             switch (node)
             {
                 case FunctionDeclaration fn:
@@ -94,12 +113,8 @@ public static class IRGenerator
                     // for each method, emit it as a real LLVM function
                     EnterScope(sd.Name);
                     foreach (FunctionDeclaration function in sd.Functions)
-                    {
-                        // create a synthetic FunctionDeclaration with a mangled name
-                        string mangle = $"{function.Scope!.FullName}";
-                        function.Name = mangle;
                         EmitFunction(function, sb);
-                    }
+                    
                     ExitScope();
                     break;
             }
@@ -493,9 +508,11 @@ public static class IRGenerator
                 string LLVMType = TypeToLLVM(sd.Fields[index].ResolvedType!)!;
 
                 string tmp = $"%{NewTempVar()}";
+                code.AppendLine($"  {tmp} = load %{sd.ResolvedType.TypeName}, ptr %this");
+                string tmp2 =  $"%{NewTempVar()}";
                 code.AppendLine(
-                    $"  {tmp} = extractvalue %{sd.ResolvedType.TypeName} %this, {index}");
-                return (code, tmp);
+                    $"  {tmp2} = extractvalue %{sd.ResolvedType.TypeName} {tmp}, {index}");
+                return (code, tmp2);
             }
         }
 
@@ -509,7 +526,14 @@ public static class IRGenerator
         code.Append(cl);
         code.Append(cr);
 
-        TypeInfo typeInfo = binaryExpression.Left.ResolvedType!;
+        TypeInfo typeInfo;
+
+        if(binaryExpression.ResolvedType == binaryExpression.Right.ResolvedType!
+         || binaryExpression.ResolvedType == binaryExpression.Left.ResolvedType!)
+            typeInfo = binaryExpression.ResolvedType;
+        else
+            typeInfo = binaryExpression.Left.ResolvedType!;
+
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
@@ -590,8 +614,8 @@ public static class IRGenerator
         if (call.Target is IdentifierExpression id)
         {
             string calleeName = id.Name;
-            if (!currentScope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out _))
-                throw new Exception($"Undefined identifier '{calleeName}' in {currentScope.FullName}");
+
+            call.Scope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out Scope? defScope);
 
             if (calleeInfo!.Kind != SymbolKind.Function)
                 throw new Exception($"'{calleeName}' is not a function in scope '{currentScope.FullName}'");
@@ -614,6 +638,7 @@ public static class IRGenerator
 
                 // infer the LLVM type of the argument
                 TypeInfo actualType = argument.ResolvedType!;
+
                 string actualLLVMType = TypeToLLVM(actualType)!;
                 string expectedLLVMType = TypeToLLVM(calleeInfo.Parameters[i].ResolvedType!)!;
 
@@ -627,10 +652,20 @@ public static class IRGenerator
 
             string tmp = $"%{NewTempVar()}";
 
+            calleeName = calleeInfo.Name;
+
+
+            if(MethodsToFunctions.ContainsKey((calleeName, defScope!)))
+            {
+                Log.Info(calleeName + " " + defScope.FullName);
+                
+                calleeName = MethodsToFunctions[(calleeName, defScope!)];
+            }
+
             if (retTy != "void")
-                code.AppendLine($"  {tmp} = call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+                code.AppendLine($"  {tmp} = call {retTy} @{calleeName}({string.Join(", ", argumentList)})");
             else
-                code.AppendLine($"  call {retTy} @{calleeInfo.Name}({string.Join(", ", argumentList)})");
+                code.AppendLine($"  call {retTy} @{calleeName}({string.Join(", ", argumentList)})");
             return (code, tmp);
         }
 
@@ -662,7 +697,7 @@ public static class IRGenerator
             case CastOp.SIToFP:     code.AppendLine($"  {tmp} = sitofp {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
             case CastOp.FPToSI:     code.AppendLine($"  {tmp} = fptosi {sourceLLVMType} {argReg} to {targetLLVMType}"); break;
 
-            // bool specials (bool lowers to i1)
+            // bools
             case CastOp.BoolToInt:  code.AppendLine($"  {tmp} = zext i1 {argReg} to {targetLLVMType}"); break;
             case CastOp.IntToBool:  code.AppendLine($"  {tmp} = icmp ne {sourceLLVMType} {argReg}, 0"); break;
             case CastOp.BoolToFP:   code.AppendLine($"  {tmp} = uitofp i1 {argReg} to {targetLLVMType}"); break;

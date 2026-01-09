@@ -3,11 +3,10 @@ namespace TheiaLang;
 static class Elaboration
 {
     // the template we use for dynamic arrays
-    public const string DYNAMIC_ARRAY_HOOK = "__dynamic_array";
+    public const string DYNAMIC_ARRAY_PREFIX = "__dynamic_array";
+    public const string DYNAMIC_ARRAY_INDEX = "__index";
 
     static Dictionary<string, SymbolInfo> DynamicArrayCache = [];
-    static SymbolInfo DynamicArrayTemplate;
-    static StructDeclaration DynamicArrayStruct;
     static Scope currentScope;
     static ProgramNode PreloadAST;
     static ProgramNode ProgramAST;
@@ -29,13 +28,6 @@ static class Elaboration
         ProgramAST = programAST;
         PreloadAST = preloadAST;
         PreloadScope = preloadScope;
-
-        foreach(INode node in preloadAST.Nodes)
-            if(node is StructDeclaration structDeclaration && structDeclaration.Name == DYNAMIC_ARRAY_HOOK)
-                DynamicArrayStruct = structDeclaration;
-
-        if (!preloadScope.TryLookup(DYNAMIC_ARRAY_HOOK, out DynamicArrayTemplate!, out _))
-            throw new Exception($"Could not find template {DYNAMIC_ARRAY_HOOK}");
         
         currentScope = GlobalScope;
 
@@ -139,7 +131,7 @@ static class Elaboration
     static TypeNamePair SubstituteDynamicArray(TypeNamePair sourceVar)
     {
         TypeInfo sourceType = sourceVar.ResolvedType;
-        string structName = $"{DYNAMIC_ARRAY_HOOK}_{sourceType.ElementType.TypeName}";
+        string structName = $"{DYNAMIC_ARRAY_PREFIX}_{sourceType.ElementType.TypeName}";
         // Log.Info(typeName);
         // (1) check if that kind of array is already declared as struct
         if (DynamicArrayCache.TryGetValue(sourceType.TypeName, out SymbolInfo? symbolInfo))
@@ -150,11 +142,7 @@ static class Elaboration
         // (2) if no -> declare the struct
         else
         {
-            Scope variableScope = currentScope;
-            StructDeclaration sd = CreateStructFromSymbol(DynamicArrayTemplate, DynamicArrayStruct, sourceType.ElementType);
-            sd.Name = structName;
-            sd.Scope = new Scope(structName, sd, GlobalScope);
-            sd.Scope.DeclaringNode = sd;
+            StructDeclaration sd = CreateDynamicArrayStruct(structName, sourceType.ElementType);
 
             // TODO: make this work with inits once we have them for arrays
             TypeNamePair newVar = new TypeNamePair(sd.ResolvedType, sourceVar.Identifier);
@@ -172,32 +160,73 @@ static class Elaboration
                                                SymbolKind.Type,
                                                sd.Fields));
 
-            currentScope = sd.Scope;
-            foreach (TypeNamePair field in sd.Fields)
-                currentScope.Declare(new SymbolInfo(field.Identifier,
-                                                    new TypeInfo(field.ResolvedType.TypeName),
-                                                    SymbolKind.Variable,
-                                                    null));
-            currentScope = variableScope;
             return newVar;
         }
     }
 
     #region Helpers
 
-    static StructDeclaration CreateStructFromSymbol(SymbolInfo symbolInfo, StructDeclaration originStruct, TypeInfo elementType)
+    static StructDeclaration CreateDynamicArrayStruct(string name, TypeInfo elementType)
     {
-        string name = $"{DYNAMIC_ARRAY_HOOK}_{elementType.TypeName}";
+        Scope scope = currentScope;
+        currentScope = GlobalScope;
+        EnterNewScope(name);
 
-        List<TypeNamePair> fields = [];
-        for (int i = 0; i < symbolInfo.Type.FieldNames!.Count; i++)
-        {
-            currentScope.TryLookup(symbolInfo.Type.FieldTypes![i], out SymbolInfo? fieldInfo, out _);
-            fields.Add(new TypeNamePair(fieldInfo.Type,
-                                        symbolInfo.Type.FieldNames[i]));
-        }
+        List<TypeNamePair> fields = [
+            new TypeNamePair(new TypeInfo("s64", 8), "Length"),
+            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", 8, new TypeInfo("void", 0)), "Data"),
+            new TypeNamePair(new TypeInfo("s64", 8), "Size"),
+        ];
 
-        return new StructDeclaration(name, fields, []);
+        List<FunctionDeclaration> functions = [
+            new FunctionDeclaration(
+                typeName:   elementType.TypeName, 
+                name:       DYNAMIC_ARRAY_INDEX,
+                paramaters: [new TypeNamePair(new TypeInfo("s64", 8), "index")],
+                statements: [new ReturnStatement(new UnaryExpression(UnaryOperator.Dereference,
+                                new CallExpression(new IdentifierExpression($"@{elementType.TypeName}"),[
+                                    new CallExpression(new IdentifierExpression($"@void"),[
+                                        new BinaryExpression(new CallExpression(new IdentifierExpression("s64"),[
+                                            new IdentifierExpression("Data")
+                                        ]),
+                                        BinaryOperator.Add,
+                                        new BinaryExpression(new CallExpression(new IdentifierExpression("TypeSize"),[
+                                            new IdentifierExpression($"@{elementType.TypeName}")
+                                        ]),
+                                        BinaryOperator.Multiply,
+                                        new IdentifierExpression("index")))
+                                    ])
+                                ]))
+            )])];
+
+        functions[0].Scope = new Scope(functions[0].Name, functions[0], currentScope);
+
+        foreach (TypeNamePair field in fields)
+            currentScope.Declare(new SymbolInfo(field.Identifier,
+                                                new TypeInfo(field.ResolvedType.TypeName),
+                                                SymbolKind.Variable,
+                                                null));
+
+        foreach(FunctionDeclaration function in functions)
+            currentScope.Declare(new SymbolInfo(
+                        function.Name,
+                        function.ResolvedType,
+                        SymbolKind.Function,
+                        function.Arguments));
+
+        StructDeclaration sd = new StructDeclaration(name, fields, functions);
+        sd.Scope = currentScope;
+        currentScope.DeclaringNode = sd;
+        
+        currentScope = scope;
+
+        return sd;
+    }
+
+    static Scope EnterNewScope(string name, INode? declaringNode = null)
+    {
+        currentScope = new Scope(name, declaringNode, currentScope);
+        return currentScope;
     }
 
     static void ExitScope()
@@ -206,5 +235,4 @@ static class Elaboration
     }
 
     #endregion
-
 }
