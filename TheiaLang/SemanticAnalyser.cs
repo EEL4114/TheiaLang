@@ -69,7 +69,10 @@ public static class SemanticAnalyser
                 throw new Exception($"Could not find struct field '{field.Identifier}' in {currentScope.FullName}");
 #endif
             if (fieldInfo.Type != null)
+            {
+                // Log.Info(fieldInfo.Type.TypeName);   
                 fieldInfo.Type = UpdateTypeInfo(fieldInfo.Type);
+            }
             else
                 fieldInfo.Type = ResolveType(field.ResolvedType.TypeName);
             size += fieldInfo.Type.Size;
@@ -113,7 +116,7 @@ public static class SemanticAnalyser
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
             TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", 8, structDeclaration.ResolvedType);
-            function.Arguments.Insert(0, new TypeNamePair(ptrType, "this"));
+            function.Parameters.Insert(0, new TypeNamePair(ptrType, "this"));
             ResolveFunctionTypeAndArgs(function);
         }
         ExitScope();
@@ -126,12 +129,13 @@ public static class SemanticAnalyser
         functionInfo!.Type = GetTypeInfo(function.ResolvedType.TypeName);
         function.ResolvedType = functionInfo.Type;
 
-        foreach (TypeNamePair arg in function.Arguments)
+        foreach (TypeNamePair arg in function.Parameters)
         {
             // TODO: simplify!!
             arg.ResolvedType = GetTypeInfo(arg.ResolvedType.TypeName);
-            // function arguments do not get declared in the Parser so we do it here
-            currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
+
+            if(!currentScope.TryLookup(arg.Identifier, out _, out _))
+                currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
         ExitScope();

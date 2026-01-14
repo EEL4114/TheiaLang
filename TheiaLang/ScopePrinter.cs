@@ -19,7 +19,7 @@ static class ScopePrinter
         {
             w.WriteLine($"{Indent(indent + 1)}Symbols:");
             foreach (KeyValuePair<string, SymbolInfo> symbol in scope.Symbols)
-                w.WriteLine($"{Indent(indent + 2)}{symbol.Key}");
+                w.WriteLine($"{Indent(indent + 2)}{symbol.Value.Type.TypeName} {symbol.Key}");
         }
 
         if (scope.Children != null)

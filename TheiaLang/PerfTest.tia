@@ -47,6 +47,9 @@ float Sum([]f32 a, int n) {
 
 float main()
 {
+    [][]f32 dynamicArrayOfDynamicArrays;
+    @[]f32 ptrToDynamicArray;
+    
     return AliveBoost(Entity{
     Transform{
         Vector3{1, 1, 1},
@@ -55,4 +58,16 @@ float main()
     70,
     1.5,
     false});
+}
+
+struct __better_dynamic_array_f32
+{
+    s64 Length;
+    @[]f32 Data;
+    s64 Size;
+
+    f32 __index(s64 index)
+    {
+        return ($Data)[index];
+    }
 }

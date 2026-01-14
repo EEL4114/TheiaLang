@@ -4,33 +4,26 @@ struct __dynamic_array  // 24 B
     @f32 Data;          // 8 B
     s64 Size;           // 8 B
 
-    //f32 __index(s64 index)
-    //{
-    //    return $(@f32(@void(s64(Data) + TypeSize(f32) * index)));
-    //}
-
-/*
-    void Add(@void item)
-    {
-        return;
-    }
-
-    void Insert(@void item, s64 index)
-    {
-        return;
-    }
-
-    void RemoveAt(s64 index)
-    {
-        return;
-    }
-
-    void RemoveAtUnordered(s64 index, s32 elementSize)
-    {
-        return;s
-    }
-*/
+    // f32 __index(s64 index)
+    // {
+    //     return $@f32(@void(s64(Data) + TypeSize(f32) * index));
+    //  // return $@f32(@void(s64(@Data) + TypeSize(f32) * index));
+    //  // return $@f32(@Data + TypeSize(f32) * index);                         // @Data + N -> @void
+    //  // return (Data + sizeOf(float) * index)*
+    // }
 }
+
+// struct __better_dynamic_array_f32   // 24 B
+// {
+//     s64 Length;                     // 8 B
+//     @[]f32 Data;                    // 8 B
+//     s64 Size;                       // 8 B
+
+//     f32 __index(s64 index)
+//     {
+//         return ($Data)[index];
+//     }
+// }
 
 @void AllocB(s64 size)
 {

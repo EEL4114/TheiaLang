@@ -65,7 +65,7 @@ public class FunctionDeclaration : IDeclaration
     public string TypeName { get; }
     public TypeInfo ResolvedType { get; set; }
     public string Name { get; set; }
-    public readonly List<TypeNamePair> Arguments;
+    public readonly List<TypeNamePair> Parameters;
     public readonly List<IStatement> Statements;    // the { … } body
     public FunctionDeclaration(string typeName,
                                string name,
@@ -74,7 +74,7 @@ public class FunctionDeclaration : IDeclaration
     {
         TypeName = typeName;
         Name = name;
-        Arguments = paramaters;
+        Parameters = paramaters;
         Statements = statements;
 
         ResolvedType = new TypeInfo(TypeName);
@@ -84,9 +84,9 @@ public class FunctionDeclaration : IDeclaration
     {
         string s = $"{TypeName} {Name} (";
 
-        if (Arguments != null)
-            for (int i = 0; i < Arguments.Count; i++)
-                s += $"{Arguments[i].ResolvedType.TypeName} {Arguments[i].Identifier}";
+        if (Parameters != null)
+            for (int i = 0; i < Parameters.Count; i++)
+                s += $"{Parameters[i].ResolvedType.TypeName} {Parameters[i].Identifier}";
 
         s += ")";
         return s;
@@ -165,12 +165,13 @@ public sealed record VariableDeclaration(
 }
 
 #endregion
-public sealed record TypeNamePair(
-    TypeInfo ResolvedType,
-    string Identifier
+public class TypeNamePair(
+    TypeInfo resolvedType,
+    string identifier
 )
 {
-    public TypeInfo ResolvedType = ResolvedType;
+    public string Identifier { get; init; } = identifier;
+    public TypeInfo ResolvedType { get; set; } = resolvedType;
     public bool Assignable => false;
 
     public override string ToString()

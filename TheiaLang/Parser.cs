@@ -91,6 +91,7 @@ public class Parser(List<Token> tokens)
                 TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
+                currentScope!.Declare(new SymbolInfo(parameter.Identifier, parameter.ResolvedType, SymbolKind.Variable, null));
             } while (Match(TokenType.Punctuation_Comma));
         }
 
@@ -98,7 +99,6 @@ public class Parser(List<Token> tokens)
 
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after parameters");
 
-        // initialise only with name, since we can't really mutate a Record later
         functionDeclaration.Scope = currentScope;
         currentScope!.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
@@ -110,7 +110,7 @@ public class Parser(List<Token> tokens)
                                 functionDeclaration.Name,
                                 returnTypeInfo,
                                 SymbolKind.Function,
-                                functionDeclaration.Arguments
+                                functionDeclaration.Parameters
                              ));
 
         return functionDeclaration;
@@ -153,15 +153,15 @@ public class Parser(List<Token> tokens)
                     TypeNamePair parameter = new TypeNamePair(fieldInfo, identifierToken.Lexeme);
 
                     currentScope.Declare(new SymbolInfo(
-                                            identifierToken.Lexeme,
-                                            fieldInfo,
+                                            parameter.Identifier,
+                                            parameter.ResolvedType,
                                             SymbolKind.Variable,
                                             null
                                          ));
 
                     fields.Add(parameter);
                     fieldNames.Add(parameter.Identifier);
-                    fieldTypes.Add(fieldInfo.TypeName);
+                    fieldTypes.Add(parameter.ResolvedType.TypeName);
                 }
             } while (Match(TokenType.Punctuation_Semicolon)
                  && !Check(TokenType.Punctuation_BraceR));

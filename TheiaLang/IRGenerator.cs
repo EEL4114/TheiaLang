@@ -69,7 +69,6 @@ public static class IRGenerator
         sb.AppendLine();
         sb.AppendLine();
         sb.AppendLine("; =============================================================================");
-        sb.AppendLine();
         sb.AppendLine("; ModuleID = 'theia_module'");
         // sb.AppendLine("target triple = \"x86_64-pc-windows-msvc19.44.35211\"");
 
@@ -164,7 +163,7 @@ public static class IRGenerator
         // this is messy but works for now?
 
         string paramList = "";
-        foreach (TypeNamePair parameter in fn.Arguments)
+        foreach (TypeNamePair parameter in fn.Parameters)
         {
             string parameterLLVMType = TypeToLLVM(parameter.ResolvedType!)!;
             args.Add($"{parameterLLVMType} %{parameter.Identifier}");
@@ -176,7 +175,7 @@ public static class IRGenerator
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
         sb.AppendLine("entry:");
 
-        foreach (TypeNamePair parameter in fn.Arguments)
+        foreach (TypeNamePair parameter in fn.Parameters)
         {
             string LLVMType = TypeToLLVM(parameter.ResolvedType!)!;
             string varName = $"%{NewTempVar()}";
@@ -656,11 +655,7 @@ public static class IRGenerator
 
 
             if(MethodsToFunctions.ContainsKey((calleeName, defScope!)))
-            {
-                Log.Info(calleeName + " " + defScope.FullName);
-                
                 calleeName = MethodsToFunctions[(calleeName, defScope!)];
-            }
 
             if (retTy != "void")
                 code.AppendLine($"  {tmp} = call {retTy} @{calleeName}({string.Join(", ", argumentList)})");

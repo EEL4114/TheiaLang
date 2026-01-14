@@ -60,7 +60,7 @@ static class AstPrinter
     {
         w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{TryScope(function.Scope!)}");
         w.WriteLine($"{Indent(indent + 1)}Arguments:");
-        foreach (TypeNamePair typeNamePair in function.Arguments)
+        foreach (TypeNamePair typeNamePair in function.Parameters)
             PrintTypeNamePair(typeNamePair, w, indent + 2);
         PrintBlock(function.Statements, w, indent + 1);
     }

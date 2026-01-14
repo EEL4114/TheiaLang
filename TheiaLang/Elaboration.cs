@@ -44,10 +44,13 @@ static class Elaboration
             if (node is FunctionDeclaration fn)
             {
                 currentScope = fn.Scope!;
-                for (int j = 0; j < fn.Arguments.Count; j++)
+                for (int j = 0; j < fn.Parameters.Count; j++)
                 {
-                    if(fn.Arguments[j].ResolvedType?.ArrayLength == 0)
-                        fn.Arguments[j] = SubstituteDynamicArray(fn.Arguments[j]);
+                    if(fn.Parameters[j].ResolvedType?.ArrayLength == 0)
+                    {
+                        fn.Parameters[j].ResolvedType = SubstituteDynamicArray(fn.Parameters[j].ResolvedType);
+                        currentScope.Symbols[fn.Parameters[j].Identifier].Type = fn.Parameters[j].ResolvedType;
+                    }
                 }
                 ExitScope();
 
@@ -76,6 +79,13 @@ static class Elaboration
     static void AnalyseStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
+        foreach(TypeNamePair field in structDeclaration.Fields)
+            if(CanSubstituteDynamicArray(field.ResolvedType, out TypeInfo newType))
+            {
+                field.ResolvedType = newType;
+                currentScope.Symbols[field.Identifier].Type = field.ResolvedType;   
+            }
+
         foreach (FunctionDeclaration function in structDeclaration.Functions)
             AnalyseFunctionBody(function);
 
@@ -110,44 +120,61 @@ static class Elaboration
         {
             IStatement statement = statements[i];
 
-            /*
-            if (statement is VariableDeclaration variable
-             && variable.ResolvedType != null)
+            if (statement is VariableDeclaration varDeclaration)
             {
-                LowerType(variable.ResolvedType);
-            }
-            */
-            if (statement is VariableDeclaration varDeclaration
-                 && varDeclaration.ResolvedType?.ArrayLength == 0)
-            {
-                TypeNamePair newVar = SubstituteDynamicArray(new TypeNamePair(varDeclaration.ResolvedType, varDeclaration.Name));
-                VariableDeclaration vd = new VariableDeclaration(newVar.ResolvedType.TypeName, newVar.Identifier, null);
-                vd.ResolvedType = newVar.ResolvedType;
+                _ = CanSubstituteDynamicArray(varDeclaration.ResolvedType!, out TypeInfo newType);
+
+                // Log.Info($"{varDeclaration.ResolvedType!.TypeName} -> {newType.TypeName}");
+
+                VariableDeclaration vd = new VariableDeclaration(newType.TypeName, varDeclaration.Name, null);
+                vd.ResolvedType = newType;
                 statements[i] = vd;
             }
         }
     }
 
-    static TypeNamePair SubstituteDynamicArray(TypeNamePair sourceVar)
+    static bool CanSubstituteDynamicArray(TypeInfo sourceType, out TypeInfo newType)
     {
-        TypeInfo sourceType = sourceVar.ResolvedType;
-        string structName = $"{DYNAMIC_ARRAY_PREFIX}_{sourceType.ElementType.TypeName}";
+        if(sourceType.ArrayLength == 0)
+        {
+            if(CanSubstituteDynamicArray(sourceType.ElementType!, out TypeInfo elementType))
+                sourceType.ElementType = elementType;
+            
+            newType = SubstituteDynamicArray(sourceType);
+            
+            return true;
+        }
+        else if(sourceType.Pointee != null)
+        {
+            if(CanSubstituteDynamicArray(sourceType.Pointee, out TypeInfo pointeeType))
+            {
+                newType = new TypeInfo($"@{pointeeType.TypeName}", 8, pointeeType);
+                return true;
+            }
+        }
+
+        newType = sourceType;
+        return true;
+    }
+
+    static TypeInfo SubstituteDynamicArray(TypeInfo sourceType)
+    {
         // Log.Info(typeName);
         // (1) check if that kind of array is already declared as struct
         if (DynamicArrayCache.TryGetValue(sourceType.TypeName, out SymbolInfo? symbolInfo))
         {
-            return new TypeNamePair(symbolInfo.Type, sourceVar.Identifier);
+            return symbolInfo.Type;
             //currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
         }
         // (2) if no -> declare the struct
         else
         {
+            string structName = $"{DYNAMIC_ARRAY_PREFIX}-{sourceType.ElementType.TypeName}";
             StructDeclaration sd = CreateDynamicArrayStruct(structName, sourceType.ElementType);
 
             // TODO: make this work with inits once we have them for arrays
-            TypeNamePair newVar = new TypeNamePair(sd.ResolvedType, sourceVar.Identifier);
-            newVar.ResolvedType = sd.ResolvedType;
-            SymbolInfo varInfo = new SymbolInfo(sourceVar.Identifier,
+            TypeInfo newType = sd.ResolvedType;
+            SymbolInfo varInfo = new SymbolInfo(sourceType.TypeName,
                                                 sd.ResolvedType,
                                                 SymbolKind.Variable,
                                                 null);
@@ -159,8 +186,15 @@ static class Elaboration
                                                sd.ResolvedType,
                                                SymbolKind.Type,
                                                sd.Fields));
+            GlobalScope.Declare(
+            new SymbolInfo(
+                "@" + sd.Name,
+                new TypeInfo("@" + sd.Name, pointee: sd.ResolvedType),
+                SymbolKind.Type,
+                null
+            ));
 
-            return newVar;
+            return newType;
         }
     }
 
@@ -212,7 +246,7 @@ static class Elaboration
                         function.Name,
                         function.ResolvedType,
                         SymbolKind.Function,
-                        function.Arguments));
+                        function.Parameters));
 
         StructDeclaration sd = new StructDeclaration(name, fields, functions);
         sd.Scope = currentScope;
