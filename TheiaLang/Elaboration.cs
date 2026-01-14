@@ -208,7 +208,7 @@ static class Elaboration
 
         List<TypeNamePair> fields = [
             new TypeNamePair(new TypeInfo("s64", 8), "Length"),
-            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", 8, new TypeInfo("void", 0)), "Data"),
+            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", 8, new TypeInfo($"{elementType.TypeName}", elementType.Size)), "Data"),
             new TypeNamePair(new TypeInfo("s64", 8), "Size"),
         ];
 
@@ -225,7 +225,7 @@ static class Elaboration
                                         ]),
                                         BinaryOperator.Add,
                                         new BinaryExpression(new CallExpression(new IdentifierExpression("TypeSize"),[
-                                            new IdentifierExpression($"@{elementType.TypeName}")
+                                            new IdentifierExpression($"{elementType.TypeName}")
                                         ]),
                                         BinaryOperator.Multiply,
                                         new IdentifierExpression("index")))
