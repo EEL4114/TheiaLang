@@ -30,7 +30,7 @@ static class AstPrinter
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name} ({structDeclaration.ResolvedType.Size} B) {TryScope(structDeclaration.Scope!)}");
+        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}({structDeclaration.ResolvedType.Size} B){TryScope(structDeclaration.Scope!)}{TryPos(structDeclaration.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Fields:");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
             PrintTypeNamePair(typeNamePair, w, indent + 2);
@@ -45,7 +45,7 @@ static class AstPrinter
 
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name} ({unionDeclaration.ResolvedType.Size} B){TryScope(unionDeclaration.Scope!)}");
+        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}({unionDeclaration.ResolvedType.Size} B){TryScope(unionDeclaration.Scope!)}{TryPos(unionDeclaration.Pos)}");
         foreach (TypeNamePair variant in unionDeclaration.Variants)
             PrintTypeNamePair(variant, w, indent + 1);
         w.WriteLine();
@@ -53,12 +53,12 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{TryType(typeNamePair.ResolvedType)}{typeNamePair.Identifier}");
+        w.WriteLine($"{Indent(indent)}{TryType(typeNamePair.ResolvedType)}{typeNamePair.Identifier}{TryPos(typeNamePair.Pos)}");
     }
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{TryScope(function.Scope!)}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{TryScope(function.Scope!)}{TryPos(function.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Arguments:");
         foreach (TypeNamePair typeNamePair in function.Parameters)
             PrintTypeNamePair(typeNamePair, w, indent + 2);
@@ -150,7 +150,7 @@ static class AstPrinter
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}{TryPos(id.Pos)}");
                 break;
 
             case BinaryExpression bin:
@@ -212,7 +212,8 @@ static class AstPrinter
 
     static string Indent(int n) => new string('\t', n);
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ({typeInfo.Size} B) ";
-    static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}' ";
+    static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
+    static string TryPos(SourePosition position) => position == SourePosition.None ? " | ()" : $" | ({position.Row} : {position.Column})";
     
     #endregion
 }

@@ -25,29 +25,29 @@ public class Parser(List<Token> tokens)
                                 "__th_allocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("s64"), "size")]
+                                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
                             ));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_reallocB",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [   new TypeNamePair(new TypeInfo("@void"), "alloc"),
-                                    new TypeNamePair(new TypeInfo("s64"), "newSize")]
+                                [   new TypeNamePair(new TypeInfo("@void"), "alloc", SourePosition.None),
+                                    new TypeNamePair(new TypeInfo("s64"), "newSize", SourePosition.None)]
                                 ));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_free",
                                 new TypeInfo("void", 0),
                                 SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("@void"), "ptr")
+                                [new TypeNamePair(new TypeInfo("@void"), "ptr", SourePosition.None)
                             ]));
 
         globalScope.Declare(new SymbolInfo(
                                 "__th_alloc",
                                 new TypeInfo("@void", 8, new TypeInfo("void")),
                                 SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("s64"), "size")]
+                                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
                             ));
 
         List<INode> nodes = [];
@@ -67,6 +67,7 @@ public class Parser(List<Token> tokens)
 
     FunctionDeclaration ParseFunctionDeclaration()
     {
+        SourePosition startPosition = Pos();
         if (!MatchTypeDefinition(out TypeInfo returnTypeInfo))
             throw new Exception("Couldn't parse function return type");
 
@@ -77,18 +78,19 @@ public class Parser(List<Token> tokens)
         List<TypeNamePair> parameters = [];
         List<IStatement> body = [];
 
-        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo.TypeName, name, parameters, body);
+        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo.TypeName, name, parameters, body, startPosition);
 
-        EnterNewScope(name, null);
+        EnterNewScope(name, functionDeclaration);
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
             {
+                startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo parameterInfo))
                     throw new Exception("Can't resolve type");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme);
+                TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme, startPosition);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
                 currentScope!.Declare(new SymbolInfo(parameter.Identifier, parameter.ResolvedType, SymbolKind.Variable, null));
@@ -100,7 +102,7 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after parameters");
 
         functionDeclaration.Scope = currentScope;
-        currentScope!.DeclaringNode = functionDeclaration;
+        // currentScope!.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
 
         // fill out AST reference
@@ -119,6 +121,7 @@ public class Parser(List<Token> tokens)
     StructDeclaration ParseStructDeclaration()
     {
         // we've already consumed 'struct'
+        SourePosition startPos = Previous().Pos;
         Token nameToken = Consume(TokenType.Identifier, "Expected struct name");
         string name = nameToken.Lexeme;
         Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
@@ -128,7 +131,7 @@ public class Parser(List<Token> tokens)
         List<string> fieldTypes = [];
         List<FunctionDeclaration> functions = [];
 
-        StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions);
+        StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
 
         structDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = structDeclaration;
@@ -137,6 +140,7 @@ public class Parser(List<Token> tokens)
         {
             do
             {
+                SourePosition startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo fieldInfo))
                     throw new Exception("Can't resove type");
 
@@ -150,7 +154,7 @@ public class Parser(List<Token> tokens)
                 else
                 {
                     Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                    TypeNamePair parameter = new TypeNamePair(fieldInfo, identifierToken.Lexeme);
+                    TypeNamePair parameter = new TypeNamePair(fieldInfo, identifierToken.Lexeme, startPosition);
 
                     currentScope.Declare(new SymbolInfo(
                                             parameter.Identifier,
@@ -186,8 +190,8 @@ public class Parser(List<Token> tokens)
 
     UnionDeclaration ParseUnionDeclaration()
     {
-        Token nameTok = Consume(TokenType.Identifier, "Expected union name");
-        string name = nameTok.Lexeme;
+        Token nameToken = Consume(TokenType.Identifier, "Expected union name");
+        string name = nameToken.Lexeme;
 
         Consume(TokenType.Punctuation_BraceL, "Expected '{' after union name");
         List<string> variantNames = [];
@@ -200,7 +204,7 @@ public class Parser(List<Token> tokens)
             fieldNames: variantNames,
             fieldTypes: variantTypes);
 
-        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo);
+        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
         unionDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = unionDeclaration;
 
@@ -208,11 +212,12 @@ public class Parser(List<Token> tokens)
         {
             do
             {
+                SourePosition startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo variantType))
                     throw new Exception($"Can't resolve type");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
-                TypeNamePair parameter = new TypeNamePair(variantType, identifierToken.Lexeme);
+                TypeNamePair parameter = new TypeNamePair(variantType, identifierToken.Lexeme, startPosition);
 
                 variants.Add(parameter);
                 variantNames.Add(identifierToken.Lexeme);
@@ -261,11 +266,12 @@ public class Parser(List<Token> tokens)
 
     IStatement ParseStatement(bool requireSemicolon = true)
     {
+        SourePosition startPosition = Pos();
         if (MatchTypeDefinition(out TypeInfo varInfo)
          && Peek().TokenType == TokenType.Identifier)
         {
             IExpression? init = null;
-            string varName = Advance().Lexeme;
+            string name = Advance().Lexeme;
 
             if (Match(TokenType.Operator_Equal))
                     init = ParseExpression();
@@ -275,7 +281,7 @@ public class Parser(List<Token> tokens)
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
 
-            VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, varName, init);
+            VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, name, init, startPosition);
             variable.ResolvedType = varInfo;
 
             return variable;
@@ -303,7 +309,7 @@ public class Parser(List<Token> tokens)
                 ExitScope();
             }
 
-            return new IfStatement(condition, thenBranch, elseBranch, thenScope, elseScope);
+            return new IfStatement(condition, thenBranch, elseBranch, thenScope, elseScope, startPosition);
         }
 
         if (Match(TokenType.Keyword_for))
@@ -320,16 +326,16 @@ public class Parser(List<Token> tokens)
             List<IStatement> body = ParseBlock();
             ExitScope();
 
-            return new ForStatement(initialiser, condition, iterator, body, bodyScope);
+            return new ForStatement(initialiser, condition, iterator, body, bodyScope, startPosition);
         }
 
         if (Match(TokenType.Keyword_return))
         {
             ReturnStatement returnStatement;
             if (Peek().TokenType != TokenType.Punctuation_Semicolon)
-                returnStatement = new ReturnStatement(ParseExpression());
+                returnStatement = new ReturnStatement(ParseExpression(), startPosition);
             else
-                returnStatement = new ReturnStatement(null);
+                returnStatement = new ReturnStatement(null, startPosition);
 
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after return value");
             return returnStatement;
@@ -365,8 +371,8 @@ public class Parser(List<Token> tokens)
                 if (requireSemicolon)
                     Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
                 if (op != null)
-                    return new CompoundAssignmentStatement(lhs, rhs, (BinaryOperator)op);
-                return new AssignmentStatement(lhs, rhs);
+                    return new CompoundAssignmentStatement(lhs, rhs, (BinaryOperator)op, startPosition);
+                return new AssignmentStatement(lhs, rhs, startPosition);
             }
             else
                 pos = ret;
@@ -382,7 +388,7 @@ public class Parser(List<Token> tokens)
             IExpression expression = ParseExpression();
             if (requireSemicolon)
                 Consume(TokenType.Punctuation_Semicolon, "Expected ';' after call");
-            return new ExpressionStatement(expression);
+            return new ExpressionStatement(expression, startPosition);
         }
 
         Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos()}");
@@ -449,15 +455,14 @@ public class Parser(List<Token> tokens)
     AssignmentStatement ParseAssignment(bool requireSemicolon = true)
     {
         Token nameToken = Advance();
-        // Log.Info(nameToken.Lexeme);
-
-        IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme);
+        IdentifierExpression identifier = new IdentifierExpression(nameToken.Lexeme, nameToken.Pos);
 
         Advance();  // consume '='
         IExpression expr = ParseExpression();
         if (requireSemicolon)
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after assignment");
-        return new AssignmentStatement(identifier, expr);
+        
+        return new AssignmentStatement(identifier, expr, nameToken.Pos);
     }
 
     #endregion
@@ -472,7 +477,7 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_OR))
         {
             IExpression right = ParseAND();
-            left = new BinaryExpression(left, BinaryOperator.OR, right);
+            left = new BinaryExpression(left, BinaryOperator.OR, right, left.Pos);
         }
         return left;
     }
@@ -483,7 +488,7 @@ public class Parser(List<Token> tokens)
         while (Match(TokenType.Operator_AND))
         {
             IExpression right = ParseEquality();
-            left = new BinaryExpression(left, BinaryOperator.AND, right);
+            left = new BinaryExpression(left, BinaryOperator.AND, right, left.Pos);
         }
         return left;
     }
@@ -496,7 +501,7 @@ public class Parser(List<Token> tokens)
             Token op = Previous();
             BinaryOperator compOperatorType = OperatorTypeToType(op.TokenType);
             IExpression right = ParseComparison();
-            left = new BinaryExpression(left, compOperatorType, right);
+            left = new BinaryExpression(left, compOperatorType, right, left.Pos);
         }
         return left;
     }
@@ -511,7 +516,7 @@ public class Parser(List<Token> tokens)
             BinaryOperator binaryOperatorType = OperatorTypeToType(op.TokenType);
 
             IExpression right = ParseAdditive();
-            left = new BinaryExpression(left, binaryOperatorType, right);
+            left = new BinaryExpression(left, binaryOperatorType, right, left.Pos);
         }
         return left;
     }
@@ -526,7 +531,7 @@ public class Parser(List<Token> tokens)
 
             IExpression right = ParseMultiplicative();
 
-            expr = new BinaryExpression(expr, binaryOperatorType, right);
+            expr = new BinaryExpression(expr, binaryOperatorType, right, expr.Pos);
         }
         return expr;
     }
@@ -540,36 +545,47 @@ public class Parser(List<Token> tokens)
                 ? BinaryOperator.Multiply
                 : BinaryOperator.Divide;
             IExpression right = ParseUnary();
-            expr = new BinaryExpression(expr, op, right);
+            expr = new BinaryExpression(expr, op, right, expr.Pos);
         }
         return expr;
     }
 
     IExpression ParseUnary()
     {
+        SourePosition startPosition = Pos();
         if (Match(TokenType.Operator_Minus))
         {
             // we’ve consumed the ‘-’
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.Negate, operand);
+            return new UnaryExpression(UnaryOperator.Negate, operand, startPosition);
         }
 
         if (Match(TokenType.Operator_Invert))
         {
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.Invert, operand);
-        }
-
-        if (Match(TokenType.Punctuation_At))
-        {
-            IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.AddressOf, operand, assignable: false);
+            return new UnaryExpression(UnaryOperator.Invert, operand, startPosition);
         }
 
         if (Match(TokenType.Punctuation_Dollar))
         {
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.Dereference, operand, assignable: true);
+            return new UnaryExpression(UnaryOperator.Dereference, operand, startPosition, assignable: true);
+        }
+
+        if (Peek().TokenType == TokenType.Punctuation_At)
+        {
+            int save = pos;
+
+            if (MatchTypeDefinition(out TypeInfo typeInfo)
+            &&  Peek().TokenType == TokenType.Punctuation_ParenthesisL)
+            {
+                return ParsePostfix(new IdentifierExpression(typeInfo.TypeName, startPosition));
+            }
+
+            pos = save;          // backtrack and parse address-of
+            Advance();           // consume '@'
+            IExpression operand = ParseUnary();
+            return new UnaryExpression(UnaryOperator.AddressOf, operand, startPosition, assignable: false);
         }
 
         return ParsePrimary();
@@ -577,6 +593,7 @@ public class Parser(List<Token> tokens)
 
     IExpression ParsePrimary()
     {
+        SourePosition startPosition = Pos();
         IExpression expression = null!;
 
         if (Match(TokenType.Literal))
@@ -589,13 +606,13 @@ public class Parser(List<Token> tokens)
                 _ => throw new Exception("Invalid literal")
             };
 
-            LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme);
+            LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme, startPosition);
             literal.ResolvedType = new TypeInfo(lit.Type, SemanticAnalyser.SizeOf(lit.Type));
             expression = literal;
         }
         else if (Peek().TokenType == TokenType.Identifier)
         {
-            expression = ParsePostfix(new IdentifierExpression(Advance().Lexeme));
+            expression = ParsePostfix(new IdentifierExpression(Advance().Lexeme, startPosition));
         }
         else if (Match(TokenType.Punctuation_ParenthesisL))
         {
@@ -604,7 +621,7 @@ public class Parser(List<Token> tokens)
             expression = ParsePostfix(inner);
         }
         else if (MatchTypeDefinition(out TypeInfo typeInfo))
-            expression = ParsePostfix(new IdentifierExpression(typeInfo.TypeName));
+            expression = ParsePostfix(new IdentifierExpression(typeInfo.TypeName, startPosition));
 
         if (expression != null)
             return expression;
@@ -629,13 +646,13 @@ public class Parser(List<Token> tokens)
                 //if (prefix is MemberAccessExpression memberAccess)
                 //    prefix = new CallExpression(memberAccess.Member, arguments);
                 //else
-                prefix = new CallExpression(prefix, arguments);
+                prefix = new CallExpression(prefix, arguments, prefix.Pos);
             }
             else if (Match(TokenType.Punctuation_BracketL))
             {
                 IExpression index = ParseExpression();
                 Consume(TokenType.Punctuation_BracketR);
-                prefix = new IndexExpression(prefix, index);
+                prefix = new IndexExpression(prefix, index, prefix.Pos);
             }
             else if (Match(TokenType.Punctuation_BraceL))
             {
@@ -649,13 +666,13 @@ public class Parser(List<Token> tokens)
                         } while (Match(TokenType.Punctuation_Comma)
                              && !Check(TokenType.Punctuation_BraceR));
                     Consume(TokenType.Punctuation_BraceR);
-                    prefix = new InstantiationExpression(identifier.Name, arguments);
+                    prefix = new InstantiationExpression(identifier.Name, arguments, identifier.Pos);
                 }
             }
             else if (Match(TokenType.Punctuation_Dot))
             {
-                string name = Consume(TokenType.Identifier, "member").Lexeme;
-                prefix = new MemberAccessExpression(prefix, new IdentifierExpression(name));
+                Token name = Consume(TokenType.Identifier, "member");
+                prefix = new MemberAccessExpression(prefix, new IdentifierExpression(name.Lexeme, name.Pos), prefix.Pos);
             }
         }
         return prefix;
@@ -689,6 +706,7 @@ public class Parser(List<Token> tokens)
     string TokenTypeToString(TokenType tokenType) => tokenType switch
     {
         TokenType.Keyword_bool => "bool",
+        TokenType.Keyword_void => "void",
 
         TokenType.Keyword_s8   => "s8",
         TokenType.Keyword_s16  => "s16",
@@ -721,7 +739,7 @@ public class Parser(List<Token> tokens)
     {
         if (Check(type)) return Advance();
         //throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
-        Log.Error(3, $"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
+        Log.Error(3, $"{message} at {programName}.tia {Peek().Pos.Row + 1}:{Peek().Pos.Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         return null!;
     }
 
@@ -729,14 +747,15 @@ public class Parser(List<Token> tokens)
     {
         Token t = Peek();
         if (IsBuiltinType(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
-        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {programName} {t.Line}:{t.Column}");
+        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {programName} {t.Pos.Row}:{t.Pos.Column}");
         return null!;
     }
 
     static bool IsBuiltinType(TokenType tokenType) => (int)tokenType >= 500 && (int)tokenType <= 539;
 
-    int Line() => tokens[pos].Line + 1;
-    int Column() => tokens[pos].Column;
+    int Line() => tokens[pos].Pos.Row + 1;
+    int Column() => tokens[pos].Pos.Column;
+    SourePosition Pos() => tokens[pos].Pos;
     string PrintCurrentPos()
     {
         return $"at {Line()}:{Column()}";

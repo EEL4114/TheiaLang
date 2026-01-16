@@ -96,7 +96,7 @@ public class Scope : INode
         if (!Parent.Children.ContainsKey(name))
             Parent.Children.Add(name, this);   
         else
-            Log.Error(7, $"Identifier '{name}' already declared in the scope '{Parent!.FullName}'");
+            Log.Error(7, $"Identifier '{name}' is already declared in the scope '{Parent!.FullName}'");
 
         //Log.Info($"Declare Scope '{name}' in parent scope '{Parent.FullName}'.\n\tAdded to parent children: {Parent.Children.ContainsKey(name)}");
     }
@@ -106,7 +106,7 @@ public class Scope : INode
     public void Declare(SymbolInfo symbolInfo)
     {
         if (Symbols.ContainsKey(symbolInfo.Name))
-            Log.Error(6, $"Identifier '{symbolInfo.Name}' already declared in the scope '{FullName}'");
+            Log.Error(6, $"Identifier '{symbolInfo.Name}' is already declared in the scope '{FullName}'");
         Symbols[symbolInfo.Name] = symbolInfo;
     }
 

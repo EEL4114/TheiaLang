@@ -278,7 +278,7 @@ public static class IRGenerator
             _ => throw new Exception($"Invalid compound operator: '{assignment.Op}'")
         };
 
-        (StringBuilder code, string val) = EmitExpression(new BinaryExpression(assignment.Target, op, assignment.Expression));
+        (StringBuilder code, string val) = EmitExpression(new BinaryExpression(assignment.Target, op, assignment.Expression, SourePosition.None));
 
         sb.Append(code);
         sb.AppendLine($"  store {LLVMType} {val}, ptr {ptr}");

@@ -116,7 +116,7 @@ public static class SemanticAnalyser
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
             TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", 8, structDeclaration.ResolvedType);
-            function.Parameters.Insert(0, new TypeNamePair(ptrType, "this"));
+            function.Parameters.Insert(0, new TypeNamePair(ptrType, "this", SourePosition.None));
             ResolveFunctionTypeAndArgs(function);
         }
         ExitScope();
@@ -257,7 +257,7 @@ public static class SemanticAnalyser
                     returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
                 else
                 {
-                    returnStatement.Expression = new LiteralExpression(null!, "void");
+                    returnStatement.Expression = new LiteralExpression(null!, "void", SourePosition.None);
                     returnStatement.Expression.ResolvedType = new TypeInfo("void");
                 }
 
@@ -316,14 +316,14 @@ public static class SemanticAnalyser
 
                         uint sizeValue = SizeOf(i.Name);
 
-                        expression = new LiteralExpression((int)sizeValue, sizeValue.ToString());
+                        expression = new LiteralExpression((int)sizeValue, sizeValue.ToString(), SourePosition.None);
                         expression.ResolvedType = new TypeInfo("s32", 4);
                     }
                     else if (id.Name == "Alloc")
                     {
                         Log.Info("ALLOC");
                     }
-                    else if (IRGenerator.BuiltinTypes.Contains(id.Name)|| id.Name.StartsWith('@'))    // type cast; for now just primitives; this for now excludes ptrs!!
+                    else if (IRGenerator.BuiltinTypes.Contains(id.Name)|| id.Name.StartsWith('@'))
                     {
                         for (int i = 0; i < call.Arguments.Count; i++)
                         {
@@ -353,7 +353,7 @@ public static class SemanticAnalyser
                             }
                             else
                             {
-                                expression = new CastExpression((CastOp)op, call.Arguments[0]);
+                                expression = new CastExpression((CastOp)op, call.Arguments[0], SourePosition.None);
                                 expression.ResolvedType = GetTypeInfo(id.Name);
                             }
                         }
@@ -366,7 +366,7 @@ public static class SemanticAnalyser
                             }
                             else if(call.Arguments[0].ResolvedType!.TypeName == "s64")
                             {
-                                expression = new CastExpression(IntToPtr, call.Arguments[0]);
+                                expression = new CastExpression(IntToPtr, call.Arguments[0], SourePosition.None);
                                 expression.ResolvedType = GetTypeInfo(id.Name);
                             }
                             else
@@ -446,7 +446,7 @@ public static class SemanticAnalyser
                     memberAccess.Member = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
                     currentScope = scope;
 
-                    IExpression addressOfExpression = AnalyseExpression(new UnaryExpression(UnaryOperator.AddressOf, memberAccess.Target));
+                    IExpression addressOfExpression = AnalyseExpression(new UnaryExpression(UnaryOperator.AddressOf, memberAccess.Target, SourePosition.None));
 
                     call.Arguments.Insert(0, addressOfExpression);
                     call.Target = memberAccess.Member;
@@ -505,7 +505,7 @@ public static class SemanticAnalyser
                             v = j;
                         }
 
-                        LiteralExpression literalExpression = new LiteralExpression(v, lexeme);
+                        LiteralExpression literalExpression = new LiteralExpression(v, lexeme, SourePosition.None);
                         literalExpression.ResolvedType = literal.ResolvedType;
                         expression = literalExpression;
                         AnalyseExpression(expression);
@@ -584,8 +584,9 @@ public static class SemanticAnalyser
                             IExpression ex = new CallExpression(
                                                 new MemberAccessExpression(
                                                     indexExpression.Target, 
-                                                    new IdentifierExpression($"{Elaboration.DYNAMIC_ARRAY_INDEX}")), 
+                                                    new IdentifierExpression($"{Elaboration.DYNAMIC_ARRAY_INDEX}", SourePosition.None), SourePosition.None), 
                                                 [indexExpression.Index],
+                                                SourePosition.None,
                                                 definitionScope);
                             expression = AnalyseExpression(ex);
                         }        
@@ -729,7 +730,7 @@ public static class SemanticAnalyser
                                       IRGenerator.BuiltinTypeIndex(targetType)];
                 if (op == null)
                     throw new Exception($"Invalid cast: {sourceType} -> {targetType}");
-                expression = new CastExpression((CastOp)op, expression);
+                expression = new CastExpression((CastOp)op, expression, SourePosition.None);
                 expression.ResolvedType = target;
             }
         }

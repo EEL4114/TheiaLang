@@ -6,18 +6,26 @@ public sealed record ProgramNode(
 );
 
 public interface INode { }
+
 public interface IDeclaration : INode
 {
     string Name { get; }
     TypeInfo ResolvedType { get; set; }
+    SourePosition Pos { get; }
 }
 
-public interface IStatement : INode { }
+public interface IStatement : INode
+{
+    SourePosition Pos { get; }
+
+}
+
 public interface IExpression : INode
 {
     TypeInfo? ResolvedType { get; set; }
     bool Assignable { get; }
-    // (long row, long column) Position { get; set;}
+
+    SourePosition Pos { get; }
 }
 
 #region  Operators
@@ -67,10 +75,15 @@ public class FunctionDeclaration : IDeclaration
     public string Name { get; set; }
     public readonly List<TypeNamePair> Parameters;
     public readonly List<IStatement> Statements;    // the { … } body
+
+    public SourePosition Pos { get; }
+
+
     public FunctionDeclaration(string typeName,
                                string name,
                                List<TypeNamePair> paramaters,
-                               List<IStatement> statements)
+                               List<IStatement> statements,
+                               SourePosition pos = default)
     {
         TypeName = typeName;
         Name = name;
@@ -78,6 +91,8 @@ public class FunctionDeclaration : IDeclaration
         Statements = statements;
 
         ResolvedType = new TypeInfo(TypeName);
+    
+        Pos = pos;
     }
 
     public override string ToString()
@@ -100,10 +115,12 @@ public struct StructDeclaration : IDeclaration
     public TypeInfo ResolvedType { get; set; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
+    public SourePosition Pos { get; }
 
     public StructDeclaration(string name,
                              List<TypeNamePair> fields,
-                             List<FunctionDeclaration> functions)
+                             List<FunctionDeclaration> functions,
+                             SourePosition pos = default)
     {
         Name = name;
         Fields = fields;
@@ -112,6 +129,8 @@ public struct StructDeclaration : IDeclaration
         ResolvedType = new TypeInfo(name,
                                     fieldNames: fields.Select(f => f.Identifier).ToList(),
                                     fieldTypes: fields.Select(f => f.ResolvedType.TypeName).ToList());
+
+        Pos = pos;
     }
 
     public override string ToString()
@@ -139,21 +158,28 @@ public struct StructDeclaration : IDeclaration
 public record UnionDeclaration(
     string Name,
     List<TypeNamePair> Variants,
-    TypeInfo ResolvedType
+    TypeInfo ResolvedType,
+    SourePosition Pos = default
 ) : IDeclaration
 {
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
     public Scope? Scope { get; set; }
+    public SourePosition Pos { get; } = Pos;
+    
 }
 
 public sealed record VariableDeclaration(
     string TypeName,            // "int", "float", "bool"
     string Name,
-    IExpression? Init           // null if no initializer
+    IExpression? Init,          // null if no initializer
+    SourePosition Pos = default
 ) : IDeclaration, IStatement
 {
     public TypeInfo? ResolvedType { get; set; }
     public IExpression? Init { get; set; } = Init;
+
+    public SourePosition Pos { get; } = Pos;
+
     public override string ToString()
     {
         string s = $"VariableDeclaration: {TypeName} {Name}";
@@ -165,14 +191,18 @@ public sealed record VariableDeclaration(
 }
 
 #endregion
+
 public class TypeNamePair(
     TypeInfo resolvedType,
-    string identifier
+    string identifier,
+    SourePosition Pos = default
 )
 {
     public string Identifier { get; init; } = identifier;
     public TypeInfo ResolvedType { get; set; } = resolvedType;
-    public bool Assignable => false;
+    public static bool Assignable => false;
+
+    public SourePosition Pos { get; } = Pos;
 
     public override string ToString()
     {
@@ -190,28 +220,38 @@ public sealed record CallArgument(
 ) : INode;*/
 
 public sealed record ExpressionStatement(
-    IExpression Expression
+    IExpression Expression,
+    SourePosition Pos = default
 ) : IStatement
-{ public IExpression Expression { get; set; } = Expression; }
+{ 
+    public IExpression Expression { get; set; } = Expression;
+    public SourePosition Pos { get; } = Pos;
+}
 
 public sealed record AssignmentStatement(
     IExpression Target,
-    IExpression Expression
+    IExpression Expression,
+    SourePosition Pos = default
 ) : IStatement
 {
     public IExpression Target { get; set; } = Target;
     public IExpression Expression { get; set; } = Expression;
+ 
+    public SourePosition Pos { get; } = Pos;
 }
 
 
 public sealed record CompoundAssignmentStatement(
     IExpression Target,
     IExpression Expression,
-    BinaryOperator Op
+    BinaryOperator Op,
+    SourePosition Pos = default
 ) : IStatement
 {
     public IExpression Target { get; set; } = Target;
     public IExpression Expression { get; set; } = Expression;
+ 
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record IfStatement(
@@ -219,9 +259,14 @@ public sealed record IfStatement(
     List<IStatement> ThenBranch,
     List<IStatement>? ElseBranch,
     Scope ThenScope,
-    Scope? ElseScope
+    Scope? ElseScope,
+    SourePosition Pos = default
 ) : IStatement
-{ public IExpression Condition { get; set; } = Condition; }
+{ 
+    public IExpression Condition { get; set; } = Condition; 
+ 
+    public SourePosition Pos { get; } = Pos;
+}
 
 
 public sealed record ForStatement(
@@ -229,16 +274,24 @@ public sealed record ForStatement(
     IExpression? Condition,
     IStatement? Iterator,
     List<IStatement> Body,
-    Scope Scope
+    Scope Scope,
+    SourePosition Pos = default
 ) : IStatement
-{ public IExpression? Condition { get; set; } = Condition; }
+{ 
+    public IExpression? Condition { get; set; } = Condition; 
+
+    public SourePosition Pos { get; } = Pos;
+}
 
 
 public sealed record ReturnStatement(
-    IExpression? Expression
+    IExpression? Expression,
+    SourePosition Pos = default
 ) : IStatement
 {
     public IExpression? Expression { get; set; } = Expression;
+
+    public SourePosition Pos { get; } = Pos;
 }
 #endregion
 
@@ -247,6 +300,7 @@ public sealed record ReturnStatement(
 public sealed record MemberAccessExpression(
     IExpression Target,
     IdentifierExpression Member,
+    SourePosition Pos,
     Scope? Scope = null
 ) : IExpression
 
@@ -256,11 +310,14 @@ public sealed record MemberAccessExpression(
     public Scope? Scope = Scope;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record CallExpression(
     IExpression Target,                // both functions and types
     List<IExpression> Arguments,       // positional & named args
+    SourePosition Pos = default,
     Scope? Scope = null
 ) : IExpression
 {
@@ -268,30 +325,39 @@ public sealed record CallExpression(
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public Scope? Scope { get; set; } = Scope;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record CastExpression(
     CastOp CastKind,
-    IExpression Target
+    IExpression Target,
+    SourePosition Pos = default
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public CastOp CastKind { get; set; } = CastKind;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record InstantiationExpression(
     string TypeName,
-    List<IExpression> Arguments
+    List<IExpression> Arguments,
+    SourePosition Pos = default
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record UnaryExpression(
     UnaryOperator Op,
     IExpression Operand,
+    SourePosition Pos = default,
     bool assignable = false
 ) : IExpression
 {
@@ -309,48 +375,63 @@ public sealed record UnaryExpression(
                 lit.ResolvedType = value;
         }
     }
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record BinaryExpression(
     IExpression Left,
     BinaryOperator Op,    // "+", "*", ">", etc.
-    IExpression Right
-) : IExpression
+    IExpression Right,
+    SourePosition Pos = default
+)
+ : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public IExpression Left { get; set; } = Left;
     public IExpression Right { get; set; } = Right;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record LiteralExpression(
     object Value,       // boxed int, float, bool
-    string Lexeme
+    string Lexeme,
+    SourePosition Pos = default
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record IdentifierExpression(
     string Name,
+    SourePosition Pos = default,
     Scope? Scope = null
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
     public Scope? Scope = Scope;
     public bool Assignable => true;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 public sealed record IndexExpression(
     IExpression Target,
-    IExpression Index
+    IExpression Index,
+    SourePosition Pos = default
 ) : IExpression
 {
     public IExpression Target { get; set; } = Target;
     public IExpression Index { get; set; } = Index;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => true;
+
+    public SourePosition Pos { get; } = Pos;
 }
 
 #endregion

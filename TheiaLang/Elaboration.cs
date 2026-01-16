@@ -126,7 +126,7 @@ static class Elaboration
 
                 // Log.Info($"{varDeclaration.ResolvedType!.TypeName} -> {newType.TypeName}");
 
-                VariableDeclaration vd = new VariableDeclaration(newType.TypeName, varDeclaration.Name, null);
+                VariableDeclaration vd = new VariableDeclaration(newType.TypeName, varDeclaration.Name, null, SourePosition.None);
                 vd.ResolvedType = newType;
                 statements[i] = vd;
             }

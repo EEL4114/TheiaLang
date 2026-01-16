@@ -11,6 +11,8 @@ public enum TokenType
 
     Keyword_bool = 500,
 
+    Keyword_void = 501,
+
     Keyword_s8   = 510,
     Keyword_s16  = 511,
     Keyword_s32  = 512,
@@ -71,20 +73,27 @@ public enum TokenType
 public sealed record Token(
     TokenType TokenType,
     string Lexeme,
-    int Line,
-    int Column);
+    SourePosition Pos);
+
+public readonly record struct SourePosition(
+    int Row,
+    int Column
+)
+{
+    public static SourePosition None => default;
+}
 
 class Lexer(string sourceCode)
 {
     readonly string source = sourceCode;
-    int pos, line, col;
+    int pos, row = 1, col = 1;
 
     public Token NextToken()
     {
         SkipWhiteSpaceAndComments();
 
         if (IsAtEnd())
-            return new Token(TokenType.EOF, "", line, col);
+            return new Token(TokenType.EOF, "", new SourePosition(row, col));
 
         char c = Advance();
         // single char punctuation
@@ -157,7 +166,7 @@ class Lexer(string sourceCode)
             "!=" => MakeToken(TokenType.Operator_Inequal, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
             "||" => MakeToken(TokenType.Operator_OR, s),
-            _ => throw new NotImplementedException($"Unexpected character '{c}' at {line + 1}:{col - 1}"),
+            _ => throw new NotImplementedException($"Unexpected character '{c}' at {row + 1}:{col - 1}"),
         };
 
         if (token != null)
@@ -166,7 +175,7 @@ class Lexer(string sourceCode)
             return token;
         }
 
-        Log.Error(0, $"Unexpected character '{c}' at {line + 1}:{col}");
+        Log.Error(0, $"Unexpected character '{c}' at {row + 1}:{col}");
         return null!;
     }
 
@@ -185,10 +194,10 @@ class Lexer(string sourceCode)
             while (!IsAtEnd() && char.IsDigit(Peek()))
                 sb.Append(Advance());
 
-            return new Token(TokenType.Literal, sb.ToString(), line, startCol);
+            return new Token(TokenType.Literal, sb.ToString(), new SourePosition(row, startCol));
         }
 
-        return new Token(TokenType.Literal, sb.ToString(), line, startCol);
+        return new Token(TokenType.Literal, sb.ToString(), new SourePosition(row, startCol));
     }
 
     Token ReadIdentifierOrKeyword(char first)
@@ -201,46 +210,47 @@ class Lexer(string sourceCode)
         string lexeme = sb.ToString();
         return lexeme switch
         {
-            "bool" => new Token(TokenType.Keyword_bool, lexeme, line, startCol),
+            "bool" => new Token(TokenType.Keyword_bool, lexeme, new SourePosition(row, startCol)),
+            "void" => new Token(TokenType.Keyword_void, lexeme, new SourePosition(row, startCol)),
 
-            "s8"    => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
-            "sbyte" => new Token(TokenType.Keyword_s8, lexeme, line, startCol),
-            "s16"   => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
-            "short" => new Token(TokenType.Keyword_s16, lexeme, line, startCol),
-            "s32"   => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "int"   => new Token(TokenType.Keyword_s32, lexeme, line, startCol),
-            "s64"   => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
-            "long"  => new Token(TokenType.Keyword_s64, lexeme, line, startCol),
-            "s128"  => new Token(TokenType.Keyword_s128, lexeme, line, startCol),
-            "s256"  => new Token(TokenType.Keyword_s256, lexeme, line, startCol),
+            "s8"    => new Token(TokenType.Keyword_s8, lexeme, new SourePosition(row, startCol)),
+            "sbyte" => new Token(TokenType.Keyword_s8, lexeme, new SourePosition(row, startCol)),
+            "s16"   => new Token(TokenType.Keyword_s16, lexeme, new SourePosition(row, startCol)),
+            "short" => new Token(TokenType.Keyword_s16, lexeme, new SourePosition(row, startCol)),
+            "s32"   => new Token(TokenType.Keyword_s32, lexeme, new SourePosition(row, startCol)),
+            "int"   => new Token(TokenType.Keyword_s32, lexeme, new SourePosition(row, startCol)),
+            "s64"   => new Token(TokenType.Keyword_s64, lexeme, new SourePosition(row, startCol)),
+            "long"  => new Token(TokenType.Keyword_s64, lexeme, new SourePosition(row, startCol)),
+            "s128"  => new Token(TokenType.Keyword_s128, lexeme, new SourePosition(row, startCol)),
+            "s256"  => new Token(TokenType.Keyword_s256, lexeme, new SourePosition(row, startCol)),
 
-            "f16"    => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
-            "half"   => new Token(TokenType.Keyword_f16, lexeme, line, startCol),
-            "f32"    => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
-            "float"  => new Token(TokenType.Keyword_f32, lexeme, line, startCol),
-            "f64"    => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
-            "double" => new Token(TokenType.Keyword_f64, lexeme, line, startCol),
-            "f128"   => new Token(TokenType.Keyword_f128, lexeme, line, startCol),
+            "f16"    => new Token(TokenType.Keyword_f16, lexeme, new SourePosition(row, startCol)),
+            "half"   => new Token(TokenType.Keyword_f16, lexeme, new SourePosition(row, startCol)),
+            "f32"    => new Token(TokenType.Keyword_f32, lexeme, new SourePosition(row, startCol)),
+            "float"  => new Token(TokenType.Keyword_f32, lexeme, new SourePosition(row, startCol)),
+            "f64"    => new Token(TokenType.Keyword_f64, lexeme, new SourePosition(row, startCol)),
+            "double" => new Token(TokenType.Keyword_f64, lexeme, new SourePosition(row, startCol)),
+            "f128"   => new Token(TokenType.Keyword_f128, lexeme, new SourePosition(row, startCol)),
 
-            "struct" => new Token(TokenType.Keyword_struct, lexeme, line, startCol),
-            "union"  => new Token(TokenType.Keyword_union, lexeme, line, startCol),
+            "struct" => new Token(TokenType.Keyword_struct, lexeme, new SourePosition(row, startCol)),
+            "union"  => new Token(TokenType.Keyword_union, lexeme, new SourePosition(row, startCol)),
 
-            "if"   => new Token(TokenType.Keyword_if, lexeme, line, startCol),
-            "else" => new Token(TokenType.Keyword_else, lexeme, line, startCol),
+            "if"   => new Token(TokenType.Keyword_if, lexeme, new SourePosition(row, startCol)),
+            "else" => new Token(TokenType.Keyword_else, lexeme, new SourePosition(row, startCol)),
 
-            "for" => new Token(TokenType.Keyword_for, lexeme, line, startCol),
+            "for" => new Token(TokenType.Keyword_for, lexeme, new SourePosition(row, startCol)),
 
-            "return" => new Token(TokenType.Keyword_return, lexeme, line, startCol),
-            "true"   => new Token(TokenType.Literal, lexeme, line, startCol),
-            "false"  => new Token(TokenType.Literal, lexeme, line, startCol),
-            "new"    => new Token(TokenType.Keyword_new, lexeme, line, startCol),
+            "return" => new Token(TokenType.Keyword_return, lexeme, new SourePosition(row, startCol)),
+            "true"   => new Token(TokenType.Literal, lexeme, new SourePosition(row, startCol)),
+            "false"  => new Token(TokenType.Literal, lexeme, new SourePosition(row, startCol)),
+            "new"    => new Token(TokenType.Keyword_new, lexeme, new SourePosition(row, startCol)),
             
-            _ => new Token(TokenType.Identifier, lexeme, line, startCol),
+            _ => new Token(TokenType.Identifier, lexeme, new SourePosition(row, startCol)),
         };
     }
 
     Token MakeToken(TokenType type, string lexeme)
-    => new Token(type, lexeme, line, col - lexeme.Length);
+    => new Token(type, lexeme, new SourePosition(row, col - lexeme.Length));
 
     void SkipWhiteSpaceAndComments()
     {
@@ -285,7 +295,7 @@ class Lexer(string sourceCode)
                         // track newlines inside comments so token positions remain accurate
                         if (Peek() == '\n')
                         {
-                            line++;
+                            row++;
                             col = 1;
                         }
                         Advance();
@@ -297,7 +307,7 @@ class Lexer(string sourceCode)
             if (c == '\n')
             {
                 Advance();  // consume '\n'
-                line++;
+                row++;
                 col = 1;    // reset column at new line
                 continue;
             }
@@ -306,7 +316,7 @@ class Lexer(string sourceCode)
             {
                 Advance();  // consume '\r'
                 Advance();  // consume '\n'
-                line++;
+                row++;
                 col = 1;
                 continue;
             }
