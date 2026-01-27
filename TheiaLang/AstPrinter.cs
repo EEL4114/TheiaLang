@@ -150,7 +150,7 @@ static class AstPrinter
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}{TryPos(id.Pos)}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}");
                 break;
 
             case BinaryExpression bin:
@@ -210,7 +210,7 @@ static class AstPrinter
 
     #region Helpers
 
-    static string Indent(int n) => new string('\t', n);
+    static string Indent(int n) => new string(' ', 2 * n);
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ({typeInfo.Size} B) ";
     static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
     static string TryPos(SourePosition position) => position == SourePosition.None ? " | ()" : $" | ({position.Row} : {position.Column})";

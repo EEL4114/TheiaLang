@@ -30,5 +30,5 @@ static class ScopePrinter
         }
     }
 
-    static string Indent(int n) => new string('\t', n);
+    static string Indent(int n) => new string(' ', 2 * n);
 }
