@@ -570,8 +570,7 @@ public static class SemanticAnalyser
             case IndexExpression indexExpression:
                 indexExpression.Target = AnalyseExpression(indexExpression.Target);
                 indexExpression.Index = AnalyseExpression(indexExpression.Index);
-                // TODO this is kinda unsafe
-                //indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s32");
+                indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s64");
 
                 if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
@@ -719,7 +718,7 @@ public static class SemanticAnalyser
         string targetType = target.TypeName;
 
         if (!CanImplicitlyCast(sourceType, targetType))
-            throw new Exception($"Cannot implicitly convert {sourceType} -> {targetType}");
+            throw new Exception($"{expression.Pos}: Cannot implicitly convert {sourceType} -> {targetType}");
 
         if (sourceType != targetType)
         {
