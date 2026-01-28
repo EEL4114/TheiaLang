@@ -5,7 +5,6 @@ union StringData
     @s8 inlineData;
 }
 
-
 struct Vector2 
 {
     f32 x;
@@ -95,7 +94,7 @@ int main()
     
     float moreHealth = 1 + entity.health;
     healthPtr = @moreHealth;
-    voidPtr = @healthPtr;
+    voidPtr = @void(healthPtr);
     HP = $healthPtr;
 
     @[8]f32 FPptr;

@@ -108,7 +108,7 @@ public class Parser(List<Token> tokens)
         // fill out AST reference
         ExitScope();
 
-        currentScope.Declare(new SymbolInfo(
+        currentScope!.Declare(new SymbolInfo(
                                 functionDeclaration.Name,
                                 returnTypeInfo,
                                 SymbolKind.Function,
@@ -142,7 +142,7 @@ public class Parser(List<Token> tokens)
             {
                 SourePosition startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo fieldInfo))
-                    throw new Exception("Can't resove type");
+                    throw new Exception($"{Pos()}: Can't resove struct type");
 
                 if (Peek().TokenType == TokenType.Identifier
                  && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
@@ -737,9 +737,9 @@ public class Parser(List<Token> tokens)
 
     Token Consume(TokenType type, string message = "")
     {
-        if (Check(type)) return Advance();
-        //throw new Exception($"{message} at {programName}.tia {Peek().Line + 1}:{Peek().Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
-        Log.Error(3, $"{message} at {programName}.tia {Peek().Pos.Row + 1}:{Peek().Pos.Column}, got: {Peek().TokenType} '{Peek().Lexeme}'");
+        if (Check(type))
+            return Advance();
+        Log.Error(3, $"{programName}.tia {Peek().Pos.Row + 1}:{Peek().Pos.Column}: {message}, got: {Peek().TokenType} '{Peek().Lexeme}'");
         return null!;
     }
 
