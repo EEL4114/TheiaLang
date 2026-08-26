@@ -1,7 +1,8 @@
 ; ModuleID = 'theia_module'
 target triple = "x86_64-pc-windows-msvc19.44.35211"
 
-declare noalias ptr @realloc(i64)
+; arg 1: new alloc size (i64)
+declare ptr @realloc(ptr, i64) nounwind allocsize(1)
 declare noalias ptr @malloc(i64) nounwind willreturn
 declare void @free(ptr) nounwind
 
