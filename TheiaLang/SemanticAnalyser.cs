@@ -63,7 +63,7 @@ public static class SemanticAnalyser
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
             // TODO: simplify!!
-            currentScope.TryLookup(field.Identifier, out SymbolInfo? fieldInfo, out _);
+            currentScope.TryLookupLocal(field.Identifier, out SymbolInfo? fieldInfo, out _);
 #if DEBUG
             if (fieldInfo == null)
                 throw new Exception($"Could not find struct field '{field.Identifier}' in {currentScope.FullName}");
@@ -91,7 +91,7 @@ public static class SemanticAnalyser
         foreach (TypeNamePair variant in unionDeclaration.Variants)
         {
             // TODO: simplify!!
-            currentScope.TryLookup(variant.Identifier, out SymbolInfo? variantInfo, out _);
+            currentScope.TryLookupLocal(variant.Identifier, out SymbolInfo? variantInfo, out _);
 #if DEBUG
             if (variantInfo == null)
                 throw new Exception($"Could not find union variant '{variant.Identifier}' in {currentScope.FullName}");
@@ -134,7 +134,7 @@ public static class SemanticAnalyser
             // TODO: simplify!!
             arg.ResolvedType = GetTypeInfo(arg.ResolvedType.TypeName);
 
-            if(!currentScope.TryLookup(arg.Identifier, out _, out _))
+            if(!currentScope.TryLookupLocal(arg.Identifier, out _, out _))
                 currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
@@ -169,7 +169,7 @@ public static class SemanticAnalyser
         {
             case VariableDeclaration variable:
                 //Log.Info($"{variable.Name}");
-                if (currentScope.TryLookup(variable.Name, out _, out _))
+                if (currentScope.TryLookupLocal(variable.Name, out _, out _))
                     throw new Exception($"A Variable with the name '{variable.Name}' is already defined in {currentScope.FullName}");
 
                 if (variable.ResolvedType != null)
@@ -288,7 +288,7 @@ public static class SemanticAnalyser
                 if (!currentScope.TryLookup(identifier.Name, out _, out Scope? symbolScope))
                     Log.Error(21, $"{identifier.Name} is not defined in {currentScope.Name}");
 
-                TypeInfo identifierInfo = GetTypeInfo(identifier.Name);
+                TypeInfo identifierInfo = GetSymbolType(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
                 identifier.Scope = symbolScope;
                 break;
@@ -297,7 +297,6 @@ public static class SemanticAnalyser
                     AnalyseExpression(arg);
                 if (call.Target is IdentifierExpression id)
                 {
-                    call.Target = AnalyseExpression(call.Target);
                     if (id.Name == "TypeSize")
                     {
                         if (call.Arguments.Count != 1)
@@ -380,6 +379,8 @@ public static class SemanticAnalyser
                     }
                     else
                     {
+                        call.Target = AnalyseExpression(call.Target);
+
                         if (id.Scope != null)
                         {
                             if (id.Scope.TryLookup(id.Name, out SymbolInfo? sInfo, out Scope? defScope)
@@ -645,6 +646,17 @@ public static class SemanticAnalyser
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
+
+        if(symbolInfo!.Kind != SymbolKind.Type)
+            throw new Exception($"'{typeOrName}' is not a valid type in {currentScope.FullName}");
+
+        return symbolInfo!.Type;
+    }
+
+    static TypeInfo GetSymbolType(string name)
+    {
+        if (!currentScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
+            throw new Exception($"Type or Name '{name}' is not defined in {currentScope.FullName}");
 
         return symbolInfo!.Type;
     }

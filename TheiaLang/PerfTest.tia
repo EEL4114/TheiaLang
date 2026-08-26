@@ -33,6 +33,12 @@ float AliveBoost(Entity entity) {
     {
         x = x * 2;
     }
+
+    if(h != 3)
+    {
+        h += 3;
+    }
+
     return f32(x);
 }
 

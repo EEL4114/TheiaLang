@@ -141,6 +141,20 @@ public class Scope : INode
         }
     }
 
+    public bool TryLookupLocal(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)
+    {
+        if (Symbols.TryGetValue(identifier, out symbolInfo))
+        {
+            symbolScope = this;
+            return true;
+        }
+        else
+        {
+            symbolScope = null;
+            return false;
+        }
+    }
+
     static string TryPos(INode? node) => node == null || node.Pos == SourePosition.None ? " | ()" : $" | ({node.Pos.Row} : {node.Pos.Column})";
 
 
