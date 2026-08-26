@@ -132,11 +132,10 @@ int CompileFile(string filePath,
     Token token;
 
     string programName = filePath[(1 + filePath.LastIndexOf('\\'))..];
-    string lexPath = $"{DEBUG_PATH}{programName}.lex";
+    string lexPath = $"{DEBUG_PATH_REL}{programName}.lex";
     using StreamWriter lexerWriter = new StreamWriter(lexPath);
 
-    do
-    {
+    do {
         token = lexer.NextToken();
         tokens.Add(token);
 
@@ -146,7 +145,7 @@ int CompileFile(string filePath,
 
     } while (token.TokenType != TokenType.EOF);
 
-    // Log.Link(lexPath, "Lexer tokens: ");
+    Log.Link(lexPath, "Lexer tokens: ");
 
     lexTimer.Stop();
     parseTimer.Start();
@@ -194,7 +193,7 @@ int CompileFile(string filePath,
     ProcessStartInfo psi = new ProcessStartInfo
     {
         FileName = @"C:\Program Files\LLVM\bin\clang.exe",
-        Arguments = $"-x ir {programName}.ll -O0 -rtlib=compiler-rt -o {OUTPUT_PATH}{programName}.exe",
+        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -O0 -rtlib=compiler-rt -o {OUTPUT_PATH_REL}{programName}.exe",
 
         UseShellExecute = false,
         RedirectStandardOutput = true,
@@ -202,12 +201,41 @@ int CompileFile(string filePath,
         CreateNoWindow = true,
     };
 
-    using Process process = Process.Start(psi)!;
+    string asmPath = $"{OUTPUT_PATH_REL}{programName}.s";
+    ProcessStartInfo psi2 = new ProcessStartInfo
+    {
+        FileName = @"C:\Program Files\LLVM\bin\clang.exe",
+        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -O3 -S -o " + asmPath,
 
-    string stdout = process.StandardOutput.ReadToEnd();
-    string stderr = process.StandardError.ReadToEnd();
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true,
+    };
 
-    process.WaitForExit();
+    Log.Link(asmPath, "ASM: ");
+
+
+    using (Process process = Process.Start(psi)!)
+    {
+        string stdout = process.StandardOutput.ReadToEnd();
+        string stderr = process.StandardError.ReadToEnd();
+
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+            throw new Exception(stderr);
+    }
+
+    using (Process process2 = Process.Start(psi2)!)
+    {
+        string stdout2 = process2.StandardOutput.ReadToEnd();
+        string stderr2 = process2.StandardError.ReadToEnd();
+        process2.WaitForExit();
+
+        if (process2.ExitCode != 0)
+            throw new Exception(stderr2);
+    }
 
     LLVMTimer.Stop();
     compileTimer.Stop();
