@@ -205,7 +205,7 @@ int CompileFile(string filePath,
     ProcessStartInfo psi2 = new ProcessStartInfo
     {
         FileName = @"C:\Program Files\LLVM\bin\clang.exe",
-        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -O3 -S -o " + asmPath,
+        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -march=native -O3 -S -o " + asmPath,
 
         UseShellExecute = false,
         RedirectStandardOutput = true,

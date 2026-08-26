@@ -1,0 +1,9 @@
+int main()
+{
+    int a = 7;
+
+    if(a != 6)
+    {
+        return 0;
+    }
+}

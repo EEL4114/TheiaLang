@@ -391,23 +391,7 @@ public static class SemanticAnalyser
                                 if (call.Arguments.Count != sInfo.Parameters.Count)
                                     throw new Exception($"Function '{sInfo.Name}' expects {sInfo.Parameters.Count}"
                                         + $" arguments, got {call.Arguments.Count}");
-                                for (int i = 0; i < call.Arguments.Count; i++)
-                                {
-                                    IExpression argument = AnalyseExpression(call.Arguments[i]);
-                                    string expected = sInfo.Parameters[i].ResolvedType!.TypeName;
-                                    argument.ResolvedType = PromoteIfLiteral(argument.ResolvedType!, expected);
-                                    GenerateImplicitCast(argument, sInfo.Parameters[i].ResolvedType!);
-
-                                    call.Arguments[i] = argument;
-                                    string actual = argument.ResolvedType!.TypeName;
-                                    string name = sInfo.Parameters[i].Identifier;
-                                    if (actual != expected)
-                                        Log.Error(22, $"Function {sInfo.Name} expects type {expected} for argument {name}, got: {actual}");
-                                    call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
-                                                                                    sInfo.Parameters[i].ResolvedType!.TypeName);
-                                    call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], sInfo.Parameters[i].ResolvedType!);
-                                }
-                                call.ResolvedType = sInfo.Type;
+                                AnalyseArguments(call, sInfo);
                                 call.Scope = defScope;
                             }
                         }
@@ -417,24 +401,7 @@ public static class SemanticAnalyser
                                 || info!.Kind != SymbolKind.Function)
                                 throw new Exception($"Unknown function '{id.Name}'");
 
-                            if (call.Arguments.Count != info.Parameters!.Count)
-                                throw new Exception($"Function '{info.Name}' expects {info.Parameters.Count}"
-                                                    + $" arguments, got {call.Arguments.Count}");
-
-                            for (int i = 0; i < call.Arguments.Count; i++)
-                            {
-                                IExpression argument = AnalyseExpression(call.Arguments[i]);
-                                call.Arguments[i] = argument;
-                                string actual = argument.ResolvedType!.TypeName;
-
-                                string expected = info.Parameters[i].ResolvedType!.TypeName;
-                                call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
-                                                                                info.Parameters[i].ResolvedType!.TypeName);
-
-                                call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], info.Parameters[i].ResolvedType!);
-                            }
-
-                            call.ResolvedType = info.Type;
+                            AnalyseArguments(call, info);
                             call.Scope = defScope;
                         }
                     }

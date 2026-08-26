@@ -1,4 +1,17 @@
+STABILITY
+
+ENTRY                                   STATUS
+Reserve function / struct names early
+Unique var names
+
+BUGS
+
 ENTRY                                   STATUS
 Lexer parsing '!=' incorrectly          Fixed
 SizeOf not including ABI alignment      
 @realloc signature                      
+
+TESTS
+ENTRY                                   STATUS
+'!='
+scope handling (esp. same identifier)
