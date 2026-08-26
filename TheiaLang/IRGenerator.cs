@@ -39,17 +39,17 @@ public static class IRGenerator
     static bool AutoLog;
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
+    static readonly string INTRINSICS_PATH_REL = Path.Combine(AppContext.BaseDirectory, INTRINSICS_PATH);
 
     static bool IsSIntegerType(int i) => i >= 2 && i <= 7;
     static bool IsFloatIdx(int i) => i >= 9 && i <= 12;
 
-
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
     {
-        if (!File.Exists(INTRINSICS_PATH))
+        if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
 
-        string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH);
+        string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH_REL);
         StringBuilder sb = new StringBuilder();
 
         sb.AppendLine($"; Creaded at: {DateTime.Now}'");

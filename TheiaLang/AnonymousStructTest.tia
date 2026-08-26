@@ -1,0 +1,19 @@
+s64 x;
+
+int main()
+{
+    return 0;
+}
+
+// struct {
+//     s64;
+//     s64;
+// } currentPos;
+
+// struct Entity{
+//     string Name;
+//     struct {
+//         float x;
+//         float y;
+//     }
+// }

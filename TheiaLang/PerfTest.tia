@@ -26,14 +26,14 @@ struct Vector3
 }
 
 float AliveBoost(Entity entity) {
-    f32 x = entity.transform.position.x;
+    f16 x = f16(entity.transform.position.x);
     f32 h = entity.health;
     bool b = entity.IsAlive();
     if (h > 0)
     {
         x = x * 2;
     }
-    return x + h;
+    return f32(x);
 }
 
 float Sum([]f32 a, int n) {
@@ -52,13 +52,13 @@ float main()
     @[]f32 ptrToDynamicArray;
 
     return AliveBoost(Entity{
-    Transform{
-        Vector3{1, 1, 1},
-        Vector3{1, 1, 1},
-        Vector3{1, 1, 1}},
-    70,
-    1.5,
-    false});
+        Transform{
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1},
+            Vector3{1, 1, 1}},
+        70,
+        1.5,
+        false});
 }
 
 struct DynamicArrayTest_f32

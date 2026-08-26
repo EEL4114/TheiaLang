@@ -83,7 +83,7 @@ public readonly record struct SourePosition(
     public static SourePosition None => default;
     public override string ToString()
     {
-        return $"({Row}:{Column})";
+        return $"{Row}:{Column}";
     }
 }
 

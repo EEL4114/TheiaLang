@@ -23,14 +23,20 @@ Stopwatch LLVMTimer     = new Stopwatch();
 
 preloadTimer.Start();
 
-const string PRELOAD_PATH = "__preload.tia";
-const string OUTPUT_PATH = "Output/";
-const string DEBUG_PATH = "Debug/";
+const string OUTPUT_PATH  = "Output/";
+const string DEBUG_PATH  = "Debug/";
 
-if (!File.Exists(PRELOAD_PATH))
+string PRELOAD_PATH_REL = Path.Combine(AppContext.BaseDirectory, "__preload.tia");
+string OUTPUT_PATH_REL  = Path.Combine(AppContext.BaseDirectory, OUTPUT_PATH);
+string DEBUG_PATH_REL   = Path.Combine(AppContext.BaseDirectory, DEBUG_PATH);
+
+Directory.CreateDirectory(Path.GetDirectoryName(OUTPUT_PATH_REL)!);
+Directory.CreateDirectory(Path.GetDirectoryName(DEBUG_PATH_REL)!);
+
+if (!File.Exists(PRELOAD_PATH_REL))
     Log.Error(18, "Preload module could not be located");
 
-string preloadCode = File.ReadAllText(PRELOAD_PATH);
+string preloadCode = File.ReadAllText(PRELOAD_PATH_REL);
 Lexer preloadLexer = new Lexer(preloadCode);
 List<Token> preloadTokens = [];
 Token token;
@@ -45,9 +51,9 @@ do
 
 Parser preloadParser = new Parser(preloadTokens);
 (ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
-using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}__preload__.ast");
+using StreamWriter writer = new StreamWriter($"{DEBUG_PATH_REL}__preload__.ast");
 AstPrinter.Print(preloadAST, writer, false);
-using StreamWriter scopeWriter = new StreamWriter($"{DEBUG_PATH}__preload__.scope");
+using StreamWriter scopeWriter = new StreamWriter($"{DEBUG_PATH_REL}__preload__.scope");
 ScopePrinter.Print("__preload", preloadScope, scopeWriter);
 
 preloadTimer.Stop();
@@ -66,10 +72,10 @@ if (args.Length == 0)
 
 if (args[0].EndsWith(".tia"))
 {
-    if (!File.Exists(args[0]))
+    if (!Path.Exists(args[0]) || !File.Exists(args[0]))
         Log.Error(15, $"File '{args[0]}' could not be found");
 
-    CompileFile(args[0][0..args[0].IndexOf('.')]);
+    CompileFile(args[0][0..args[0].LastIndexOf('.')]);
 }
 else    // folder
 {
@@ -112,12 +118,12 @@ else    // folder
 
 #region  Compilation
 
-int CompileFile(string programName,
+int CompileFile(string filePath,
                 bool insertLogs = false,
                 bool timestamps = true,
                 bool writeLexerOutput = false)
 {
-    string code = File.ReadAllText(programName + ".tia");
+    string code = File.ReadAllText(filePath + ".tia");
 
     compileTimer.Start();
     lexTimer.Start();
@@ -125,7 +131,9 @@ int CompileFile(string programName,
     List<Token> tokens = [];
     Token token;
 
-    using StreamWriter lexerWriter = new StreamWriter($"{DEBUG_PATH}{programName}.lex");
+    string programName = filePath[(1 + filePath.LastIndexOf('\\'))..];
+    string lexPath = $"{DEBUG_PATH}{programName}.lex";
+    using StreamWriter lexerWriter = new StreamWriter(lexPath);
 
     do
     {
@@ -138,47 +146,68 @@ int CompileFile(string programName,
 
     } while (token.TokenType != TokenType.EOF);
 
+    // Log.Link(lexPath, "Lexer tokens: ");
+
     lexTimer.Stop();
     parseTimer.Start();
 
     Parser parser = new Parser(tokens);
 
-    (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName[(1 + programName.LastIndexOf('\\'))..]);
+    (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
 
     parseTimer.Stop();
-    compileTimer.Stop();
+    (ast, globalScope) = Elaboration.Lower(preloadScope, preloadAST, globalScope, ast);
     printTimer.Start();
 
-    (ast, globalScope) = Elaboration.Lower(preloadScope, preloadAST, globalScope, ast);
-
-    using StreamWriter writer = new StreamWriter($"{DEBUG_PATH}{programName}.ast");
+    string writerPath = $"{DEBUG_PATH_REL}{programName}.ast";
+    using StreamWriter writer = new StreamWriter(writerPath);
     AstPrinter.Print(ast, writer, timestamps);
+    Log.Link(writerPath, "Preload AST: ");
 
-    using StreamWriter sw2 = new StreamWriter($"{DEBUG_PATH}{programName}.scope");
-    ScopePrinter.Print(programName, globalScope, sw2);
+    string sw2Path = $"{DEBUG_PATH_REL}{programName}.scope";
+    using StreamWriter sw2 = new StreamWriter(sw2Path);
+    ScopePrinter.Print(filePath, globalScope, sw2);
+    Log.Link(sw2Path, "Scope Tree: ");
 
     printTimer.Stop();
-    compileTimer.Start();
     analysisTimer.Start();
 
     (ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
 
     analysisTimer.Stop();
-    compileTimer.Stop();
     printTimer.Start();
 
-    using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH}{programName}_full.ast");
+    string writer2Path = $"{DEBUG_PATH_REL}{programName}_full.ast";
+    using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH_REL}{programName}_full.ast");
     AstPrinter.Print(ast, writer2, timestamps);
+    Log.Link(writer2Path, "Full AST: ");
 
-    compileTimer.Start();
     IRGenTimer.Start();
 
-    IRGenerator.Emit(ast, globalScope, $"{OUTPUT_PATH}{programName}.ll", insertLogs);
+    string irgenPath = $"{OUTPUT_PATH_REL}{programName}.ll";
+    IRGenerator.Emit(ast, globalScope, irgenPath, insertLogs);
+    Log.Link(irgenPath, "IR: ");
 
     IRGenTimer.Stop();
     LLVMTimer.Start();
 
-    Process.Start(@"C:\Program Files\LLVM\bin\clang.exe", $"-x ir {OUTPUT_PATH}{programName}.ll -O0 -o {OUTPUT_PATH}{programName}.exe")?.WaitForExit();
+    ProcessStartInfo psi = new ProcessStartInfo
+    {
+        FileName = @"C:\Program Files\LLVM\bin\clang.exe",
+        Arguments = $"-x ir {programName}.ll -O0 -rtlib=compiler-rt -o {OUTPUT_PATH}{programName}.exe",
+
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true,
+    };
+
+    using Process process = Process.Start(psi)!;
+
+    string stdout = process.StandardOutput.ReadToEnd();
+    string stderr = process.StandardError.ReadToEnd();
+
+    process.WaitForExit();
 
     LLVMTimer.Stop();
     compileTimer.Stop();
@@ -260,12 +289,19 @@ public static class Log
             Console.WriteLine();
     }
 
+    public static void Link(string path, string label = "")
+    {
+        Uri uri = new Uri(path);
+        Console.WriteLine(label + uri.AbsoluteUri);
+    }
+
     public static void Usage()
     {
         Info("Usage: ");
         Info("  <path>.tia                       compile the specified file");
         Info("  --test <path>                    test all files in the specified folder");
     }
+
 }
 
 #endregion

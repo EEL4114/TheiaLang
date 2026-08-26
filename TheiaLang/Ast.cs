@@ -5,9 +5,12 @@ public sealed record ProgramNode(
     List<INode> Nodes
 );
 
-public interface INode { }
+public interface INode
+{
+    SourePosition Pos { get; }
+}
 
-public interface IDeclaration : INode
+public interface IDeclaration : INode, IStatement
 {
     string Name { get; }
     TypeInfo ResolvedType { get; set; }
@@ -17,7 +20,6 @@ public interface IDeclaration : INode
 public interface IStatement : INode
 {
     SourePosition Pos { get; }
-
 }
 
 public interface IExpression : INode
@@ -173,7 +175,7 @@ public sealed record VariableDeclaration(
     string Name,
     IExpression? Init,          // null if no initializer
     SourePosition Pos = default
-) : IDeclaration, IStatement
+) : IDeclaration
 {
     public TypeInfo? ResolvedType { get; set; }
     public IExpression? Init { get; set; } = Init;

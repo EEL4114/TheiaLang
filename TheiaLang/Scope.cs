@@ -84,6 +84,7 @@ public class Scope : INode
     public Scope? Parent { get; }
     public Dictionary<string, Scope> Children { get; } = [];
     public Dictionary<string, SymbolInfo> Symbols { get; } = [];
+    public SourePosition Pos => default;
 
     public Scope(string name, INode? declaringNode = null, Scope? parent = null)
     {
@@ -96,7 +97,7 @@ public class Scope : INode
         if (!Parent.Children.ContainsKey(name))
             Parent.Children.Add(name, this);   
         else
-            Log.Error(7, $"Identifier '{name}' is already declared in the scope '{Parent!.FullName}'");
+            Log.Error(7, $"Identifier '{name}' is already declared in the scope '{Parent!.FullName}'{TryPos(declaringNode)}");
 
         //Log.Info($"Declare Scope '{name}' in parent scope '{Parent.FullName}'.\n\tAdded to parent children: {Parent.Children.ContainsKey(name)}");
     }
@@ -139,6 +140,9 @@ public class Scope : INode
                 return Parent.TryLookup(identifier, out symbolInfo, out symbolScope);
         }
     }
+
+    static string TryPos(INode? node) => node == null || node.Pos == SourePosition.None ? " | ()" : $" | ({node.Pos.Row} : {node.Pos.Column})";
+
 
     public bool TryFindChild(string name, out Scope? childScope)
     {

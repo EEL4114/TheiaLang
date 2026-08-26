@@ -21,12 +21,14 @@ static class AstPrinter
                 PrintStruct(structDeclaration, w, indent);
             if (node is UnionDeclaration unionDeclaration)
                 PrintUnion(unionDeclaration, w, indent);
+            if (node is VariableDeclaration variableDeclaration)
+                PrintVariableDeclaration(variableDeclaration, w, indent);
         }
 
         w.Flush();
     }
 
-    #region Baisc
+    #region Basic
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
@@ -73,6 +75,14 @@ static class AstPrinter
         w.WriteLine();
     }
 
+    static void PrintVariableDeclaration(VariableDeclaration vd, TextWriter w, int indent)
+    {
+        w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)}{vd.Name}"
+            + (vd.Init != null ? " =" : ""));
+        if (vd.Init != null)
+            PrintExpression(vd.Init, w, indent + 1);
+    }
+
     #endregion
 
     #region  Statements
@@ -82,10 +92,7 @@ static class AstPrinter
         switch (statement)
         {
             case VariableDeclaration vd:
-                w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)}{vd.Name}" +
-                            (vd.Init is not null ? " =" : ""));
-                if (vd.Init != null)
-                    PrintExpression(vd.Init, w, indent + 1);
+                PrintVariableDeclaration(vd, w, indent);
                 break;
             case AssignmentStatement a:
                 w.WriteLine($"{Indent(indent)}Assignment:");

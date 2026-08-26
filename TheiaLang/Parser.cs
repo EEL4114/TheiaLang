@@ -21,56 +21,112 @@ public class Parser(List<Token> tokens)
         foreach (string builtinType in IRGenerator.BuiltinTypes)
             DeclareBuiltin(builtinType);
 
-        globalScope.Declare(new SymbolInfo(
-                                "__th_allocB",
-                                new TypeInfo("@void", 8, new TypeInfo("void")),
-                                SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
-                            ));
+        globalScope.Declare(
+            new SymbolInfo(
+                "__th_allocB",
+                new TypeInfo("@void", 8, new TypeInfo("void")),
+                SymbolKind.Function,
+                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
+            ));
 
-        globalScope.Declare(new SymbolInfo(
-                                "__th_reallocB",
-                                new TypeInfo("@void", 8, new TypeInfo("void")),
-                                SymbolKind.Function,
-                                [   new TypeNamePair(new TypeInfo("@void"), "alloc", SourePosition.None),
-                                    new TypeNamePair(new TypeInfo("s64"), "newSize", SourePosition.None)]
-                                ));
+        globalScope.Declare(
+            new SymbolInfo(
+                "__th_reallocB",
+                new TypeInfo("@void", 8, new TypeInfo("void")),
+                SymbolKind.Function,
+                [   new TypeNamePair(new TypeInfo("@void"), "alloc", SourePosition.None),
+                    new TypeNamePair(new TypeInfo("s64"), "newSize", SourePosition.None)]
+            ));
 
-        globalScope.Declare(new SymbolInfo(
-                                "__th_free",
-                                new TypeInfo("void", 0),
-                                SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("@void"), "ptr", SourePosition.None)
-                            ]));
+        globalScope.Declare(
+            new SymbolInfo(
+                "__th_free",
+                new TypeInfo("void", 0),
+                SymbolKind.Function,
+                [new TypeNamePair(new TypeInfo("@void"), "ptr", SourePosition.None)
+            ]));
 
-        globalScope.Declare(new SymbolInfo(
-                                "__th_alloc",
-                                new TypeInfo("@void", 8, new TypeInfo("void")),
-                                SymbolKind.Function,
-                                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
-                            ));
+        globalScope.Declare(
+            new SymbolInfo(
+                "__th_alloc",
+                new TypeInfo("@void", 8, new TypeInfo("void")),
+                SymbolKind.Function,
+                [new TypeNamePair(new TypeInfo("s64"), "size", SourePosition.None)]
+            ));
 
-        List<INode> nodes = [];
-
-        while (!IsAtEnd())
-            if (Match(TokenType.Keyword_struct))
-                nodes.Add(ParseStructDeclaration());
-            else if (Match(TokenType.Keyword_union))
-                nodes.Add(ParseUnionDeclaration());
-            else
-                nodes.Add(ParseFunctionDeclaration());
-
+        List<INode> nodes = ParseDeclarations();
         return (new ProgramNode(ProgramName, nodes), globalScope);
     }
 
     #region Declarations
 
-    FunctionDeclaration ParseFunctionDeclaration()
+    List<INode> ParseDeclarations()
+    {
+        List<INode> nodes = [];
+        while (!IsAtEnd())
+            nodes.Add(ParseDeclaration());
+
+        return nodes;
+    }
+
+    IDeclaration ParseDeclaration()
     {
         SourePosition startPosition = Pos();
-        if (!MatchTypeDefinition(out TypeInfo returnTypeInfo))
-            throw new Exception("Couldn't parse function return type");
+        if (Match(TokenType.Keyword_struct))
+            return ParseStructDeclaration();
+        if (Match(TokenType.Keyword_union))
+            return ParseUnionDeclaration();
+        if (MatchTypeDefinition(out TypeInfo typeInfo)
+            && Peek().TokenType == TokenType.Identifier)
+        {
+            if (PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+                return ParseFunctionDeclaration(typeInfo, startPosition);
 
+            return ParseVariableDeclaration(typeInfo, startPosition, true);
+        }
+
+        throw new Exception($"{startPosition} Can't resolve type '{Peek().Lexeme}'");
+    }
+
+    (bool success, IDeclaration result) TryParseDeclaration()
+    {
+        
+        SourePosition startPosition = Pos();
+        if (Match(TokenType.Keyword_struct))
+            return (true, ParseStructDeclaration());
+        if (Match(TokenType.Keyword_union))
+            return (true, ParseUnionDeclaration());
+        if (MatchTypeDefinition(out TypeInfo typeInfo)
+            && Peek().TokenType == TokenType.Identifier)
+        {
+            if (PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+                return (true, ParseFunctionDeclaration(typeInfo, startPosition));
+
+            return (true, ParseVariableDeclaration(typeInfo, startPosition, true));
+        }
+
+        return (false, null!);
+    }
+
+    VariableDeclaration ParseVariableDeclaration(TypeInfo typeInfo, SourePosition startPosition, bool requireSemicolon)
+    {
+        IExpression? init = null;
+        string name = Consume(TokenType.Identifier).Lexeme;
+
+        if (Match(TokenType.Operator_Equal))
+            init = ParseExpression();
+
+        if (requireSemicolon)
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
+
+        VariableDeclaration variable = new VariableDeclaration(typeInfo.TypeName, name, init, startPosition);
+        variable.ResolvedType = typeInfo;
+
+        return variable;
+    }
+
+    FunctionDeclaration ParseFunctionDeclaration(TypeInfo returnTypeInfo, SourePosition startPosition)
+    {
         Token nameToken = Consume(TokenType.Identifier, "Expected function name");
         string name = nameToken.Lexeme;
 
@@ -113,7 +169,7 @@ public class Parser(List<Token> tokens)
                                 returnTypeInfo,
                                 SymbolKind.Function,
                                 functionDeclaration.Parameters
-                             ));
+                                ));
 
         return functionDeclaration;
     }
@@ -132,7 +188,6 @@ public class Parser(List<Token> tokens)
         List<FunctionDeclaration> functions = [];
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
-
         structDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = structDeclaration;
 
@@ -140,35 +195,23 @@ public class Parser(List<Token> tokens)
         {
             do
             {
-                SourePosition startPosition = Pos();
-                if (!MatchTypeDefinition(out TypeInfo fieldInfo))
-                    throw new Exception($"{Pos()}: Can't resove struct type");
-
-                if (Peek().TokenType == TokenType.Identifier
-                 && PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
+                IDeclaration declaration = ParseDeclaration();
+                if(declaration is VariableDeclaration vd)
                 {
-                    pos--;
-                    FunctionDeclaration functionDeclaration = ParseFunctionDeclaration();
-                    functions.Add(functionDeclaration);
+                    currentScope.Declare(new SymbolInfo(vd.Name,
+                                                        vd.ResolvedType!,
+                                                        SymbolKind.Variable,
+                                                        null));
+                    fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
+                    fieldNames.Add(vd.Name);
+                    fieldTypes.Add(vd.ResolvedType!.TypeName);
                 }
-                else
+                else if (declaration is FunctionDeclaration fd)
                 {
-                    Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
-                    TypeNamePair parameter = new TypeNamePair(fieldInfo, identifierToken.Lexeme, startPosition);
-
-                    currentScope.Declare(new SymbolInfo(
-                                            parameter.Identifier,
-                                            parameter.ResolvedType,
-                                            SymbolKind.Variable,
-                                            null
-                                         ));
-
-                    fields.Add(parameter);
-                    fieldNames.Add(parameter.Identifier);
-                    fieldTypes.Add(parameter.ResolvedType.TypeName);
+                    functions.Add(fd);
                 }
-            } while (Match(TokenType.Punctuation_Semicolon)
-                 && !Check(TokenType.Punctuation_BraceR));
+
+            } while (!Check(TokenType.Punctuation_BraceR));
         }
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
 
@@ -258,7 +301,13 @@ public class Parser(List<Token> tokens)
         List<IStatement> statements = [];
 
         while (!Check(TokenType.Punctuation_BraceR) && !IsAtEnd())
-            statements.Add(ParseStatement());
+        {
+            (bool success, IDeclaration result) = TryParseDeclaration();
+            if(success)
+                statements.Add(result);
+            else
+                statements.Add(ParseStatement());
+        }
 
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after block");
         return statements;
@@ -267,25 +316,6 @@ public class Parser(List<Token> tokens)
     IStatement ParseStatement(bool requireSemicolon = true)
     {
         SourePosition startPosition = Pos();
-        if (MatchTypeDefinition(out TypeInfo varInfo)
-         && Peek().TokenType == TokenType.Identifier)
-        {
-            IExpression? init = null;
-            string name = Advance().Lexeme;
-
-            if (Match(TokenType.Operator_Equal))
-                    init = ParseExpression();
-
-            //Log.Info($"{init}");
-            //Log.Info($"{Peek()}");
-            if (requireSemicolon)
-                Consume(TokenType.Punctuation_Semicolon, "Expected ';' after variable declaration");
-
-            VariableDeclaration variable = new VariableDeclaration(varInfo.TypeName, name, init, startPosition);
-            variable.ResolvedType = varInfo;
-
-            return variable;
-        }
 
         if (Match(TokenType.Keyword_if))
         {
@@ -316,7 +346,7 @@ public class Parser(List<Token> tokens)
         {
             EnterNewScope($"for_{pos}");
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after for keyword");
-            IStatement initialiser = ParseStatement();
+            IStatement initialiser = ParseDeclaration();
             IExpression condition = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after loop condition");
             IStatement iterator = ParseStatement(requireSemicolon: false);
@@ -391,7 +421,7 @@ public class Parser(List<Token> tokens)
             return new ExpressionStatement(expression, startPosition);
         }
 
-        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' {PrintCurrentPos()}");
+        Log.Error(1, $"Unexpected token {Peek().TokenType} '{Peek().Lexeme}' at {programName}:{Peek().Pos}");
         return null!;
     }
 
@@ -427,6 +457,7 @@ public class Parser(List<Token> tokens)
             typeInfo = new TypeInfo($"[{arrayLength}]{elementInfo.TypeName}",
                                     elementType: elementInfo,
                                     arrayLength: arrayLength);
+            
             return true;
         }
         else if (IsBuiltinType(Peek().TokenType))
@@ -438,14 +469,14 @@ public class Parser(List<Token> tokens)
             return true;
         }
         else    // composite; we do not want to touch the identifier here, but still check for its existence
-        if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Identifier)
-        {
-            Advance();
-            // TODO this is janky
-            string typeName = TokenTypeToString(Previous().TokenType);
-            typeInfo = new TypeInfo(typeName);
-            return true;
-        }
+            if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Identifier)
+            {
+                Advance();
+                // TODO this is janky
+                string typeName = TokenTypeToString(Previous().TokenType);
+                typeInfo = new TypeInfo(typeName);
+                return true;
+            }
 
         typeInfo = new TypeInfo("");
         pos = startPos;
@@ -758,7 +789,7 @@ public class Parser(List<Token> tokens)
     SourePosition Pos() => tokens[pos].Pos;
     string PrintCurrentPos()
     {
-        return $"at {Line()}:{Column()}";
+        return $"at {programName}:{Line()}:{Column()}";
     }
 
     bool Check(TokenType type) => !IsAtEnd() && Peek().TokenType == type;

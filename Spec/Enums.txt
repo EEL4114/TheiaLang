@@ -1,0 +1,66 @@
+sum Unit
+{
+    enum<f64> Mass              // access via Unit.variants, here: Unit.variant = 0, so Unit.variants[0]
+           {
+               kg  = 1,         // member index 0, access via Mass.members;
+               lbm = 0.453592,  // member index 1
+           },
+    enum<f64> Length            // Unit.variant = 1
+            {
+                m  = 1,         // member index 0
+                ft = 0.3048,    // member index 1
+                in = 0.0254,   // member index 2
+            },
+}
+
+
+f64 massValue;
+Unit.Mass massUnit;                 // explicitly defined as variant = 0; only values with variant = 0 permitted
+f64 lengthValue;
+Unit.Length lengthUnit;             // explicitly defined as variant = 1; only values with variant = 1 permitted
+Unit genericUnit                    // any unit goes;
+
+massUnit = Unit.Mass.kg;            // allowed, because Unit.Mass.kg is still variant 0
+massUnit = Unit.Mass.members[1];    // Unit.Mass.lbm; equivalent to massUnit.members[1]
+
+f64 massInSI = massValue * massUnit.value / Unit.Mass.kg.value;
+//                         ^ Unit.mass.lbm here
+
+//                                             v treat this like a ptr
+void OnUnitChanged(Unit newUnit, Unit oldUnit, @f64 associatedValue, string fieldName)
+{
+    if(newUnit == oldUnit)  // structural equality, not value equality: Unit.Length.m != Unit.Mass.kg
+    {                       // values can be compared via newUnit.Value == oldUnit.value
+        print($"{fieldName} already had unit {newUnit}");
+        return;
+    }
+
+    associatedValue *= f64(newUnit) / f64(oldUnit); // alternatively newUnit.value / oldUnit.value
+    return;
+}
+
+int massDimensionIndex = Unit.Mass.variant  // 0
+int kgIndex = Unit.variants[massIndex].kg.index;  // equivalent to Unit.Mass.kg.index 
+                                                  // the latter would be more practical, this is just for demonstration
+
+massUnit = Unit.variants[massIndex].members[kgIndex];
+
+void OnUnitChangedV2(Unit newUnit, @f64 associatedValue, @Unit storedUnit, string fieldName)
+{
+    if(newUnit == storedUnit)
+    {
+        print($"{fieldName} already had unit {newUnit}");
+        return;
+    }
+
+    if(newUnit.variant != storedUnit.variant)
+    {
+        print($"Dimension mismatch: {newUnit} is not compatible with {oldUnit}");
+        return;
+    }
+
+    associatedValue *= newUnit.value / storedUnit.value;
+    storedUnit = newUnit;
+
+    return;
+}

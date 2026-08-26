@@ -601,7 +601,7 @@ public static class SemanticAnalyser
                 break;
             default: throw new Exception($"Unsupported expression: {expression.GetType()}");
         }
-
+        
         return expression;
     }
 
