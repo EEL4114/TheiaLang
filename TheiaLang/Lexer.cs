@@ -47,7 +47,7 @@ public enum TokenType
     Operator_AND        = 610,
     Operator_OR         = 611,
     Operator_EqualEqual = 612,
-    Operator_Inequal    = 613,
+    Operator_NotEqual    = 613,
     Operator_Invert     = 614,
 
     Operator_PlusEqual  = 620,
@@ -132,6 +132,13 @@ class Lexer(string sourceCode)
                     return MakeToken(TokenType.Operator_DivEqual, "/=");
                 }
                 return MakeToken(TokenType.Operator_Div, "/");
+            case '!':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    return MakeToken(TokenType.Operator_NotEqual, "!=");
+                }
+                return MakeToken(TokenType.Operator_Invert, "!");
             case '=':
                 if (Peek() == '=')
                 {
@@ -141,7 +148,6 @@ class Lexer(string sourceCode)
                 return MakeToken(TokenType.Operator_Equal, "=");
             case '>': return MakeToken(TokenType.Operator_Greater, ">");
             case '<': return MakeToken(TokenType.Operator_Less, "<");
-            case '!': return MakeToken(TokenType.Operator_Invert, "!");
             case '@': return MakeToken(TokenType.Punctuation_At, "@");
             case ',': return MakeToken(TokenType.Punctuation_Comma, ",");
             case '.': return MakeToken(TokenType.Punctuation_Dot, ".");
@@ -167,7 +173,7 @@ class Lexer(string sourceCode)
         token = s switch
         {
             "==" => MakeToken(TokenType.Operator_EqualEqual, s),
-            "!=" => MakeToken(TokenType.Operator_Inequal, s),
+            "!=" => MakeToken(TokenType.Operator_NotEqual, s),
             "&&" => MakeToken(TokenType.Operator_AND, s),
             "||" => MakeToken(TokenType.Operator_OR, s),
             _ => throw new NotImplementedException($"Unexpected character '{c}' at {row + 1}:{col - 1}"),

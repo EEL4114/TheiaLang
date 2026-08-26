@@ -527,7 +527,7 @@ public class Parser(List<Token> tokens)
     IExpression ParseEquality()
     {
         IExpression left = ParseComparison();
-        while (Match(TokenType.Operator_EqualEqual) || Match(TokenType.Operator_Inequal))
+        while (Match(TokenType.Operator_EqualEqual) || Match(TokenType.Operator_NotEqual))
         {
             Token op = Previous();
             BinaryOperator compOperatorType = OperatorTypeToType(op.TokenType);
@@ -724,7 +724,7 @@ public class Parser(List<Token> tokens)
         TokenType.Operator_Less    => BinaryOperator.Less,
 
         TokenType.Operator_EqualEqual => BinaryOperator.EqualEqual,
-        TokenType.Operator_Inequal    => BinaryOperator.NotEqual,
+        TokenType.Operator_NotEqual    => BinaryOperator.NotEqual,
 
         TokenType.Operator_PlusEqual  => BinaryOperator.PlusEqual,
         TokenType.Operator_MinusEqual => BinaryOperator.MinusEqual,

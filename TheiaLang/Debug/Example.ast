@@ -1,503 +1,391 @@
 Program: Example
-Generated at 29.10.2025 17:21:07
+Generated at 28.01.2026 13:39:20
 
-UnionDeclaration: StringData (0 B) | Scope: 'StringData' 
-    [0]s8 dataPtr
-    @s8 inlineData
+UnionDeclaration: StringData(0 B) | Scope: 'StringData' | (2 : 7)
+  [0]s8 (0 B) dataPtr | (4 : 5)
+  @s8 (0 B) inlineData | (5 : 5)
 
-StructDeclaration: Vector2 (0 B)  | Scope: 'Vector2' 
-    Fields:
-        f32 x
-        f32 y
+StructDeclaration: Vector2(0 B) | Scope: 'Vector2' | (9 : 1)
+  Fields:
+    f32 (4 B) x | (11 : 5)
+    f32 (4 B) y | (12 : 5)
 
-FunctionDeclaration: s32 main | Scope: 'main' 
-    Arguments:
-    BlockSatement:
-        VariableDeclaration: Entity (0 B) entity =
-            Instantiation: Entity
-                Arguments:
-                    Instantiation: Transform
-                        Arguments:
-                            Instantiation: Vector3
-                                Arguments:
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                            Instantiation: Vector3
-                                Arguments:
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                            Instantiation: Vector3
-                                Arguments:
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                                    Literal: int (0 B) 1
-                    Literal: int (0 B) 70
-                    Literal: float (0 B) 1.5
-                    Literal: bool (1 B) false
-        VariableDeclaration: f32 (4 B) entityX =
-            MemberAccess: 
-                Target: 
-                    MemberAccess: 
-                        Target: 
-                            MemberAccess: 
-                                Target: 
-                                    Identifier: entity | Scope: ---
-                                Member: transform
-                        Member: position
-                Member: x
-        VariableDeclaration: f32 (4 B) fx =
-            Literal: float (0 B) 2.5
-        VariableDeclaration: s16 (2 B) sw =
-            Call: 
-                Target:
-                    Identifier: s16 | Scope: ---
-                Arguments:
-                    Identifier: fx | Scope: ---
-        VariableDeclaration: s32 (4 B) sx =
-            Call: 
-                Target:
-                    Identifier: s32 | Scope: ---
-                Arguments:
-                    Identifier: sw | Scope: ---
-        Assignment:
-            Identifier: sx | Scope: ---
-            Call: 
-                Target:
-                    Identifier: s32 | Scope: ---
-                Arguments:
-                    Identifier: sx | Scope: ---
-        Assignment:
-            Identifier: sx | Scope: ---
-            Call: 
-                Target:
-                    Identifier: s8 | Scope: ---
-                Arguments:
-                    Identifier: sx | Scope: ---
-        VariableDeclaration: s8 (1 B) sa =
-            Call: 
-                Target:
-                    Identifier: s8 | Scope: ---
-                Arguments:
-                    Identifier: sx | Scope: ---
-        VariableDeclaration: [4]f32 (0 B) Vec4
-        Assignment:
-            IndexExpression: 
-                Target:
-                    Identifier: Vec4 | Scope: ---
-                Index:
-                    Literal: int (0 B) 1
-            Literal: int (0 B) 3
-        VariableDeclaration: Dynamic_Array_s8 (0 B) ff
-        VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
-        VariableDeclaration: [4][6]@s8 (0 B) arrX
-        VariableDeclaration: [4]@[6]s8 (0 B) arrY
-        VariableDeclaration: @[4]@[6]s8 (0 B) ptrToArrayOfArrays
-        VariableDeclaration: @[4]f32 (0 B) ptrToFloatArray
-        VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
-        VariableDeclaration: @void (0 B) v =
-            Call: 
-                Target:
-                    Identifier: AllocB | Scope: ---
-                Arguments:
-                    Literal: int (0 B) 4
-        Assignment:
-            Identifier: v | Scope: ---
-            Call: 
-                Target:
-                    Identifier: ReallocB | Scope: ---
-                Arguments:
-                    Identifier: v | Scope: ---
-                    Literal: int (0 B) 8
-        Expression:
-            Call: 
-                Target:
-                    Identifier: Free | Scope: ---
-                Arguments:
-                    Identifier: v | Scope: ---
+  Functions:
+FunctionDeclaration: f32 Foo | Scope: 'Foo' | (15 : 1)
+  Arguments:
+    Entity (0 B) entity | (15 : 11)
+  BlockSatement:
+    VariableDeclaration: f32 (4 B) f
+    Return: 
+      BinaryExpression: Multiply
+        Identifier: f | Scope: ---
+        Literal: int (0 B) 2
 
-        VariableDeclaration: @void (0 B) voidPtr
-        VariableDeclaration: dynamicArray
-        VariableDeclaration: dynamicArray2
-        VariableDeclaration: f32 (4 B) z =
-            IndexExpression: 
-                Target:
-                    Identifier: Vec4 | Scope: ---
-                Index:
-                    Literal: int (0 B) 2
-        VariableDeclaration: Transform (0 B) tr =
-            MemberAccess: 
-                Target: 
-                    Identifier: entity | Scope: ---
-                Member: transform
-        VariableDeclaration: @Entity (0 B) entityPtr =
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: entity | Scope: ---
-        VariableDeclaration: s32 (4 B) ii =
-            Call: 
-                Target:
-                    Identifier: TypeSize | Scope: ---
-                Arguments:
-                    Identifier: Entity | Scope: ---
-        VariableDeclaration: s32 (4 B) jj =
-            Call: 
-                Target:
-                    Identifier: TypeSize | Scope: ---
-                Arguments:
-                    Identifier: s32 | Scope: ---
-        VariableDeclaration: f32 (4 B) HP =
-            MemberAccess: 
-                Target: 
-                    Identifier: entity | Scope: ---
-                Member: health
-        VariableDeclaration: @f32 (0 B) healthPtr =
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: HP | Scope: ---
-        Assignment:
-            UnaryExpression: Dereference
-                Operand:
-                    Identifier: healthPtr | Scope: ---
-            Literal: int (0 B) 5
-        VariableDeclaration: f32 (4 B) moreHealth =
-            BinaryExpression: Add
-                Literal: int (0 B) 1
-                MemberAccess: 
-                    Target: 
-                        Identifier: entity | Scope: ---
-                    Member: health
-        Assignment:
-            Identifier: healthPtr | Scope: ---
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: moreHealth | Scope: ---
-        Assignment:
-            Identifier: voidPtr | Scope: ---
-            UnaryExpression: AddressOf
-                Operand:
-                    Identifier: healthPtr | Scope: ---
-        Assignment:
-            Identifier: HP | Scope: ---
-            UnaryExpression: Dereference
-                Operand:
-                    Identifier: healthPtr | Scope: ---
-        VariableDeclaration: @[8]f32 (0 B) FPptr
-        VariableDeclaration: [8]f32 (0 B) FP
-        VariableDeclaration: f32 (4 B) f5 =
-            IndexExpression: 
-                Target:
-                    Identifier: FP | Scope: ---
-                Index:
-                    Literal: int (0 B) 5
-        Assignment:
-            Identifier: f5 | Scope: ---
-            IndexExpression: 
-                Target:
-                    UnaryExpression: Dereference
-                        Operand:
-                            Identifier: FPptr | Scope: ---
-                Index:
-                    Literal: int (0 B) 5
-        Compound Assignment: PlusEqual
-            Identifier: moreHealth | Scope: ---
-            Literal: int (0 B) 1
-        Expression:
-            Call: 
-                Target:
-                    Identifier: m | Scope: ---
-                Arguments:
-                    Literal: int (0 B) 7
+FunctionDeclaration: s32 main | Scope: 'main' | (21 : 1)
+  Arguments:
+  BlockSatement:
+    VariableDeclaration: Entity (0 B) entity
+    VariableDeclaration: bool (1 B) entityAlive
+    VariableDeclaration: f32 (4 B) entityX
+    VariableDeclaration: f32 (4 B) fx
+    VariableDeclaration: s16 (2 B) sw
+    VariableDeclaration: s32 (4 B) sx
+    Assignment:
+      Identifier: sx | Scope: ---
+      Call: 
+        Target:
+          Identifier: s32 | Scope: ---
+        Arguments:
+          Identifier: sx | Scope: ---
+    Assignment:
+      Identifier: sx | Scope: ---
+      Call: 
+        Target:
+          Identifier: s8 | Scope: ---
+        Arguments:
+          Identifier: sx | Scope: ---
+    VariableDeclaration: s8 (1 B) sa
+    VariableDeclaration: [4]f32 (0 B) Vec4
+    Assignment:
+      IndexExpression: 
+        Target:
+          Identifier: Vec4 | Scope: ---
+        Index:
+          Literal: int (0 B) 1
+      Literal: int (0 B) 3
+    VariableDeclaration: __dynamic_array-s8 (0 B) ff
+    VariableDeclaration: [4][6]s8 (0 B) arrayOfArrays
+    VariableDeclaration: [4][6]@s8 (0 B) arrX
+    VariableDeclaration: [4]@[6]s8 (0 B) arrY
+    VariableDeclaration: @[4]@[6]s8 (8 B) ptrToArrayOfArrays
+    VariableDeclaration: @[4]f32 (8 B) ptrToFloatArray
+    VariableDeclaration: [4]@f32 (0 B) arrOfFloatPtrs
+    VariableDeclaration: @void (8 B) v
+    Assignment:
+      Identifier: v | Scope: ---
+      Call: 
+        Target:
+          Identifier: ReallocB | Scope: ---
+        Arguments:
+          Identifier: v | Scope: ---
+          Literal: int (0 B) 8
+    Expression:
+      Call: 
+        Target:
+          Identifier: Free | Scope: ---
+        Arguments:
+          Identifier: v | Scope: ---
 
-        Expression:
-            Call: 
-                Target:
-                    Identifier: n | Scope: ---
-                Arguments:
-                    Literal: bool (1 B) true
+    VariableDeclaration: @void (8 B) voidPtr
+    VariableDeclaration: __dynamic_array-s8 (0 B) dynamicArray
+    VariableDeclaration: __dynamic_array-s8 (0 B) dynamicArray2
+    VariableDeclaration: f32 (4 B) z
+    VariableDeclaration: Transform (0 B) tr
+    VariableDeclaration: @Entity (8 B) entityPtr
+    VariableDeclaration: s32 (4 B) ii
+    VariableDeclaration: s32 (4 B) jj
+    VariableDeclaration: f32 (4 B) HP
+    VariableDeclaration: @f32 (8 B) healthPtr
+    Assignment:
+      UnaryExpression: Dereference
+        Operand:
+          Identifier: healthPtr | Scope: ---
+      Literal: int (0 B) 5
+    VariableDeclaration: f32 (4 B) moreHealth
+    Assignment:
+      Identifier: healthPtr | Scope: ---
+      UnaryExpression: AddressOf
+        Operand:
+          Identifier: moreHealth | Scope: ---
+    Assignment:
+      Identifier: voidPtr | Scope: ---
+      Call: 
+        Target:
+          Identifier: @void | Scope: ---
+        Arguments:
+          Identifier: healthPtr | Scope: ---
+    Assignment:
+      Identifier: HP | Scope: ---
+      UnaryExpression: Dereference
+        Operand:
+          Identifier: healthPtr | Scope: ---
+    VariableDeclaration: @[8]f32 (8 B) FPptr
+    VariableDeclaration: [8]f32 (0 B) FP
+    VariableDeclaration: f32 (4 B) f5
+    Assignment:
+      Identifier: f5 | Scope: ---
+      IndexExpression: 
+        Target:
+          UnaryExpression: Dereference
+            Operand:
+              Identifier: FPptr | Scope: ---
+        Index:
+          Literal: int (0 B) 5
+    CompoundAssignment: PlusEqual
+      Identifier: moreHealth | Scope: ---
+      Literal: int (0 B) 1
+    Expression:
+      Call: 
+        Target:
+          Identifier: m | Scope: ---
+        Arguments:
+          Literal: int (0 B) 7
 
-        Expression:
-            Call: 
-                Target:
-                    Identifier: n | Scope: ---
-                Arguments:
-                    Literal: bool (1 B) false
+    Expression:
+      Call: 
+        Target:
+          Identifier: n | Scope: ---
+        Arguments:
+          Literal: bool (1 B) true
 
-        VariableDeclaration: s32 (4 B) t =
-            Call: 
-                Target:
-                    Identifier: m | Scope: ---
-                Arguments:
-                    Literal: int (0 B) 8
-        VariableDeclaration: s32 (4 B) u =
-            BinaryExpression: Add
-                BinaryExpression: Add
-                    Literal: int (0 B) 1
-                    Call: 
-                        Target:
-                            Identifier: m | Scope: ---
-                        Arguments:
-                            Literal: int (0 B) 8
-                Literal: int (0 B) 9
-        VariableDeclaration: s32 (4 B) defaultInt
-        VariableDeclaration: f32 (4 B) defaultFloat
-        VariableDeclaration: bool (1 B) defaultBool
-        Assignment:
-            MemberAccess: 
-                Target: 
-                    Identifier: entity | Scope: ---
-                Member: health
-            Literal: int (0 B) 4
-        VariableDeclaration: s32 (4 B) default_s32
-        VariableDeclaration: f32 (4 B) default_f32
-        VariableDeclaration: bool (1 B) default_bool
-        VariableDeclaration: f128 (16 B) quad =
-            Literal: int (0 B) 14
-        VariableDeclaration: s32 (4 B) i =
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int (0 B) 1
-        Expression:
-            Call: 
-                Target:
-                    Identifier: Abs | Scope: ---
-                Arguments:
-                    Identifier: i | Scope: ---
+    Expression:
+      Call: 
+        Target:
+          Identifier: n | Scope: ---
+        Arguments:
+          Literal: bool (1 B) false
 
-        Expression:
-            Call: 
-                Target:
-                    Identifier: Abs | Scope: ---
-                Arguments:
-                    UnaryExpression: Negate
-                        Operand:
-                            Identifier: i | Scope: ---
+    VariableDeclaration: s32 (4 B) t
+    VariableDeclaration: s32 (4 B) u
+    VariableDeclaration: s32 (4 B) defaultInt
+    VariableDeclaration: f32 (4 B) defaultFloat
+    VariableDeclaration: bool (1 B) defaultBool
+    Assignment:
+      MemberAccess: 
+        Target: 
+          Identifier: entity | Scope: ---
+        Member: health
+      Literal: int (0 B) 4
+    VariableDeclaration: s32 (4 B) default_s32
+    VariableDeclaration: f32 (4 B) default_f32
+    VariableDeclaration: bool (1 B) default_bool
+    VariableDeclaration: f128 (16 B) quad
+    VariableDeclaration: s32 (4 B) i
+    Expression:
+      Call: 
+        Target:
+          Identifier: Abs | Scope: ---
+        Arguments:
+          Identifier: i | Scope: ---
 
-        VariableDeclaration: f32 (4 B) j =
-            UnaryExpression: Negate
-                Operand:
-                    Literal: int (0 B) 1
-        VariableDeclaration: bool (1 B) ffg =
-            Literal: bool (1 B) true
-        VariableDeclaration: s32 (4 B) a =
-            Literal: int (0 B) 5
-        VariableDeclaration: s32 (4 B) b =
-            Literal: int (0 B) 10
-        VariableDeclaration: s32 (4 B) c =
-            BinaryExpression: Add
-                Identifier: a | Scope: ---
-                Identifier: b | Scope: ---
-        VariableDeclaration: s32 (4 B) d =
-            Literal: int (0 B) 4
-        Assignment:
-            Identifier: d | Scope: ---
-            BinaryExpression: Add
-                Identifier: a | Scope: ---
-                Identifier: c | Scope: ---
-        Assignment:
-            Identifier: d | Scope: ---
-            BinaryExpression: Add
-                Identifier: d | Scope: ---
-                Literal: int (0 B) 42
-        VariableDeclaration: f32 (4 B) f =
-            Literal: float (0 B) 2.5
-        Compound Assignment: MultEqual
+    Expression:
+      Call: 
+        Target:
+          Identifier: Abs | Scope: ---
+        Arguments:
+          UnaryExpression: Negate
+            Operand:
+              Identifier: i | Scope: ---
+
+    VariableDeclaration: f32 (4 B) j
+    VariableDeclaration: bool (1 B) ffg
+    VariableDeclaration: s32 (4 B) a
+    VariableDeclaration: s32 (4 B) b
+    VariableDeclaration: s32 (4 B) c
+    VariableDeclaration: s32 (4 B) d
+    Assignment:
+      Identifier: d | Scope: ---
+      BinaryExpression: Add
+        Identifier: a | Scope: ---
+        Identifier: c | Scope: ---
+    Assignment:
+      Identifier: d | Scope: ---
+      BinaryExpression: Add
+        Identifier: d | Scope: ---
+        Literal: int (0 B) 42
+    VariableDeclaration: f32 (4 B) f
+    CompoundAssignment: MultEqual
+      Identifier: f | Scope: ---
+      Literal: int (0 B) 2
+    VariableDeclaration: f32 (4 B) g
+    VariableDeclaration: f32 (4 B) h
+    VariableDeclaration: bool (1 B) ok
+    Return: int (0 B) 
+      Literal: int (0 B) 0
+
+FunctionDeclaration: void fn | Scope: 'fn' | (153 : 1)
+  Arguments:
+    s32 (4 B) i | (153 : 9)
+  BlockSatement:
+    VariableDeclaration: s32 (4 B) j
+    Return: 
+
+FunctionDeclaration: s32 Branchy | Scope: 'Branchy' | (159 : 1)
+  Arguments:
+    s32 (4 B) value | (159 : 13)
+  BlockSatement:
+    If:
+      Condition:
+        BinaryExpression: EqualEqual
+          Identifier: value | Scope: ---
+          Literal: int (0 B) 0
+      Then: | Scope: 'if_then573'
+        BlockSatement:
+          Assignment:
+            Identifier: value | Scope: ---
+            Literal: int (0 B) 42
+          VariableDeclaration: f32 (4 B) f =
+            Literal: int (0 B) 0
+          Assignment:
             Identifier: f | Scope: ---
-            Literal: int (0 B) 2
-        VariableDeclaration: f32 (4 B) g =
-            Literal: int (0 B) 3
-        VariableDeclaration: f32 (4 B) h =
-            BinaryExpression: Subtract
-                Identifier: f | Scope: ---
-                Identifier: g | Scope: ---
-        VariableDeclaration: bool (1 B) ok =
-            BinaryExpression: Greater
-                Identifier: c | Scope: ---
-                Literal: int (0 B) 5
-        Return: int (0 B) 
+            UnaryExpression: Negate
+              Operand:
+                Literal: int (0 B) 1
+
+      Else: | Scope: 'if_else589'
+        BlockSatement:
+          Assignment:
+            Identifier: value | Scope: ---
+            UnaryExpression: Negate
+              Operand:
+                Literal: int (0 B) 42
+          VariableDeclaration: f32 (4 B) f =
+            Literal: int (0 B) 78
+
+    Return: 
+      Identifier: value | Scope: ---
+
+FunctionDeclaration: s32 Abs | Scope: 'Abs' | (175 : 1)
+  Arguments:
+    s32 (4 B) value | (175 : 9)
+  BlockSatement:
+    If:
+      Condition:
+        BinaryExpression: Less
+          Identifier: value | Scope: ---
+          Literal: int (0 B) 0
+      Then: | Scope: 'if_then619'
+        BlockSatement:
+          Return: 
+            UnaryExpression: Negate
+              Operand:
+                Identifier: value | Scope: ---
+
+    Return: 
+      Identifier: value | Scope: ---
+
+FunctionDeclaration: bool n | Scope: 'n' | (184 : 1)
+  Arguments:
+    bool (1 B) b | (184 : 8)
+  BlockSatement:
+    Return: 
+      Identifier: b | Scope: ---
+
+FunctionDeclaration: s32 m | Scope: 'm' | (189 : 1)
+  Arguments:
+    s32 (4 B) j | (189 : 7)
+  BlockSatement:
+    VariableDeclaration: s32 (4 B) i
+    CompoundAssignment: PlusEqual
+      Identifier: j | Scope: ---
+      Literal: int (0 B) 4
+    VariableDeclaration: s32 (4 B) health
+    Return: 
+      Identifier: j | Scope: ---
+
+StructDeclaration: Entity(0 B) | Scope: 'Entity' | (197 : 1)
+  Fields:
+    Transform (0 B) transform | (199 : 5)
+    f32 (4 B) health | (200 : 5)
+    f32 (4 B) speed | (201 : 5)
+    bool (1 B) canFly | (202 : 5)
+  Functions:
+    FunctionDeclaration: bool IsAlive | Scope: 'IsAlive' | (204 : 5)
+      Arguments:
+      BlockSatement:
+        Return: 
+          BinaryExpression: Greater
+            Identifier: health | Scope: ---
             Literal: int (0 B) 0
 
-FunctionDeclaration: void fn | Scope: 'fn' 
-    Arguments:
-        s32 i
-    BlockSatement:
-        VariableDeclaration: s32 (4 B) j =
-            BinaryExpression: Divide
-                Identifier: i | Scope: ---
-                Literal: int (0 B) 7
-        Return: 
+StructDeclaration: Transform(0 B) | Scope: 'Transform' | (213 : 1)
+  Fields:
+    Vector3 (0 B) position | (215 : 5)
+    Vector3 (0 B) rotation | (216 : 5)
+    Vector3 (0 B) scale | (217 : 5)
 
-FunctionDeclaration: s32 Branchy | Scope: 'Branchy' 
-    Arguments:
-        s32 value
-    BlockSatement:
-        If:
-            Condition:
-                BinaryExpression: EqualEqual
-                    Identifier: value | Scope: ---
-                    Literal: int (0 B) 0
-            Then: | Scope: 'if_then537' 
-                BlockSatement:
-                    Assignment:
-                        Identifier: value | Scope: ---
-                        Literal: int (0 B) 42
-                    VariableDeclaration: f32 (4 B) f =
-                        Literal: int (0 B) 0
-                    Assignment:
-                        Identifier: f | Scope: ---
-                        UnaryExpression: Negate
-                            Operand:
-                                Literal: int (0 B) 1
+  Functions:
+StructDeclaration: Vector3(0 B) | Scope: 'Vector3' | (220 : 1)
+  Fields:
+    f32 (4 B) x | (222 : 5)
+    f32 (4 B) y | (223 : 5)
+    f32 (4 B) z | (224 : 5)
 
-            Else: | Scope: 'if_else553' 
-                BlockSatement:
-                    Assignment:
-                        Identifier: value | Scope: ---
-                        UnaryExpression: Negate
-                            Operand:
-                                Literal: int (0 B) 42
-                    VariableDeclaration: f32 (4 B) f =
-                        Literal: int (0 B) 78
-
-        Return: 
-            Identifier: value | Scope: ---
-
-FunctionDeclaration: s32 Abs | Scope: 'Abs' 
-    Arguments:
-        s32 value
-    BlockSatement:
-        If:
-            Condition:
-                BinaryExpression: Less
-                    Identifier: value | Scope: ---
-                    Literal: int (0 B) 0
-            Then: | Scope: 'if_then583' 
-                BlockSatement:
-                    Return: 
-                        UnaryExpression: Negate
-                            Operand:
-                                Identifier: value | Scope: ---
-
-        Return: 
-            Identifier: value | Scope: ---
-
-FunctionDeclaration: s32 Loopy | Scope: 'Loopy' 
-    Arguments:
-        s32 value
-    BlockSatement:
-        For: | Scope: 'for_601' 
-            Initialiser:
-                VariableDeclaration: s32 (4 B) i =
-                    Literal: int (0 B) 0
-            Condition:
-                BinaryExpression: Less
-                    Identifier: i | Scope: ---
-                    Identifier: value | Scope: ---
-            Iterator:
-                Compound Assignment: MinusEqual
-                    Identifier: i | Scope: ---
-                    Literal: int (0 B) 3
-                BlockSatement:
-                    Compound Assignment: PlusEqual
-                        Identifier: value | Scope: ---
-                        Identifier: i | Scope: ---
-
-        Return: 
-            Identifier: value | Scope: ---
-
-FunctionDeclaration: bool n | Scope: 'n' 
-    Arguments:
-        bool b
-    BlockSatement:
-        Return: 
-            Identifier: b | Scope: ---
-
-FunctionDeclaration: s32 m | Scope: 'm' 
-    Arguments:
-        s32 j
-    BlockSatement:
-        VariableDeclaration: s32 (4 B) i =
-            Literal: int (0 B) 3
-        Compound Assignment: PlusEqual
-            Identifier: j | Scope: ---
-            Literal: int (0 B) 4
-        VariableDeclaration: s32 (4 B) health =
-            Literal: int (0 B) 7
-        Return: 
-            Identifier: j | Scope: ---
-
-StructDeclaration: Entity (0 B)  | Scope: 'Entity' 
-    Fields:
-        Transform transform
-        f32 health
-        f32 speed
-        bool canFly
-    FunctionDeclaration: bool IsAlive | Scope: 'IsAlive' 
+  Functions:
+FunctionDeclaration: @void AllocB | Scope: 'AllocB' | (28 : 1)
+  Arguments:
+    s64 (8 B) size | (28 : 14)
+  BlockSatement:
+    Return: 
+      Call: 
+        Target:
+          Identifier: __th_allocB | Scope: ---
         Arguments:
-        BlockSatement:
-            Return: 
-                BinaryExpression: Greater
-                    Identifier: health | Scope: ---
-                    Literal: int (0 B) 0
+          Identifier: size | Scope: ---
 
-StructDeclaration: Transform (0 B)  | Scope: 'Transform' 
-    Fields:
-        Vector3 position
-        Vector3 rotation
-        Vector3 scale
+FunctionDeclaration: @void ReallocB | Scope: 'ReallocB' | (33 : 1)
+  Arguments:
+    @void (0 B) ptr | (33 : 16)
+    s64 (8 B) newSize | (33 : 27)
+  BlockSatement:
+    Return: 
+      Call: 
+        Target:
+          Identifier: __th_reallocB | Scope: ---
+        Arguments:
+          Identifier: ptr | Scope: ---
+          Identifier: newSize | Scope: ---
 
-StructDeclaration: Vector3 (0 B)  | Scope: 'Vector3' 
-    Fields:
-        f32 x
-        f32 y
-        f32 z
+FunctionDeclaration: void Free | Scope: 'Free' | (39 : 1)
+  Arguments:
+    @void (0 B) ptr | (39 : 11)
+  BlockSatement:
+    Expression:
+      Call: 
+        Target:
+          Identifier: __th_free | Scope: ---
+        Arguments:
+          Identifier: ptr | Scope: ---
 
-FunctionDeclaration: @void AllocB | Scope: 'AllocB' 
-    Arguments:
-        s64 size
-    BlockSatement:
+    Return: 
+
+FunctionDeclaration: void TypeSize | Scope: 'TypeSize' | (45 : 1)
+  Arguments:
+  BlockSatement:
+    Return: 
+
+StructDeclaration: __dynamic_array-s8(0 B) | Scope: '__dynamic_array-s8' | ()
+  Fields:
+    s64 (8 B) Length | ()
+    @s8 (8 B) Data | ()
+    s64 (8 B) Size | ()
+  Functions:
+    FunctionDeclaration: s8 __index | Scope: '__index' | ()
+      Arguments:
+        s64 (8 B) index | ()
+      BlockSatement:
         Return: 
-            Call: 
+          UnaryExpression: Dereference
+            Operand:
+              Call: 
                 Target:
-                    Identifier: __th_allocB | Scope: ---
+                  Identifier: @s8 | Scope: ---
                 Arguments:
-                    Identifier: size | Scope: ---
-
-FunctionDeclaration: @void ReallocB | Scope: 'ReallocB' 
-    Arguments:
-        @void ptr
-        s64 newSize
-    BlockSatement:
-        Return: 
-            Call: 
-                Target:
-                    Identifier: __th_reallocB | Scope: ---
-                Arguments:
-                    Identifier: ptr | Scope: ---
-                    Identifier: newSize | Scope: ---
-
-FunctionDeclaration: void Free | Scope: 'Free' 
-    Arguments:
-        @void ptr
-    BlockSatement:
-        Expression:
-            Call: 
-                Target:
-                    Identifier: __th_free | Scope: ---
-                Arguments:
-                    Identifier: ptr | Scope: ---
-
-        Return: 
-
-FunctionDeclaration: void TypeSize | Scope: 'TypeSize' 
-    Arguments:
-    BlockSatement:
-        Return: 
-
-StructDeclaration: Dynamic_Array_s8 (0 B)  | Scope: 'Dynamic_Array_s8' 
-    Fields:
-        s64 Length
-        @void Data
-        s64 Size
+                  Call: 
+                    Target:
+                      Identifier: @void | Scope: ---
+                    Arguments:
+                      BinaryExpression: Add
+                        Call: 
+                          Target:
+                            Identifier: s64 | Scope: ---
+                          Arguments:
+                            Identifier: Data | Scope: ---
+                        BinaryExpression: Multiply
+                          Call: 
+                            Target:
+                              Identifier: TypeSize | Scope: ---
+                            Arguments:
+                              Identifier: s8 | Scope: ---
+                          Identifier: index | Scope: ---
 

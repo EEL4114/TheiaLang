@@ -1,0 +1,51 @@
+Program: __preload__
+
+StructDeclaration: __dynamic_array(0 B) | Scope: '__dynamic_array' | (1 : 1)
+  Fields:
+    s64 (8 B) Length | (3 : 5)
+    @f32 (0 B) Data | (4 : 5)
+    s64 (8 B) Size | (5 : 5)
+
+  Functions:
+FunctionDeclaration: @void AllocB | Scope: 'AllocB' | (28 : 1)
+  Arguments:
+    s64 (8 B) size | (28 : 14)
+  BlockSatement:
+    Return: 
+      Call: 
+        Target:
+          Identifier: __th_allocB | Scope: ---
+        Arguments:
+          Identifier: size | Scope: ---
+
+FunctionDeclaration: @void ReallocB | Scope: 'ReallocB' | (33 : 1)
+  Arguments:
+    @void (0 B) ptr | (33 : 16)
+    s64 (8 B) newSize | (33 : 27)
+  BlockSatement:
+    Return: 
+      Call: 
+        Target:
+          Identifier: __th_reallocB | Scope: ---
+        Arguments:
+          Identifier: ptr | Scope: ---
+          Identifier: newSize | Scope: ---
+
+FunctionDeclaration: void Free | Scope: 'Free' | (39 : 1)
+  Arguments:
+    @void (0 B) ptr | (39 : 11)
+  BlockSatement:
+    Expression:
+      Call: 
+        Target:
+          Identifier: __th_free | Scope: ---
+        Arguments:
+          Identifier: ptr | Scope: ---
+
+    Return: 
+
+FunctionDeclaration: void TypeSize | Scope: 'TypeSize' | (45 : 1)
+  Arguments:
+  BlockSatement:
+    Return: 
+
