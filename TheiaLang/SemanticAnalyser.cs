@@ -134,7 +134,9 @@ public static class SemanticAnalyser
             // TODO: simplify!!
             arg.ResolvedType = GetTypeInfo(arg.ResolvedType.TypeName);
 
-            if(!currentScope.TryLookupLocal(arg.Identifier, out _, out _))
+            if(currentScope.TryLookupLocal(arg.Identifier, out SymbolInfo? argInfo, out _))
+                argInfo!.Type = arg.ResolvedType;
+            else
                 currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
         }
 
@@ -303,7 +305,7 @@ public static class SemanticAnalyser
                             throw new Exception($"Function 'SizeOf' expects 1 argument, got {call.Arguments.Count}");
 
                         if (call.Arguments[0] is not IdentifierExpression i)
-                            throw new Exception($"Unexpected argument in call 'SizeOf': expected identifer, got: {call.Arguments[0].GetType()}");
+                            throw new Exception($"Unexpected argument in call 'TypeSize': expected identifer, got: {call.Arguments[0].GetType()}");
 
                         /*TypeInfo typeInfo;
                         if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
@@ -444,7 +446,13 @@ public static class SemanticAnalyser
                     
                     Scope scope = currentScope;
                     EnterScope(defScope!);
-                    memberAccess.Member = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
+                    IdentifierExpression idExpr = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
+                    
+                    if (!currentScope.TryLookup(idExpr.Name, out SymbolInfo? info, out _)
+                                || info!.Kind != SymbolKind.Function)
+                                throw new Exception($"Unknown function '{idExpr.Name}'");
+
+                    memberAccess.Member = idExpr;
                     currentScope = scope;
 
                     IExpression addressOfExpression = AnalyseExpression(new UnaryExpression(UnaryOperator.AddressOf, memberAccess.Target, SourePosition.None));
@@ -453,6 +461,8 @@ public static class SemanticAnalyser
                     call.Target = memberAccess.Member;
                     call.ResolvedType = memberAccess.Member.ResolvedType;
                     call.Scope = defScope;
+
+                    AnalyseArguments(call, info);
                 }
                 else
                 {
@@ -521,7 +531,7 @@ public static class SemanticAnalyser
                     else
                     {
                         if (unary.Operand.Assignable == false)
-                            Log.Error(21, $"Can't take address of non-assignable {unary.Operand}");
+                            Log.Error(22, $"Can't take address of non-assignable {unary.Operand}");
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
@@ -575,6 +585,7 @@ public static class SemanticAnalyser
 
                 if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
+                // dynamic array
                 if (indexExpression.Target.ResolvedType!.ArrayLength == null)
                 {
                     if(currentScope.TryFindChild(indexExpression.Target.ResolvedType.TypeName, out Scope? definitionScope))
@@ -609,6 +620,23 @@ public static class SemanticAnalyser
     #endregion
 
     #region Helpers
+
+    static void AnalyseArguments(CallExpression call, SymbolInfo sInfo)
+    {
+        if (call.Arguments.Count != sInfo.Parameters.Count)
+            throw new Exception($"Function '{sInfo.Name}' expects {sInfo.Parameters.Count}"
+                + $" arguments, got {call.Arguments.Count}");
+        for (int i = 0; i < call.Arguments.Count; i++)
+        {
+            IExpression argument = AnalyseExpression(call.Arguments[i]);
+
+            call.Arguments[i] = argument;
+            call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
+                                                            sInfo.Parameters[i].ResolvedType!.TypeName);
+            call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], sInfo.Parameters[i].ResolvedType!);
+        }
+        call.ResolvedType = sInfo.Type;
+    }
 
     static TypeInfo UpdateTypeInfo(TypeInfo type)
     {
