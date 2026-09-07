@@ -11,6 +11,8 @@ public class Parser(List<Token> tokens)
 
     const int MAX_POSTFIX_DEPTH = 128;
 
+    long acc = 0;
+
 
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
@@ -90,7 +92,6 @@ public class Parser(List<Token> tokens)
 
     (bool success, IDeclaration result) TryParseDeclaration()
     {
-        
         SourePosition startPosition = Pos();
         if (Match(TokenType.Keyword_struct))
             return (true, ParseStructDeclaration());
@@ -143,7 +144,7 @@ public class Parser(List<Token> tokens)
             {
                 startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo parameterInfo))
-                    throw new Exception("Can't resolve type");
+                    throw new Exception($"{startPosition} Can't resolve type '{Peek().Lexeme}'");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
                 TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme, startPosition);
@@ -257,7 +258,7 @@ public class Parser(List<Token> tokens)
             {
                 SourePosition startPosition = Pos();
                 if (!MatchTypeDefinition(out TypeInfo variantType))
-                    throw new Exception($"Can't resolve type");
+                    throw new Exception($"{startPosition} Can't resolve type '{Peek().Lexeme}'");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
                 TypeNamePair parameter = new TypeNamePair(variantType, identifierToken.Lexeme, startPosition);
@@ -279,6 +280,11 @@ public class Parser(List<Token> tokens)
         }
 
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after union variants");
+
+        unionDeclaration.ResolvedType = new TypeInfo(
+            name,
+            fieldNames: variantNames,
+            fieldTypes: variantTypes);
 
         ExitScope();
         currentScope!.Declare(new SymbolInfo(
@@ -428,6 +434,66 @@ public class Parser(List<Token> tokens)
     bool MatchTypeDefinition(out TypeInfo typeInfo)
     {
         int startPos = pos;
+        if(Match(TokenType.Keyword_struct))                 // anonymous struct
+        {
+            SourePosition sourcePos = Previous().Pos;
+
+            Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
+            List<TypeNamePair> fields = [];
+            List<string> fieldNames = [];
+            List<string> fieldTypes = [];
+            List<FunctionDeclaration> functions = [];
+
+            string typeName = $"__anonymousStruct_{currentScope!.Name}_{acc++}";
+
+            StructDeclaration structDeclaration = new StructDeclaration(typeName, fields, functions, sourcePos);
+            structDeclaration.Scope = EnterNewScope(typeName);
+            currentScope!.DeclaringNode = structDeclaration;
+
+            if (!Check(TokenType.Punctuation_BraceR))
+            {
+                do
+                {
+                    IDeclaration declaration = ParseDeclaration();
+                    if (declaration is VariableDeclaration vd)
+                    {
+                        currentScope.Declare(new SymbolInfo(vd.Name,
+                                                            vd.ResolvedType!,
+                                                            SymbolKind.Variable,
+                                                            null));
+                        fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
+                        fieldNames.Add(vd.Name);
+                        fieldTypes.Add(vd.ResolvedType!.TypeName);
+                    }
+                    else if (declaration is FunctionDeclaration fd)
+                    {
+                        functions.Add(fd);
+                    }
+
+                } while (!Check(TokenType.Punctuation_BraceR));
+            }
+
+            Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
+            ExitScope();
+
+            structDeclaration.ResolvedType = new TypeInfo(
+                typeName,
+                fieldNames: fieldNames,
+                fieldTypes: fieldTypes);
+
+            SymbolInfo symbolInfo = new SymbolInfo(
+                typeName,
+                structDeclaration.ResolvedType,
+                SymbolKind.Type,
+                fields);
+
+            currentScope.Declare(symbolInfo);
+            
+            typeInfo = new TypeInfo(type: typeName);
+
+            Log.Info("Inline struct def");
+            return true;
+        }
         if (Match(TokenType.Punctuation_At))                // ptr
         {
             if (!MatchTypeDefinition(out TypeInfo pointeeInfo))

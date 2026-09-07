@@ -15,13 +15,18 @@ public static class SemanticAnalyser
         // so we should resolve them here first. 
         // Later, we want to do whatever applies to structs for all composite types.
         foreach (INode node in program.Nodes)
-            if (node is StructDeclaration sd)
+        {
+            if(node is StructDeclaration sd)
                 ResolveStruct(sd);
+            if(node is UnionDeclaration ud)
+                ResolveUnion(ud);   
+        }
 
         // Now, we want to resolve all function return and argument types so we 
         // don't get into order dependency issues later.
         // This of course includes functions that are defined in the scope of
         // composite types!
+
         foreach (INode node in program.Nodes)
             switch (node)
             {
@@ -29,9 +34,9 @@ public static class SemanticAnalyser
                     ResolveFunctionsInStruct(sd);
                     break;
 
-                case UnionDeclaration ud:
-                    ResolveUnion(ud);
-                    break;
+                // case UnionDeclaration ud:
+                //     ResolveUnion(ud);
+                //     break;
 
                 case FunctionDeclaration fn:
                     ResolveFunctionTypeAndArgs(fn);
@@ -105,7 +110,6 @@ public static class SemanticAnalyser
         }
 
         unionDeclaration.ResolvedType.Size = size;
-
         ExitScope();
     }
 

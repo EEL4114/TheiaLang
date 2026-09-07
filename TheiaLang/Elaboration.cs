@@ -41,6 +41,9 @@ static class Elaboration
             if (node is StructDeclaration sd)
                 AnalyseStruct(sd);
 
+            if (node is UnionDeclaration ud)
+                AnalyseUnion(ud);
+
             if (node is FunctionDeclaration fn)
             {
                 currentScope = fn.Scope!;
@@ -91,6 +94,23 @@ static class Elaboration
 
         ExitScope();
     }
+
+    static void AnalyseUnion(UnionDeclaration unionDeclaration)
+    {
+        currentScope = unionDeclaration.Scope!;
+        foreach(TypeNamePair variant in unionDeclaration.Variants)
+            if(CanSubstituteDynamicArray(variant.ResolvedType, out TypeInfo newType))
+            {
+                variant.ResolvedType = newType;
+                currentScope.Symbols[variant.Identifier].Type = variant.ResolvedType;   
+            }
+
+        // foreach (FunctionDeclaration function in unionDeclaration.Functions)
+        //     AnalyseFunctionBody(function);
+
+        ExitScope();
+    }
+
 
     static void AnalyseFunctionBody(FunctionDeclaration function)
     {

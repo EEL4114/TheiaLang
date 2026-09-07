@@ -1,0 +1,16 @@
+int main()
+{
+    StringData s;
+    return 0;
+}
+
+union StringData
+{
+    @s8 inlineData;
+
+    struct {
+        s32 a;
+        f32 g;
+    } inlineStruct;
+}
+

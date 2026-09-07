@@ -14,20 +14,17 @@ public interface IDeclaration : INode, IStatement
 {
     string Name { get; }
     TypeInfo ResolvedType { get; set; }
-    SourePosition Pos { get; }
 }
 
 public interface IStatement : INode
 {
-    SourePosition Pos { get; }
+    
 }
 
 public interface IExpression : INode
 {
     TypeInfo? ResolvedType { get; set; }
     bool Assignable { get; }
-
-    SourePosition Pos { get; }
 }
 
 #region  Operators
@@ -160,14 +157,15 @@ public struct StructDeclaration : IDeclaration
 public record UnionDeclaration(
     string Name,
     List<TypeNamePair> Variants,
+    // List<FunctionDeclaration> Functions,
     TypeInfo ResolvedType,
     SourePosition Pos = default
 ) : IDeclaration
 {
+    // public List<FunctionDeclaration> Functions {get; set;} = Functions;
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
     public Scope? Scope { get; set; }
     public SourePosition Pos { get; } = Pos;
-    
 }
 
 public sealed record VariableDeclaration(

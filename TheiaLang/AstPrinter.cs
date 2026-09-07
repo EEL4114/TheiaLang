@@ -157,7 +157,7 @@ static class AstPrinter
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope)}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope!)}");
                 break;
 
             case BinaryExpression bin:

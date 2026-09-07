@@ -1,17 +1,22 @@
 STABILITY
 
-ENTRY                                   STATUS
-Reserve function / struct names early
-Unique var names
+ENTRY                                                           STATUS
+Reserve function / struct names early                           
+Unique var names                                                
+realloc(ptr, 0)                                                 
+Free(null)                                                      
+Allocator pairing                                               
+memory ownership/lifetime                                       
 
 BUGS
 
-ENTRY                                   STATUS
-Lexer parsing '!=' incorrectly          Fixed
-SizeOf not including ABI alignment      
-@realloc signature                      
-
-TESTS
-ENTRY                                   STATUS
-'!='
-scope handling (esp. same identifier)
+ENTRY                                                           STATUS  TEST?
+Lexer parsing '!=' incorrectly                                  Fixed   
+SizeOf not including ABI alignment                              
+@realloc signature                                              Fixed   
+@realloc OOM handling                                           
+Integer overflow in requestedSize + headerSize                  
+FP128                                                           
+Dynamic array struct fields                                     
+scope handling (esp. same identifier)                           Fixed   
+union variants not beling lowered
