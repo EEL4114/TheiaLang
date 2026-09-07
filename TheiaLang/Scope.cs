@@ -38,7 +38,7 @@ public class TypeInfo(string type,
                       TypeInfo? elementType = null,
                       uint? arrayLength = null,
                       List<string>? fieldNames = null,
-                      List<string>? fieldTypes = null)
+                      List<TypeInfo>? fieldTypes = null)
 {
     public string TypeName { get; init; } = type;
 
@@ -48,7 +48,7 @@ public class TypeInfo(string type,
     public uint? ArrayLength { get; set; } = arrayLength;    // non-null for static arrays
 
     public List<string>? FieldNames { get; set; } = fieldNames;
-    public List<string>? FieldTypes { get; set; } = fieldTypes;
+    public List<TypeInfo>? FieldTypes { get; set; } = fieldTypes;
     public uint Size { get; set; } = size;
     public override string ToString()
     {

@@ -185,7 +185,7 @@ public class Parser(List<Token> tokens)
 
         List<TypeNamePair> fields = [];
         List<string> fieldNames = [];
-        List<string> fieldTypes = [];
+        List<TypeInfo> fieldTypes = [];
         List<FunctionDeclaration> functions = [];
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
@@ -205,7 +205,7 @@ public class Parser(List<Token> tokens)
                                                         null));
                     fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
                     fieldNames.Add(vd.Name);
-                    fieldTypes.Add(vd.ResolvedType!.TypeName);
+                    fieldTypes.Add(vd.ResolvedType!);
                 }
                 else if (declaration is FunctionDeclaration fd)
                 {
@@ -239,7 +239,7 @@ public class Parser(List<Token> tokens)
 
         Consume(TokenType.Punctuation_BraceL, "Expected '{' after union name");
         List<string> variantNames = [];
-        List<string> variantTypes = [];
+        List<TypeInfo> variantTypes = [];
         List<TypeNamePair> variants = [];
 
 
@@ -265,7 +265,7 @@ public class Parser(List<Token> tokens)
 
                 variants.Add(parameter);
                 variantNames.Add(identifierToken.Lexeme);
-                variantTypes.Add(variantType.TypeName);
+                variantTypes.Add(variantType);
 
                 currentScope.Declare(
                      new SymbolInfo(
@@ -441,7 +441,7 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
             List<TypeNamePair> fields = [];
             List<string> fieldNames = [];
-            List<string> fieldTypes = [];
+            List<TypeInfo> fieldTypes = [];
             List<FunctionDeclaration> functions = [];
 
             string typeName = $"__anonymousStruct_{currentScope!.Name}_{acc++}";
@@ -463,7 +463,7 @@ public class Parser(List<Token> tokens)
                                                             null));
                         fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
                         fieldNames.Add(vd.Name);
-                        fieldTypes.Add(vd.ResolvedType!.TypeName);
+                        fieldTypes.Add(vd.ResolvedType!);
                     }
                     else if (declaration is FunctionDeclaration fd)
                     {

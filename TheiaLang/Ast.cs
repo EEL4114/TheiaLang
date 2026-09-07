@@ -127,7 +127,7 @@ public struct StructDeclaration : IDeclaration
 
         ResolvedType = new TypeInfo(name,
                                     fieldNames: fields.Select(f => f.Identifier).ToList(),
-                                    fieldTypes: fields.Select(f => f.ResolvedType.TypeName).ToList());
+                                    fieldTypes: fields.Select(f => f.ResolvedType).ToList());
 
         Pos = pos;
     }

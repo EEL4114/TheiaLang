@@ -135,7 +135,7 @@ public static class IRGenerator
         string llvmName = $"%{sd.Name}";
 
         // TODO: simplify??
-        IEnumerable<string> fieldTypes = sd.Fields.Select(f => f.ResolvedType.TypeName);
+        IEnumerable<TypeInfo> fieldTypes = sd.Fields.Select(f => f.ResolvedType);
 
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");

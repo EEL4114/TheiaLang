@@ -671,10 +671,10 @@ public static class SemanticAnalyser
         if (type.FieldTypes != null)
         {
             uint size = 0;
-            foreach (string fieldTypeName in type.FieldTypes!)
+            foreach(TypeInfo fieldType in type.FieldTypes!)
             {
-                _ = ResolveType(fieldTypeName);
-                size += SizeOf(fieldTypeName);
+                // _ = ResolveType(fieldTypeName);
+                size += SizeOf(fieldType);
             }
 
             return size;

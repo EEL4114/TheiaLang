@@ -4,10 +4,10 @@ union StringData
     []s8 dataPtr;
     @s8 inlineData;
 
-    struct {
-        s32 a;
-        f32 g;
-    } inlineStruct;
+    //struct {
+    //    s32 a;
+    //    f32 g;
+    //} inlineStruct;
 }
 
 struct Vector2 
