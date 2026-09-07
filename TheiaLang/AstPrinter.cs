@@ -180,7 +180,7 @@ static class AstPrinter
                 PrintExpression(u.Operand, w, indent + 2);
                 break;
             case MemberAccessExpression mem:
-                w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}");
+                w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}{TryScope(mem.Scope!)}");
                 w.WriteLine($"{Indent(indent + 1)}Target: {TryType(mem.Target.ResolvedType)}");
                 PrintExpression(mem.Target, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
