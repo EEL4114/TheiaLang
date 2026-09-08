@@ -85,8 +85,8 @@ public static class IRGenerator
         {
             if (decl is StructDeclaration sd)
                 EmitStructType(sd, sb);
-            // if(decl is UnionDeclaration ud)
-            //     EmitUnionType(ud, sb);   
+            if(decl is UnionDeclaration ud)
+                EmitUnionType(ud, sb); 
         }
 
         sb.AppendLine();
@@ -139,47 +139,32 @@ public static class IRGenerator
 
         string llvmName = $"%{sd.Name}";
 
-        // TODO: simplify??
-        IEnumerable<TypeInfo> fieldTypes = sd.Fields.Select(f => f.ResolvedType);
-
         // emit: %StructName = type { <field1>, <field2>, … }
         sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
 
-        // TODO this seems unnecessary?
-        TypeInfo typeInfo = new TypeInfo
-        (
-            sd.Name,
-            Struct, 
-            fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
-            fieldTypes: fieldTypes.ToList()
-        );
-
-        varTypes.Peek()[sd.Name] = typeInfo;
+        varTypes.Peek()[sd.Name] = sd.ResolvedType;
     }
 
-    // static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
-    // {
-    //     List<string> unionLLVMTypes = [];
-    //     foreach (TypeNamePair variant in ud.Variants)
-    //         unionLLVMTypes.Add(TypeToLLVM(variant.ResolvedType!)!);
-    //     string fieldIr = string.Join(
-    //         ", ",
-    //         unionLLVMTypes
-    //     );
-    //     string llvmName = $"%{sd.Name}";
-    //     // TODO: simplify??
-    //     IEnumerable<TypeInfo> fieldTypes = sd.Fields.Select(f => f.ResolvedType);
-    //     // emit: %StructName = type { <field1>, <field2>, … }
-    //     sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
-    //     // TODO this seems unnecessary?
-    //     TypeInfo typeInfo = new TypeInfo
-    //     (
-    //         sd.Name,
-    //         fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
-    //         fieldTypes: fieldTypes.ToList()
-    //     );
-    //     varTypes.Peek()[sd.Name] = typeInfo;
-    // }
+    static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
+    {
+        long alignment = GetAlignment(ud.ResolvedType);
+        long maxVariantSize = 0;
+        
+        foreach(TypeNamePair variant in ud.Variants)
+            maxVariantSize = Math.Max(maxVariantSize, variant.ResolvedType.Size);
+
+        long size = TMath.RoundUp(maxVariantSize, alignment);
+        long padding = size - alignment;
+
+        string llvmName = $"%{ud.Name}";
+        // emit: %UnionName = type { alignment [padding to fill total size] }
+        if (padding == 0)
+            sb.AppendLine($"{llvmName} = type {{ i{8 * alignment} }}");
+        else
+            sb.AppendLine($"{llvmName} = type {{ i{8 * alignment}, [{padding} x i8] }}");
+    
+        varTypes.Peek()[ud.Name] = ud.ResolvedType;
+    }
 
     #region Functions
 
@@ -781,65 +766,31 @@ public static class IRGenerator
                 string irElemTy = TypeToLLVM(ti.Pointee!)!;
                 return (reg, irElemTy);
             case MemberAccessExpression memberAccess:
-                string memberName = memberAccess.Member.Name;
+                (string targetAddr, string targetLLVMType) = EmitAddressOf(memberAccess.Target, code);
 
-                if (memberAccess.Target is IdentifierExpression id)
+                TypeInfo targetType = memberAccess.Target.ResolvedType!;
+                TypeInfo memberType = memberAccess.Member.ResolvedType!;
+                string memberLLVMType = TypeToLLVM(memberType)!;
+
+                if(targetType.TypeKind == Union)
+                    return (targetAddr, memberLLVMType);
+
+                if(targetType.TypeKind == Struct)
                 {
-                    string targetName = id.Name;
-
-                    // TODO get rid of redundancy here
-                    if (!TryResolveSlot(targetName, out alloc, out TypeInfo? structInfo))
-                        throw new Exception($"Undefined variable '{targetName}'");
-
-                    if (!currentScope!.TryLookup(targetName, out SymbolInfo? targetVarInfo, out Scope? _))
-                        throw new Exception($"Could not find identifier '{targetName}' in Scope {currentScope.FullName}");
-
-                    if (!currentScope!.TryLookup(targetVarInfo!.Type.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
-                        throw new Exception($"Could not find type '{targetVarInfo.Type.TypeName}' in Scope {currentScope.FullName}");
-
-                    Scope targetScope = definitionScope!.Children[targetVarInfo.Type.TypeName.TrimStart('%')];
-
-                    if (!targetScope!.TryLookup(memberName, out SymbolInfo? memberInfo, out Scope? memberScope))
-                        throw new Exception($"Could not find member '{memberName}' in '{currentScope.FullName}'");
-                    
-                    if (varTypes.Peek()[targetName].FieldNames?.Count == 0)
-                        throw new Exception($"Variable {targetName} does not define any fields");
-
-                    int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
+                    int memberIndex = targetType.FieldNames!.IndexOf(memberAccess.Member.Name);
                     if (memberIndex < 0)
-                        throw new Exception($"Variable {targetName} does not define a field '{memberName}'");
-
-                    string LLVMType = TypeToLLVM(varTypes.Peek()[targetName])!;   // alredy LLVM type
-                    string memberLLVMType = TypeToLLVM(memberInfo!.Type)!;
-
-                    string temp = $"%{NewTempVar()}";
-
-                    code.AppendLine(
-                        $"  {temp} = getelementptr inbounds {LLVMType}, ptr {alloc.ptr}, i32 0, i32 {memberIndex}");
-                    return (temp, memberLLVMType);
-                }
-                else
-                {
-                    (string targetAddr, string targetLLVMType) = EmitAddressOf(memberAccess.Target, code);
-
-                    TypeInfo targetTypeInfo = memberAccess.Target.ResolvedType!;
-                    Scope targetScope = memberAccess.Scope!;
-
-                    if (!currentScope!.TryLookup(targetTypeInfo.TypeName, out SymbolInfo? targetInfo, out Scope? definitionScope))
-                        throw new Exception($"Could not find type '{targetTypeInfo.TypeName}' in Scope {currentScope.FullName}");
-
-                    int memberIndex = targetInfo!.Parameters!.FindIndex(x => x.Identifier == memberName);
-                    string memberLLVMType = TypeToLLVM(memberAccess.Member.ResolvedType!)!;
+                        throw new Exception($"Type '{targetType.TypeName}' has no member '{memberAccess.Member.Name}'");
 
                     string temp = $"%{NewTempVar()}";
 
                     code.AppendLine(
                         $"  {temp} = getelementptr inbounds {targetLLVMType}, ptr {targetAddr}, i32 0, i32 {memberIndex}");
-
-                    return (temp, memberLLVMType);
+                    
+                    return(temp, memberLLVMType);
                 }
 
-
+                throw new Exception(
+                    $"Cannot access member '{memberAccess.Member.Name}' of type '{targetType.TypeName}'");
             case IndexExpression index:
                 (string targetPtr, string arrayTypeLLVM) = EmitAddressOf(index.Target, code);
 
@@ -859,26 +810,28 @@ public static class IRGenerator
         }
     }
 
-    // static long GetAlignment(TypeInfo type)
-    // {
-        // if(type.ElementType == null)    // array?
-        // {
-            // long alignment = 0;
-            // if(type.FieldTypes == null)
-            // {
-                // 
-            // }   
-            // else
-            // {
-                // for(int i = 0; i < type.FieldTypes; i++)
-                // {
-                    // alignment = Math.Max(alignment, type.FieldTypes[i].Size);
-                // }
-            // }         
-        // }
-        // else
-            // return GetAlignment(type.ElementType);
-    // }
+    static long GetAlignment(TypeInfo type)
+    {
+        switch(type.TypeKind)
+        {
+            case Void:    return 0;
+            case Scalar:  return type.Size;
+            case Pointer: return 8;
+            case Array:   return GetAlignment(type.ElementType!);
+            case Struct:
+                long maxFieldAlignment = 0;
+                foreach(TypeInfo typeInfo in type.FieldTypes!)
+                    maxFieldAlignment = Math.Max(maxFieldAlignment, GetAlignment(typeInfo));
+                return maxFieldAlignment;
+            case Union:
+                long maxVariantAlignment = 0;
+                foreach(TypeInfo typeInfo in type.FieldTypes!)
+                    maxVariantAlignment = Math.Max(maxVariantAlignment, GetAlignment(typeInfo));
+                return maxVariantAlignment;
+            default:
+                throw new NotImplementedException($"TypeKind {type.TypeKind}");
+        }
+    }
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
 

@@ -548,7 +548,6 @@ public class Parser(List<Token> tokens)
         else    // composite; we do not want to touch the identifier here, but still check for its existence
             if (Peek().TokenType == TokenType.Identifier && PeekNext().TokenType == TokenType.Identifier)
             {
-                Log.Info("CC");
                 Advance();
                 // TODO this is janky
                 string typeName = TokenTypeToString(Previous().TokenType);
