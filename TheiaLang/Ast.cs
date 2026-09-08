@@ -78,7 +78,8 @@ public class FunctionDeclaration : IDeclaration
     public SourePosition Pos { get; }
 
 
-    public FunctionDeclaration(string typeName,
+    public FunctionDeclaration(string typeName,     // possibly change this?
+                               TypeKind typeKind,
                                string name,
                                List<TypeNamePair> paramaters,
                                List<IStatement> statements,
@@ -89,7 +90,7 @@ public class FunctionDeclaration : IDeclaration
         Parameters = paramaters;
         Statements = statements;
 
-        ResolvedType = new TypeInfo(TypeName);
+        ResolvedType = new TypeInfo(TypeName, typeKind);
     
         Pos = pos;
     }
@@ -125,7 +126,7 @@ public struct StructDeclaration : IDeclaration
         Fields = fields;
         Functions = functions;
 
-        ResolvedType = new TypeInfo(name,
+        ResolvedType = new TypeInfo(name, TypeKind.Struct,
                                     fieldNames: fields.Select(f => f.Identifier).ToList(),
                                     fieldTypes: fields.Select(f => f.ResolvedType).ToList());
 

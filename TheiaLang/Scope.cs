@@ -32,7 +32,19 @@ public enum SymbolKind
     }
 }
 
+public enum TypeKind
+{
+    Unresolved = -1,
+    Void    = 0,
+    Scalar  = 1,
+    Array   = 2,
+    Struct  = 3,
+    Union   = 4,
+    Pointer = 5,
+}
+
 public class TypeInfo(string type,
+                      TypeKind typeKind,
                       uint size = 0,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
@@ -41,6 +53,8 @@ public class TypeInfo(string type,
                       List<TypeInfo>? fieldTypes = null)
 {
     public string TypeName { get; init; } = type;
+    
+    public TypeKind TypeKind {get; set; } = typeKind; 
 
     public TypeInfo? Pointee { get; set; } = pointee;
 

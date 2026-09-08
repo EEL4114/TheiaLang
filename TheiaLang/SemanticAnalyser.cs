@@ -1,6 +1,8 @@
-using static TheiaLang.CastOp;
-
 namespace TheiaLang;
+
+using static CastOp;
+using static TypeKind;
+
 public static class SemanticAnalyser
 {
     static Scope currentScope = new Scope("");
@@ -119,7 +121,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", 8, structDeclaration.ResolvedType);
+            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, 8, structDeclaration.ResolvedType);
             function.Parameters.Insert(0, new TypeNamePair(ptrType, "this", SourePosition.None));
             ResolveFunctionTypeAndArgs(function);
         }
@@ -264,7 +266,7 @@ public static class SemanticAnalyser
                 else
                 {
                     returnStatement.Expression = new LiteralExpression(null!, "void", SourePosition.None);
-                    returnStatement.Expression.ResolvedType = new TypeInfo("void");
+                    returnStatement.Expression.ResolvedType = new TypeInfo("void", Void);
                 }
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
@@ -322,7 +324,7 @@ public static class SemanticAnalyser
                         uint sizeValue = SizeOf(i.Name);
 
                         expression = new LiteralExpression((int)sizeValue, sizeValue.ToString(), SourePosition.None);
-                        expression.ResolvedType = new TypeInfo("s32", 4);
+                        expression.ResolvedType = new TypeInfo("s32", Scalar, 4);
                     }
                     else if (id.Name == "Alloc")
                     {
@@ -506,6 +508,7 @@ public static class SemanticAnalyser
                         if (unary.Operand.Assignable == false)
                             Log.Error(22, $"Can't take address of non-assignable {unary.Operand}");
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
+                                                          Pointer,
                                                           SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
                     }
@@ -640,10 +643,10 @@ public static class SemanticAnalyser
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, 8, GetTypeInfo(typeOrName[1..]));
+            return new TypeInfo(typeOrName, Pointer, 8, GetTypeInfo(typeOrName[1..]));
 
         if(typeOrName.StartsWith(Elaboration.DYNAMIC_ARRAY_PREFIX))
-            return new TypeInfo(typeOrName, 24);
+            return new TypeInfo(typeOrName, Struct, 24);
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
@@ -940,18 +943,18 @@ public static class SemanticAnalyser
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
 
-        if (typeInfo.TypeName.StartsWith('@') && builtinB < 8)    // int - ptr
-            return new TypeInfo("s64");
+        if (typeInfo.TypeName.StartsWith('@') && builtinB < 8)    // int - ,ptr
+            return new TypeInfo("s64", Scalar);
 
         if (expectedType.StartsWith('@') && builtinA < 8)
-            return new TypeInfo("s64");
+            return new TypeInfo("s64", Scalar);
 
         if (builtinA < 0 || builtinB < 0)
             throw new Exception($"Cannot resolve {typeInfo.TypeName} to {expectedType}");
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {
-            TypeInfo type = new TypeInfo(expectedType);
+            TypeInfo type = new TypeInfo(expectedType, Scalar);
             type.Size = SizeOf(type.TypeName);
             return type;    // literals always cast to the more concrete value
         }

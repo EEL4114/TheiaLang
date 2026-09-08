@@ -1,6 +1,7 @@
-using System.Text;
-
 namespace TheiaLang;
+
+using System.Text;
+using static TypeKind;
 
 public static class IRGenerator
 {
@@ -81,8 +82,12 @@ public static class IRGenerator
         sb.AppendLine();
 
         foreach (INode decl in program.Nodes)
+        {
             if (decl is StructDeclaration sd)
                 EmitStructType(sd, sb);
+            // if(decl is UnionDeclaration ud)
+            //     EmitUnionType(ud, sb);   
+        }
 
         sb.AppendLine();
 
@@ -144,12 +149,37 @@ public static class IRGenerator
         TypeInfo typeInfo = new TypeInfo
         (
             sd.Name,
+            Scalar, 
             fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
             fieldTypes: fieldTypes.ToList()
         );
 
         varTypes.Peek()[sd.Name] = typeInfo;
     }
+
+    // static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
+    // {
+    //     List<string> unionLLVMTypes = [];
+    //     foreach (TypeNamePair variant in ud.Variants)
+    //         unionLLVMTypes.Add(TypeToLLVM(variant.ResolvedType!)!);
+    //     string fieldIr = string.Join(
+    //         ", ",
+    //         unionLLVMTypes
+    //     );
+    //     string llvmName = $"%{sd.Name}";
+    //     // TODO: simplify??
+    //     IEnumerable<TypeInfo> fieldTypes = sd.Fields.Select(f => f.ResolvedType);
+    //     // emit: %StructName = type { <field1>, <field2>, … }
+    //     sb.AppendLine($"{llvmName} = type {{ {fieldIr} }}");
+    //     // TODO this seems unnecessary?
+    //     TypeInfo typeInfo = new TypeInfo
+    //     (
+    //         sd.Name,
+    //         fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
+    //         fieldTypes: fieldTypes.ToList()
+    //     );
+    //     varTypes.Peek()[sd.Name] = typeInfo;
+    // }
 
     #region Functions
 
@@ -828,6 +858,27 @@ public static class IRGenerator
             default: throw new Exception($"Unsupported expression type: {target.GetType()}");
         }
     }
+
+    // static long GetAlignment(TypeInfo type)
+    // {
+        // if(type.ElementType == null)    // array?
+        // {
+            // long alignment = 0;
+            // if(type.FieldTypes == null)
+            // {
+                // 
+            // }   
+            // else
+            // {
+                // for(int i = 0; i < type.FieldTypes; i++)
+                // {
+                    // alignment = Math.Max(alignment, type.FieldTypes[i].Size);
+                // }
+            // }         
+        // }
+        // else
+            // return GetAlignment(type.ElementType);
+    // }
 
     static string NewTempVar() => $"tmp{tmpCounter++}";
 

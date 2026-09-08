@@ -19,4 +19,6 @@ Integer overflow in requestedSize + headerSize
 FP128                                                           
 Dynamic array struct fields                                     
 scope handling (esp. same identifier)                           Fixed   
-union variants not beling lowered
+union variants not beling lowered                               
+Builtin types vs types with scope                               
+MemberAccess allowed expressions                                

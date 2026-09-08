@@ -218,7 +218,7 @@ static class AstPrinter
     #region Helpers
 
     static string Indent(int n) => new string(' ', 2 * n);
-    static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeName} ({typeInfo.Size} B) ";
+    static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeKind}:{typeInfo.TypeName} ({typeInfo.Size} B) ";
     static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
     static string TryPos(SourePosition position) => position == SourePosition.None ? " | ()" : $" | ({position.Row} : {position.Column})";
     

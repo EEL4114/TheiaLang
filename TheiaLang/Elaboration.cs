@@ -1,5 +1,5 @@
 namespace TheiaLang;
-
+using static TypeKind;
 static class Elaboration
 {
     // the template we use for dynamic arrays
@@ -168,7 +168,7 @@ static class Elaboration
         {
             if(CanSubstituteDynamicArray(sourceType.Pointee, out TypeInfo pointeeType))
             {
-                newType = new TypeInfo($"@{pointeeType.TypeName}", 8, pointeeType);
+                newType = new TypeInfo($"@{pointeeType.TypeName}", Pointer, 8, pointeeType);
                 return true;
             }
         }
@@ -209,7 +209,7 @@ static class Elaboration
             GlobalScope.Declare(
             new SymbolInfo(
                 "@" + sd.Name,
-                new TypeInfo("@" + sd.Name, pointee: sd.ResolvedType),
+                new TypeInfo("@" + sd.Name, Pointer, pointee: sd.ResolvedType),
                 SymbolKind.Type,
                 null
             ));
@@ -227,16 +227,17 @@ static class Elaboration
         EnterNewScope(name);
 
         List<TypeNamePair> fields = [
-            new TypeNamePair(new TypeInfo("s64", 8), "Length"),
-            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", 8, new TypeInfo($"{elementType.TypeName}", elementType.Size)), "Data"),
-            new TypeNamePair(new TypeInfo("s64", 8), "Size"),
+            new TypeNamePair(new TypeInfo("s64", Scalar, 8), "Length"),
+            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", Pointer, 8, new TypeInfo($"{elementType.TypeName}", elementType.TypeKind, elementType.Size)), "Data"),
+            new TypeNamePair(new TypeInfo("s64", Scalar, 8), "Size"),
         ];
 
         List<FunctionDeclaration> functions = [
             new FunctionDeclaration(
                 typeName:   elementType.TypeName, 
+                typeKind:   elementType.TypeKind,
                 name:       DYNAMIC_ARRAY_INDEX,
-                paramaters: [new TypeNamePair(new TypeInfo("s64", 8), "index")],
+                paramaters: [new TypeNamePair(new TypeInfo("s64", TypeKind.Scalar, 8), "index")],
                 statements: [new ReturnStatement(new UnaryExpression(UnaryOperator.Dereference,
                                 new CallExpression(new IdentifierExpression($"@{elementType.TypeName}"),[
                                     new CallExpression(new IdentifierExpression($"@void"),[
@@ -257,7 +258,7 @@ static class Elaboration
 
         foreach (TypeNamePair field in fields)
             currentScope.Declare(new SymbolInfo(field.Identifier,
-                                                new TypeInfo(field.ResolvedType.TypeName),
+                                                new TypeInfo(field.ResolvedType.TypeName, field.ResolvedType.TypeKind),
                                                 SymbolKind.Variable,
                                                 null));
 
