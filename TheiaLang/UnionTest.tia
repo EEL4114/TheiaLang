@@ -1,7 +1,7 @@
 int main()
 {
     StringData s;
-    return 0;
+    return s.inlineStruct.a;
 }
 
 union StringData

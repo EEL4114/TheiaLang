@@ -292,7 +292,7 @@ public static class SemanticAnalyser
                 break;
             case IdentifierExpression identifier:
                 if (!currentScope.TryLookup(identifier.Name, out _, out Scope? symbolScope))
-                    Log.Error(21, $"{identifier.Name} is not defined in {currentScope.Name}");
+                    Log.Error(21, $"{identifier.Pos} {identifier.Name} is not defined in {currentScope.Name}");
 
                 TypeInfo identifierInfo = GetSymbolType(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
@@ -443,24 +443,26 @@ public static class SemanticAnalyser
             case MemberAccessExpression memberAccess:
                 Scope s = currentScope;
                 AnalyseExpression(memberAccess.Target);
+
                 if (memberAccess.Target is IdentifierExpression targetEx
                  && targetEx.ResolvedType != null)
                 {
                     if (!currentScope.TryFindChild(targetEx.ResolvedType.TypeName, out Scope? targetScope))
-                        throw new Exception($"Could not find {targetEx.ResolvedType.TypeName} in {currentScope.FullName}");
-                    EnterScope(targetScope!);
+                        throw new Exception($"{memberAccess.Pos} Could not find {targetEx.ResolvedType.TypeName} in {currentScope.FullName}");
+                    SetScope(targetScope!);
                 }
                 else if (memberAccess.Target is MemberAccessExpression mem && mem.Scope != null)
-                    EnterScope(mem.Scope);  
+                    SetScope(mem.Scope);
                 else
                     throw new Exception("ff");
 
-                AnalyseExpression(memberAccess.Member);
+                memberAccess.Member = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
                 memberAccess.ResolvedType = memberAccess.Member.ResolvedType;
+
                 if (!IRGenerator.BuiltinTypes.Contains(memberAccess.Member.ResolvedType!.TypeName))
                 {
-                    if (!currentScope.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out Scope? memberScope))
-                        throw new Exception($"Could not find {memberAccess.Member.ResolvedType!.TypeName} in {currentScope.FullName}");
+                    if (!currentScope!.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out Scope? memberScope))
+                        throw new Exception($"{memberAccess.Pos} Could not find {memberAccess.Member.ResolvedType!.TypeName} in {currentScope.FullName}");
 
                     memberAccess.Scope = memberScope;
                 }
@@ -706,6 +708,14 @@ public static class SemanticAnalyser
         //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void
             1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0
     ];
+
+    static Scope SetScope(Scope scope)
+    {
+        Scope previous = currentScope;
+        currentScope   = scope;
+
+        return previous;
+    }
 
     static void EnterScope(Scope scope)
     {
