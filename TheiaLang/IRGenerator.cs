@@ -115,7 +115,7 @@ public static class IRGenerator
 
                 case StructDeclaration sd:
                     // for each method, emit it as a real LLVM function
-                    EnterScope(sd.Name);
+                    EnterScope(sd.Scope!);
                     foreach (FunctionDeclaration function in sd.Functions)
                         EmitFunction(function, sb);
                     
@@ -820,6 +820,9 @@ public static class IRGenerator
             case Array:   return GetAlignment(type.ElementType!);
             case Struct:
                 long maxFieldAlignment = 0;
+                if(type.FieldTypes == null)
+                    Log.Info(type.ToString());
+
                 foreach(TypeInfo typeInfo in type.FieldTypes!)
                     maxFieldAlignment = Math.Max(maxFieldAlignment, GetAlignment(typeInfo));
                 return maxFieldAlignment;
@@ -917,33 +920,9 @@ public static class IRGenerator
         throw new Exception($"Unsupported type: '{type.TypeName}'");
     }
 
-    static void EnterScope(string scopeName)
-    {
-#if DEBUG   // this can only fail if there is a bug in the IRGen itself
-        if (currentScope == null)
-            throw new Exception("'currentScope' is null!");
-
-        if (!currentScope.Children.ContainsKey(scopeName))  // verify that we can enter that scope
-
-            Log.Error(8, $"Scope '{scopeName}' does not exist in '{currentScope}'");
-#endif
-
-        allocas.Push([]);
-        varTypes.Push([]);
-
-        currentScope = currentScope.Children[scopeName];
-    }
-
     static void EnterScope(Scope scope)
     {
-#if DEBUG   // this can only fail if there is a bug in the IRGen itself
-        if (currentScope == null)
-            throw new Exception("'currentScope' is null!");
-
-        if (!currentScope.Children.ContainsValue(scope))    // verify that we can enter that scope
-            Log.Error(8, $"Scope '{scope}' does not exist in '{currentScope}'");
-#endif
-            allocas.Push([]);
+        allocas.Push([]);
         varTypes.Push([]);
 
         currentScope = scope;
