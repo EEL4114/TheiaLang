@@ -548,7 +548,7 @@ public class Parser(List<Token> tokens)
 
             unionDeclaration.ResolvedType = new TypeInfo(
                 typeName,
-                Struct,
+                Union,
                 fieldNames: variantNames,
                 fieldTypes: variantTypes);
 
