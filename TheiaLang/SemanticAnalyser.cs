@@ -651,9 +651,6 @@ public static class SemanticAnalyser
         if (typeOrName.StartsWith('@'))
             return new TypeInfo(typeOrName, Pointer, 8, GetTypeInfo(typeOrName[1..]));
 
-        if(typeOrName.StartsWith(Elaboration.DYNAMIC_ARRAY_PREFIX))
-            return new TypeInfo(typeOrName, Struct, 24);
-
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
 

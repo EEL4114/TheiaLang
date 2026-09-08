@@ -228,7 +228,12 @@ static class Elaboration
 
         List<TypeNamePair> fields = [
             new TypeNamePair(new TypeInfo("s64", Scalar, 8), "Length"),
-            new TypeNamePair(new TypeInfo($"@{elementType.TypeName}", Pointer, 8, new TypeInfo($"{elementType.TypeName}", elementType.TypeKind, elementType.Size)), "Data"),
+            new TypeNamePair(
+                    new TypeInfo($"@{elementType.TypeName}", 
+                        Pointer, 
+                        8, 
+                        elementType), 
+                "Data"),
             new TypeNamePair(new TypeInfo("s64", Scalar, 8), "Size"),
         ];
 
@@ -237,7 +242,7 @@ static class Elaboration
                 typeName:   elementType.TypeName, 
                 typeKind:   elementType.TypeKind,
                 name:       DYNAMIC_ARRAY_INDEX,
-                paramaters: [new TypeNamePair(new TypeInfo("s64", TypeKind.Scalar, 8), "index")],
+                paramaters: [new TypeNamePair(new TypeInfo("s64", Scalar, 8), "index")],
                 statements: [new ReturnStatement(new UnaryExpression(UnaryOperator.Dereference,
                                 new CallExpression(new IdentifierExpression($"@{elementType.TypeName}"),[
                                     new CallExpression(new IdentifierExpression($"@void"),[
