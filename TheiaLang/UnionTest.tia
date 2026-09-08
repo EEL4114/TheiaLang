@@ -1,7 +1,20 @@
 int main()
 {
     StringData s;
+
+    union {s8 by; @s8 ptr;} inlineUnion;
+
     return s.inlineStruct.a;
+}
+
+struct S
+{
+    s8 by;
+    
+    // union {
+    //     s8 by;
+    //     @s8 ptr;
+    // } inlineUnion;
 }
 
 union StringData
@@ -12,5 +25,10 @@ union StringData
         s32 a;
         f32 g;
     } inlineStruct;
+
+    union {
+        s8 by;
+        @s8 ptr;
+    } inlineUnion;
 }
 

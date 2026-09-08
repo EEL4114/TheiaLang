@@ -75,9 +75,9 @@ public class Parser(List<Token> tokens)
     IDeclaration ParseDeclaration()
     {
         SourePosition startPosition = Pos();
-        if (Match(TokenType.Keyword_struct))
+        if (Peek().TokenType == TokenType.Keyword_struct && PeekNext().TokenType == TokenType.Identifier)
             return ParseStructDeclaration();
-        if (Match(TokenType.Keyword_union))
+        if (Peek().TokenType == TokenType.Keyword_union && PeekNext().TokenType == TokenType.Identifier)
             return ParseUnionDeclaration();
         if (MatchTypeDefinition(out TypeInfo typeInfo)
             && Peek().TokenType == TokenType.Identifier)
@@ -94,9 +94,9 @@ public class Parser(List<Token> tokens)
     (bool success, IDeclaration result) TryParseDeclaration()
     {
         SourePosition startPosition = Pos();
-        if (Match(TokenType.Keyword_struct))
+        if (Peek().TokenType == TokenType.Keyword_struct && PeekNext().TokenType == TokenType.Identifier)
             return (true, ParseStructDeclaration());
-        if (Match(TokenType.Keyword_union))
+        if (Peek().TokenType == TokenType.Keyword_union && PeekNext().TokenType == TokenType.Identifier)
             return (true, ParseUnionDeclaration());
         if (MatchTypeDefinition(out TypeInfo typeInfo)
             && Peek().TokenType == TokenType.Identifier)
@@ -178,7 +178,8 @@ public class Parser(List<Token> tokens)
 
     StructDeclaration ParseStructDeclaration()
     {
-        // we've already consumed 'struct'
+        Consume(TokenType.Keyword_struct);
+
         SourePosition startPos = Previous().Pos;
         Token nameToken = Consume(TokenType.Identifier, "Expected struct name");
         string name = nameToken.Lexeme;
@@ -236,6 +237,8 @@ public class Parser(List<Token> tokens)
 
     UnionDeclaration ParseUnionDeclaration()
     {
+        Consume(TokenType.Keyword_union);
+
         Token nameToken = Consume(TokenType.Identifier, "Expected union name");
         string name = nameToken.Lexeme;
 
@@ -441,7 +444,7 @@ public class Parser(List<Token> tokens)
         {
             SourePosition sourcePos = Previous().Pos;
 
-            Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
+            Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct keyword");
             List<TypeNamePair> fields = [];
             List<string> fieldNames = [];
             List<TypeInfo> fieldTypes = [];
@@ -496,6 +499,70 @@ public class Parser(List<Token> tokens)
             typeInfo = structDeclaration.ResolvedType;
 
             nodes.Add(structDeclaration);
+            return true;
+        }
+        if(Match(TokenType.Keyword_union))                 // anonymous union
+        {
+            SourePosition sourcePos = Previous().Pos;
+
+            Consume(TokenType.Punctuation_BraceL, "Expected '{' after union keyword");
+            List<TypeNamePair> variants = [];
+            List<string> variantNames = [];
+            List<TypeInfo> variantTypes = [];
+
+            string typeName = $"__anonymousUnion_{currentScope!.Name}_{acc++}";
+
+            TypeInfo unionInfo = new TypeInfo(
+                typeName,
+                Union,
+                fieldNames: variantNames,
+                fieldTypes: variantTypes);
+
+            UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, variants, unionInfo, sourcePos);
+            unionDeclaration.Scope = EnterNewScope(typeName);
+            currentScope!.DeclaringNode = unionDeclaration;
+
+            if (!Check(TokenType.Punctuation_BraceR))
+            {
+                do
+                {
+                    IDeclaration declaration = ParseDeclaration();
+                    if (declaration is VariableDeclaration vd)
+                    {
+                        currentScope.Declare(new SymbolInfo(vd.Name,
+                                                            vd.ResolvedType!,
+                                                            SymbolKind.Variable,
+                                                            null));
+                        variants.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
+                        variantNames.Add(vd.Name);
+                        variantTypes.Add(vd.ResolvedType!);
+                    }
+                    else 
+                        throw new Exception();
+
+                } while (!Check(TokenType.Punctuation_BraceR));
+            }
+
+            Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
+            ExitScope();
+
+            unionDeclaration.ResolvedType = new TypeInfo(
+                typeName,
+                Struct,
+                fieldNames: variantNames,
+                fieldTypes: variantTypes);
+
+            SymbolInfo symbolInfo = new SymbolInfo(
+                typeName,
+                unionDeclaration.ResolvedType,
+                SymbolKind.Type,
+                variants);
+
+            currentScope.Declare(symbolInfo);
+            
+            typeInfo = unionDeclaration.ResolvedType;
+
+            nodes.Add(unionDeclaration);
             return true;
         }
         if (Match(TokenType.Punctuation_At))                // ptr
