@@ -149,7 +149,7 @@ public static class IRGenerator
         TypeInfo typeInfo = new TypeInfo
         (
             sd.Name,
-            Scalar, 
+            Struct, 
             fieldNames: sd.Fields.Select(f => f.Identifier).ToList(),
             fieldTypes: fieldTypes.ToList()
         );

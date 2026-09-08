@@ -45,7 +45,7 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_free",
-                new TypeInfo("void", 0),
+                new TypeInfo("void", Void, 0),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("@void", Pointer), "ptr", SourePosition.None)
             ]));
