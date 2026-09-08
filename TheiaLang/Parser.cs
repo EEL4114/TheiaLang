@@ -28,7 +28,7 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_allocB",
-                new TypeInfo("@void", Pointer, 8, new TypeInfo("void", Void)),
+                new TypeInfo("@void", Pointer, IRGenerator.PTR_SIZE, new TypeInfo("void", Void)),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar), "size", SourePosition.None)]
             ));
@@ -36,7 +36,7 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_reallocB",
-                new TypeInfo("@void", Pointer, 8, new TypeInfo("void", Void)),
+                new TypeInfo("@void", Pointer, IRGenerator.PTR_SIZE, new TypeInfo("void", Void)),
                 SymbolKind.Function,
                 [   new TypeNamePair(new TypeInfo("@void", Pointer), "alloc", SourePosition.None),
                     new TypeNamePair(new TypeInfo("s64", Scalar), "newSize", SourePosition.None)]
@@ -53,7 +53,7 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_alloc",
-                new TypeInfo("@void", Pointer, 8, new TypeInfo("void", Void)),
+                new TypeInfo("@void", Pointer, IRGenerator.PTR_SIZE, new TypeInfo("void", Void)),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar), "size", SourePosition.None)]
             ));

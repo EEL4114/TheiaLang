@@ -7,6 +7,12 @@ realloc(ptr, 0)
 Free(null)                                                      
 Allocator pairing                                               
 memory ownership/lifetime                                       
+Control block termination                                       
+static statements                                               
+DynamicArrayCache                                               
+IRGenerator.BuiltinTypes is not a great place                   
+literal parsing                                                 
+loop initializer positioning                                    
 
 BUGS
 
@@ -22,3 +28,6 @@ scope handling (esp. same identifier)                           Fixed
 union variants not beling lowered                               
 Builtin types vs types with scope                               
 MemberAccess allowed expressions                                
+Pointer size                                                    
+DynamicArrayCache                                               
+short-circuit && / ||

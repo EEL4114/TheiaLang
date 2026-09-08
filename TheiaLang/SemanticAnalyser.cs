@@ -127,7 +127,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, 8, structDeclaration.ResolvedType);
+            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, IRGenerator.PTR_SIZE, structDeclaration.ResolvedType);
             function.Parameters.Insert(0, new TypeNamePair(ptrType, "this", SourePosition.None));
             ResolveFunctionTypeAndArgs(function);
         }
@@ -649,7 +649,7 @@ public static class SemanticAnalyser
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, Pointer, 8, GetTypeInfo(typeOrName[1..]));
+            return new TypeInfo(typeOrName, Pointer, IRGenerator.PTR_SIZE, GetTypeInfo(typeOrName[1..]));
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
@@ -674,7 +674,7 @@ public static class SemanticAnalyser
         if (i >= 0)
             return SizeOfBuiltin[i];
         if (type.TypeName.StartsWith('@'))
-            return 8;   // ptrs are 64-bit == 8 B
+            return IRGenerator.PTR_SIZE;
 
         if (type.FieldTypes != null)
         {
@@ -700,7 +700,7 @@ public static class SemanticAnalyser
         int i = IRGenerator.BuiltinTypeIndex(typeName);
 
         if (typeName.StartsWith('@'))
-            return 8;   // ptrs are 64-bit == 8 B
+            return IRGenerator.PTR_SIZE;
         if (i >= 0)
             return SizeOfBuiltin[i];
 

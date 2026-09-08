@@ -5,6 +5,9 @@ using static TypeKind;
 
 public static class IRGenerator
 {
+    // for now, this will be const
+    public const uint PTR_SIZE = 8;
+
     public static readonly List<string> BuiltinTypes =
     [
         /*  0  */    "bool",

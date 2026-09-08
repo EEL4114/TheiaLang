@@ -28,3 +28,4 @@ comptime execution
 array ops
 const
 nullability
+anonymous data structures               done

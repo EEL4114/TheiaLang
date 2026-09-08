@@ -168,7 +168,7 @@ static class Elaboration
         {
             if(CanSubstituteDynamicArray(sourceType.Pointee, out TypeInfo pointeeType))
             {
-                newType = new TypeInfo($"@{pointeeType.TypeName}", Pointer, 8, pointeeType);
+                newType = new TypeInfo($"@{pointeeType.TypeName}", Pointer, IRGenerator.PTR_SIZE, pointeeType);
                 return true;
             }
         }
@@ -231,7 +231,7 @@ static class Elaboration
             new TypeNamePair(
                     new TypeInfo($"@{elementType.TypeName}", 
                         Pointer, 
-                        8, 
+                        IRGenerator.PTR_SIZE, 
                         elementType), 
                 "Data"),
             new TypeNamePair(new TypeInfo("s64", Scalar, 8), "Size"),
