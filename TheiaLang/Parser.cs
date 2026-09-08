@@ -79,7 +79,7 @@ public class Parser(List<Token> tokens)
             return ParseStructDeclaration();
         if (Peek().TokenType == TokenType.Keyword_union && PeekNext().TokenType == TokenType.Identifier)
             return ParseUnionDeclaration();
-        if (MatchTypeDefinition(out TypeInfo typeInfo)
+        if (MatchTypeDefinition(out TypeInfo typeInfo, true)
             && Peek().TokenType == TokenType.Identifier)
         {
             if (PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
@@ -98,7 +98,7 @@ public class Parser(List<Token> tokens)
             return (true, ParseStructDeclaration());
         if (Peek().TokenType == TokenType.Keyword_union && PeekNext().TokenType == TokenType.Identifier)
             return (true, ParseUnionDeclaration());
-        if (MatchTypeDefinition(out TypeInfo typeInfo)
+        if (MatchTypeDefinition(out TypeInfo typeInfo, true)
             && Peek().TokenType == TokenType.Identifier)
         {
             if (PeekNext().TokenType == TokenType.Punctuation_ParenthesisL)
@@ -144,7 +144,7 @@ public class Parser(List<Token> tokens)
             do
             {
                 startPosition = Pos();
-                if (!MatchTypeDefinition(out TypeInfo parameterInfo))
+                if (!MatchTypeDefinition(out TypeInfo parameterInfo, false))
                     throw new Exception($"{startPosition} Can't resolve type '{Peek().Lexeme}'");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected field name");
@@ -262,7 +262,7 @@ public class Parser(List<Token> tokens)
             do
             {
                 SourePosition startPosition = Pos();
-                if (!MatchTypeDefinition(out TypeInfo variantType))
+                if (!MatchTypeDefinition(out TypeInfo variantType, true))
                     throw new Exception($"{startPosition} Can't resolve type '{Peek().Lexeme}'");
 
                 Token identifierToken = Consume(TokenType.Identifier, "Expected variant name");
@@ -437,10 +437,10 @@ public class Parser(List<Token> tokens)
         return null!;
     }
 
-    bool MatchTypeDefinition(out TypeInfo typeInfo)
+    bool MatchTypeDefinition(out TypeInfo typeInfo, bool allowAnonymous)
     {
         int startPos = pos;
-        if(Match(TokenType.Keyword_struct))                 // anonymous struct
+        if(allowAnonymous && Match(TokenType.Keyword_struct))       // anonymous struct
         {
             SourePosition sourcePos = Previous().Pos;
 
@@ -501,7 +501,7 @@ public class Parser(List<Token> tokens)
             nodes.Add(structDeclaration);
             return true;
         }
-        if(Match(TokenType.Keyword_union))                 // anonymous union
+        if(allowAnonymous && Match(TokenType.Keyword_union))        // anonymous union
         {
             SourePosition sourcePos = Previous().Pos;
 
@@ -567,7 +567,7 @@ public class Parser(List<Token> tokens)
         }
         if (Match(TokenType.Punctuation_At))                // ptr
         {
-            if (!MatchTypeDefinition(out TypeInfo pointeeInfo))
+            if (!MatchTypeDefinition(out TypeInfo pointeeInfo, false))
             {
                 typeInfo = new TypeInfo("", Void);
                 pos = startPos;
@@ -589,7 +589,7 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_BracketR, $"Expected closing ']', got: {Peek().TokenType}");
 
-            if (!MatchTypeDefinition(out TypeInfo elementInfo))
+            if (!MatchTypeDefinition(out TypeInfo elementInfo, false))
                 throw new Exception($"Expected type after array definition");
 
             typeInfo = new TypeInfo($"[{arrayLength}]{elementInfo.TypeName}",
@@ -752,7 +752,7 @@ public class Parser(List<Token> tokens)
         {
             int save = pos;
 
-            if (MatchTypeDefinition(out TypeInfo typeInfo)
+            if (MatchTypeDefinition(out TypeInfo typeInfo, false)
             &&  Peek().TokenType == TokenType.Punctuation_ParenthesisL)
             {
                 return ParsePostfix(new IdentifierExpression(typeInfo.TypeName, startPosition));
@@ -796,7 +796,7 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after expression");
             expression = ParsePostfix(inner);
         }
-        else if (MatchTypeDefinition(out TypeInfo typeInfo))
+        else if (MatchTypeDefinition(out TypeInfo typeInfo, true))
             expression = ParsePostfix(new IdentifierExpression(typeInfo.TypeName, startPosition));
 
         if (expression != null)
