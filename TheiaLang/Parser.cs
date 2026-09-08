@@ -493,7 +493,7 @@ public class Parser(List<Token> tokens)
 
             currentScope.Declare(symbolInfo);
             
-            typeInfo = new TypeInfo(type: typeName, Struct);
+            typeInfo = structDeclaration.ResolvedType;
 
             nodes.Add(structDeclaration);
             return true;

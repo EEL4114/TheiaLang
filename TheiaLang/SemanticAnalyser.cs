@@ -86,6 +86,10 @@ public static class SemanticAnalyser
             field.ResolvedType = fieldInfo.Type;
         }
 
+        structDeclaration.ResolvedType.FieldTypes = structDeclaration.Fields
+                                                        .Select(f => f.ResolvedType)
+                                                        .ToList();
+
         structDeclaration.ResolvedType.Size = size;
         ExitScope();
     }
@@ -99,17 +103,19 @@ public static class SemanticAnalyser
         {
             // TODO: simplify!!
             currentScope.TryLookupLocal(variant.Identifier, out SymbolInfo? variantInfo, out _);
-#if DEBUG
+// #if DEBUG
             if (variantInfo == null)
                 throw new Exception($"Could not find union variant '{variant.Identifier}' in {currentScope.FullName}");
-#endif
-            if (variantInfo.Type != null)
-                variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
-            else
-                variantInfo.Type = ResolveType(variant.ResolvedType.TypeName);
+// #endif
+            variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
             size = Math.Max(variantInfo.Type.Size, size);
+
             variant.ResolvedType = variantInfo.Type;
         }
+
+        unionDeclaration.ResolvedType.FieldTypes = unionDeclaration.Variants
+                                                       .Select(v => v.ResolvedType)
+                                                       .ToList();
 
         unionDeclaration.ResolvedType.Size = size;
         ExitScope();
