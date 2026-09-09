@@ -965,29 +965,31 @@ public class Parser(List<Token> tokens)
     static string BuiltinTypeToString(BuiltinType builtinType)
         => builtinType switch
         {
-            VOID       => "void",
+            VOID  => "void",
 
-            BOOL       => "bool",
+            BOOL  => "bool",
 
-            S8         => "s8",
-            S16        => "s16",
-            S32        => "s32",
-            S64        => "s64",
-            S128       => "s128",
-            S256       => "s256",
+            INT   => "int",
+            S8    => "s8",
+            S16   => "s16",
+            S32   => "s32",
+            S64   => "s64",
+            S128  => "s128",
+            S256  => "s256",
 
-            U8         => "u8",
-            U16        => "u16",
-            U32        => "u32",
-            U64        => "u64",
-            U128       => "u128",
-            U256       => "u256",
+            U8    => "u8",
+            U16   => "u16",
+            U32   => "u32",
+            U64   => "u64",
+            U128  => "u128",
+            U256  => "u256",
 
-            F16        => "f16",
-            F32        => "f32",
-            F64        => "f64",
-            F128       => "f128",
-            _          => throw new NotImplementedException()
+            FLOAT => "float",
+            F16   => "f16",
+            F32   => "f32",
+            F64   => "f64",
+            F128  => "f128",
+            _     => throw new NotImplementedException()
         };
 
     int Line() => tokens[pos].Pos.Row + 1;

@@ -715,8 +715,8 @@ public static class SemanticAnalyser
 
     public static readonly uint[] SizeOfBuiltin =
     [
-        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void
-            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0
+        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void    ptr
+            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0,      8,
     ];
 
     static Scope SetScope(Scope scope)
@@ -821,6 +821,7 @@ public static class SemanticAnalyser
 
             "bool" => BOOL,
 
+            "int"  => INT,
             "s8"   => S8,
             "s16"  => S16,
             "s32"  => S32,
@@ -835,6 +836,7 @@ public static class SemanticAnalyser
             "u128" => U128,
             "u256" => U256,
 
+            "float"=> FLOAT,
             "f16"  => F16,
             "f32"  => F32,
             "f64"  => F64,
@@ -861,23 +863,24 @@ public static class SemanticAnalyser
         /*f128  */  {   null,   F128,   null,   null,   null,   null,   null,   null,   F128,   null,   null,   null,   F128 },
     };
 
-    static readonly CastOp?[,] TypeCast = new CastOp?[14, 14]
+    static readonly CastOp?[,] TypeCast = new CastOp?[15, 15]
     {
         //from   \  to   bool        int         s8          s16         s32         s64         s128        s256        float       f16         f32         f64         f128       @void
-        /*bool  */  {   NoOp,       null,       BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  null,       BoolToFP,   BoolToFP,   BoolToFP,   BoolToFP,   null},
-        /*int   */  {   null,       NoOp,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null},
-        /*s8    */  {   IntToBool,  null,       NoOp,       SExt,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
-        /*s16   */  {   IntToBool,  null,       Trunc,      NoOp,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
-        /*s32   */  {   IntToBool,  null,       Trunc,      Trunc,      NoOp,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
-        /*s64   */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      NoOp,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     IntToPtr},
-        /*s128  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
-        /*s256  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null},
-        /*float */  {   null,       null,       null,       null,       null,       null,       null,       null,       NoOp,       null,       null,       null,       null,       null},
-        /*f16   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       NoOp,       FPExt,      FPExt,      FPExt,      null},
-        /*f32   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    NoOp,       FPExt,      FPExt,      null},
-        /*f64   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    NoOp,       FPExt,      null},
-        /*f128  */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    FPTrunc,    NoOp,       null},
-        /*@void */  {   null,       null,       null,       null,       null,       PtrToInt,   null,       null,       null,       null,       null,       null,       null,       NoOp},
+        /*bool  */  {   NoOp,       null,       BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  BoolToInt,  null,       BoolToFP,   BoolToFP,   BoolToFP,   BoolToFP,   null,       null},
+        /*int   */  {   null,       NoOp,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null,       null},
+        /*s8    */  {   IntToBool,  null,       NoOp,       SExt,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null,       null},
+        /*s16   */  {   IntToBool,  null,       Trunc,      NoOp,       SExt,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null,       null},
+        /*s32   */  {   IntToBool,  null,       Trunc,      Trunc,      NoOp,       SExt,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null,       null},
+        /*s64   */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      NoOp,       SExt,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     IntToPtr,   IntToPtr},
+        /*s128  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       SExt,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null,       null},
+        /*s256  */  {   IntToBool,  null,       Trunc,      Trunc,      Trunc,      Trunc,      Trunc,      NoOp,       null,       SIToFP,     SIToFP,     SIToFP,     SIToFP,     null,       null},
+        /*float */  {   null,       null,       null,       null,       null,       null,       null,       null,       NoOp,       null,       null,       null,       null,       null,       null},
+        /*f16   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       NoOp,       FPExt,      FPExt,      FPExt,      null,       null},
+        /*f32   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    NoOp,       FPExt,      FPExt,      null,       null},
+        /*f64   */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    NoOp,       FPExt,      null,       null},
+        /*f128  */  {   FPToBool,   null,       FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     FPToSI,     null,       FPTrunc,    FPTrunc,    FPTrunc,    NoOp,       null,       null},
+        /*@void */  {   null,       null,       null,       null,       null,       PtrToInt,   null,       null,       null,       null,       null,       null,       null,       NoOp,       NoOp},
+        /*@void */  {   null,       null,       null,       null,       null,       PtrToInt,   null,       null,       null,       null,       null,       null,       null,       NoOp,       NoOp},
     };
 
     static TypeInfo GetBinaryOpReturnType(BinaryOperator binaryOperator, TypeInfo typeA, TypeInfo typeB)
@@ -966,7 +969,7 @@ public static class SemanticAnalyser
             result = toBuiltin;
 
         if (result == null)
-            Log.Error(13, $"Cannot implicitly convert between {fromType} and {toType}");
+            Log.Error(13, $"Cannot implicitly convert between {fromType} {fromType.BuiltinType} and {toType} {toType.BuiltinType}");
 
         return result;
     }
@@ -983,10 +986,10 @@ public static class SemanticAnalyser
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
 
-        if (typeInfo.BuiltinType == PTR && Builtins.IsSignedInt(StringToBuiltin(expectedType)))    // int - ,ptr
+        if (typeInfo.BuiltinType == PTR && Builtins.IsInt(StringToBuiltin(expectedType)))    // int - ,ptr
             return new TypeInfo("s64", Scalar, S64);
 
-        if (StringToBuiltin(expectedType) == PTR && Builtins.IsSignedInt(typeInfo.BuiltinType))
+        if (StringToBuiltin(expectedType) == PTR && Builtins.IsInt(typeInfo.BuiltinType))
             return new TypeInfo("s64", Scalar, S64);
 
         if (builtinA < 0 || builtinB < 0)
@@ -994,7 +997,7 @@ public static class SemanticAnalyser
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {
-            TypeInfo type = new TypeInfo(expectedType, Scalar, S64);
+            TypeInfo type = new TypeInfo(expectedType, Scalar, StringToBuiltin(expectedType));
             type.Size = SizeOf(type.TypeName);
             return type;    // literals always cast to the more concrete value
         }

@@ -35,12 +35,21 @@ public enum BuiltinType
 
 public static class Builtins
 {
-    public static readonly BuiltinType[] AllTypes = [VOID, BOOL, S8, S16, S32, S64, S128, S256, U8, U16, U32, U64, U128, U256, F16, F32, F64, F128, PTR];
+    public static readonly BuiltinType[] AllTypes = [
+        VOID, 
+        BOOL, 
+        INT, 
+            S8, S16, S32, S64, S128, S256, 
+            U8, U16, U32, U64, U128, U256, 
+        FLOAT,
+            F16, F32, F64, F128, 
+        PTR];
 
     public static int BuiltinTypeIndex(BuiltinType? builtinType) 
         => builtinType switch
         {
             null => -1,
+            PTR  => 14,
 
             BOOL => 0,
 
@@ -58,9 +67,9 @@ public static class Builtins
             F64   => 11,
             F128  => 12,
 
-            VOID => 13,
+            VOID  => 13,
 
-            _    => throw new NotImplementedException(),
+            _    => throw new NotImplementedException(builtinType.ToString()),
         };
 
     public static bool IsInt(BuiltinType? builtinType)
@@ -139,10 +148,10 @@ public static class Builtins
             U128 => new TypeInfo("u128", Scalar, U128, 16),
             U256 => new TypeInfo("u256", Scalar, U256, 32),
 
-            F16  => new TypeInfo("u16",  Scalar, U16,  2),
-            F32  => new TypeInfo("u32",  Scalar, U32,  4),
-            F64  => new TypeInfo("u64",  Scalar, U64,  8),
-            F128 => new TypeInfo("u128", Scalar, U128, 16),
+            F16  => new TypeInfo("u16",  Scalar, F16,  2),
+            F32  => new TypeInfo("u32",  Scalar, F32,  4),
+            F64  => new TypeInfo("u64",  Scalar, F64,  8),
+            F128 => new TypeInfo("u128", Scalar, F128, 16),
 
             _ => throw new NotImplementedException(),
         };
