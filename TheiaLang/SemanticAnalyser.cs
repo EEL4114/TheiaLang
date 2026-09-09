@@ -330,8 +330,8 @@ public static class SemanticAnalyser
 
                         uint sizeValue = SizeOf(i.Name);
 
-                        expression = new LiteralExpression((int)sizeValue, sizeValue.ToString(), SourePosition.None);
-                        expression.ResolvedType = new TypeInfo("s32", Scalar, S32, 4);
+                        expression = new LiteralExpression((long)sizeValue, sizeValue.ToString(), SourePosition.None);
+                        expression.ResolvedType = Builtins.GetTypeInfo(S64);
                     }
                     else if (id.Name == "Alloc")
                     {
@@ -533,15 +533,25 @@ public static class SemanticAnalyser
                     unary.ResolvedType = unary.Operand.ResolvedType;
                 break;
             case BinaryExpression binary:
-                binary.Left = AnalyseExpression(binary.Left);
+                binary.Left  = AnalyseExpression(binary.Left);
                 binary.Right = AnalyseExpression(binary.Right);
 
                 binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType!, binary.Right.ResolvedType!.TypeName);
                 binary.Right.ResolvedType = PromoteIfLiteral(binary.Right.ResolvedType, binary.Left.ResolvedType.TypeName);
 
-                binary.ResolvedType = GetBinaryOpReturnType(binary.Op,
-                    binary.Left.ResolvedType,
-                    binary.Right.ResolvedType);
+                BuiltinType commonBuiltin = GetImplicitPromotionType(binary.Left.ResolvedType!, binary.Right.ResolvedType!)!.Value;
+                TypeInfo commonType = Builtins.GetTypeInfo(commonBuiltin);
+
+                binary.Left  = GenerateImplicitCast(binary.Left, commonType);
+                binary.Right = GenerateImplicitCast(binary.Right, commonType);
+                
+                binary.ResolvedType =
+                    binary.Op is BinaryOperator.Greater
+                            or BinaryOperator.Less
+                            or BinaryOperator.EqualEqual
+                            or BinaryOperator.NotEqual
+                        ? Builtins.GetTypeInfo(BOOL)
+                        : commonType;
                 break;
             case InstantiationExpression instantiation:
                 if (!currentScope.TryLookup(instantiation.TypeName, out SymbolInfo? typeSymbolInfo, out _)
