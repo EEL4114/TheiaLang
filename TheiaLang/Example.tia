@@ -88,8 +88,8 @@ int main()
     @Entity entityPtr = @entity;
     //tr = ($entityPtr).transform;
 
-    s32 ii = TypeSize(Entity);
-    s32 jj = TypeSize(s32);
+    s64 ii = TypeSize(Entity);
+    s64 jj = TypeSize(s32);
     //s32 ll = SizeOf([2]s32);
     //s32 kk = SizeOf(arrX);
 

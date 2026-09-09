@@ -292,13 +292,6 @@ public class Parser(List<Token> tokens)
 
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after union variants");
 
-        unionDeclaration.ResolvedType = new TypeInfo(
-            name,
-            Union,
-            null,
-            fieldNames: variantNames,
-            fieldTypes: variantTypes);
-
         ExitScope();
         currentScope!.Declare(new SymbolInfo(
                               name,
@@ -554,13 +547,6 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
             ExitScope();
-
-            unionDeclaration.ResolvedType = new TypeInfo(
-                typeName,
-                Union,
-                null, 
-                fieldNames: variantNames,
-                fieldTypes: variantTypes);
 
             SymbolInfo symbolInfo = new SymbolInfo(
                 typeName,
