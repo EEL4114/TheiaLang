@@ -42,16 +42,16 @@ public class Parser(List<Token> tokens)
                 "__th_reallocB",
                 new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, new TypeInfo("void", Void, VOID)),
                 SymbolKind.Function,
-                [   new TypeNamePair(new TypeInfo("@void", Pointer, PTR), "alloc", SourePosition.None),
-                    new TypeNamePair(new TypeInfo("s64", Scalar, PTR), "newSize", SourePosition.None)]
+                [   new TypeNamePair(new TypeInfo("@void", Pointer, PTR, pointee: Builtins.GetTypeInfo(PTR)), "alloc", SourePosition.None),
+                    new TypeNamePair(new TypeInfo("s64", Scalar, S64, pointee: Builtins.GetTypeInfo(S64)), "newSize", SourePosition.None)]
             ));
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_free",
-                new TypeInfo("void", Void, 0),
+                new TypeInfo("void", Void, VOID, 0),
                 SymbolKind.Function,
-                [new TypeNamePair(new TypeInfo("@void", Pointer, PTR), "ptr", SourePosition.None)
+                [new TypeNamePair(new TypeInfo("@void", Pointer, PTR, pointee: Builtins.GetTypeInfo(PTR)), "ptr", SourePosition.None)
             ]));
 
         globalScope.Declare(

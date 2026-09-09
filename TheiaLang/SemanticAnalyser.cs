@@ -773,23 +773,24 @@ public static class SemanticAnalyser
 
     #region Interop
     
-    static readonly bool[,] LosslessTypeInterop = new bool[14, 14]
+    static readonly bool[,] LosslessTypeInterop = new bool[15, 15]
     {
         //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void
-        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
-        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false},
-        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  false},
-        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false},
-        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false},
-        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false},
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false},
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false},
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false},
-        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false},
-        /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true },
+        /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
+        /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false,  false},
+        /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false,  false},
+        /*s16   */  {   false,  true,   false,  true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false,  false},
+        /*s32   */  {   false,  true,   false,  false,  true,   true,   true,   true,   false,  false,  false,  false,  false,  false,  false},
+        /*s64   */  {   false,  true,   false,  false,  false,  true,   true,   true,   false,  false,  false,  false,  false,  false,  false},
+        /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false,  false},
+        /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false,  false},
+        /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false,  false},
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false},
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false,  false},
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false,  false},
+        /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false,  false},
+        /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   true },
+        /*ptr  */   {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   true },
     };
 
     static readonly bool[,] ScalarTypeInterop = new bool[13, 13]
@@ -887,20 +888,20 @@ public static class SemanticAnalyser
     {
         if (binaryOperator == BinaryOperator.EqualEqual
          || binaryOperator == BinaryOperator.NotEqual)
-            return Builtins.GetBuiltingTypeInfo(BOOL);
+            return Builtins.GetTypeInfo(BOOL);
 
         if (typeA.BuiltinType == BOOL && typeB.BuiltinType == BOOL
          && binaryOperator == BinaryOperator.AND
          || binaryOperator == BinaryOperator.OR)
-            return Builtins.GetBuiltingTypeInfo(BOOL);
+            return Builtins.GetTypeInfo(BOOL);
 
         BuiltinType? shared = GetImplicitPromotionType(typeA, typeB)!;
 
         if (shared != BOOL && shared != null || shared == PTR)
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
-                return Builtins.GetBuiltingTypeInfo(BOOL);
+                return Builtins.GetTypeInfo(BOOL);
             else
-                return Builtins.GetBuiltingTypeInfo((BuiltinType)shared)    ;
+                return Builtins.GetTypeInfo((BuiltinType)shared)    ;
 
         throw new Exception($"Operator '{binaryOperator}' is not valid for type {shared}");
     }

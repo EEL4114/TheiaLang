@@ -123,12 +123,8 @@ public static class Builtins
             _ => false,
         };
 
-    public static TypeInfo GetBuiltingTypeInfo(BuiltinType builtin)
-    {
-        if(builtin == PTR)
-            throw new Exception();
-        
-        return builtin switch
+    public static TypeInfo GetTypeInfo(BuiltinType builtin)
+        => builtin switch
         {
             VOID => new TypeInfo("void", Void, VOID, 0),
 
@@ -148,12 +144,13 @@ public static class Builtins
             U128 => new TypeInfo("u128", Scalar, U128, 16),
             U256 => new TypeInfo("u256", Scalar, U256, 32),
 
-            F16  => new TypeInfo("u16",  Scalar, F16,  2),
-            F32  => new TypeInfo("u32",  Scalar, F32,  4),
-            F64  => new TypeInfo("u64",  Scalar, F64,  8),
-            F128 => new TypeInfo("u128", Scalar, F128, 16),
+            F16  => new TypeInfo("f16",  Scalar, F16,  2),
+            F32  => new TypeInfo("f32",  Scalar, F32,  4),
+            F64  => new TypeInfo("f64",  Scalar, F64,  8),
+            F128 => new TypeInfo("f128", Scalar, F128, 16),
+
+            PTR  => new TypeInfo("@void", Pointer, PTR, 8, pointee: GetTypeInfo(VOID)),
 
             _ => throw new NotImplementedException(),
         };
-    }
 }
