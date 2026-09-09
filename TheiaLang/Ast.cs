@@ -80,6 +80,7 @@ public class FunctionDeclaration : IDeclaration
 
     public FunctionDeclaration(string typeName,     // possibly change this?
                                TypeKind typeKind,
+                               BuiltinType? builtinType,
                                string name,
                                List<TypeNamePair> paramaters,
                                List<IStatement> statements,
@@ -90,7 +91,7 @@ public class FunctionDeclaration : IDeclaration
         Parameters = paramaters;
         Statements = statements;
 
-        ResolvedType = new TypeInfo(TypeName, typeKind);
+        ResolvedType = new TypeInfo(TypeName, typeKind, builtinType);
     
         Pos = pos;
     }
@@ -108,7 +109,7 @@ public class FunctionDeclaration : IDeclaration
     }
 }
 
-public struct StructDeclaration : IDeclaration
+public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
     public string Name { get; set; }
@@ -126,7 +127,7 @@ public struct StructDeclaration : IDeclaration
         Fields = fields;
         Functions = functions;
 
-        ResolvedType = new TypeInfo(name, TypeKind.Struct,
+        ResolvedType = new TypeInfo(name, TypeKind.Struct, null,
                                     fieldNames: fields.Select(f => f.Identifier).ToList(),
                                     fieldTypes: fields.Select(f => f.ResolvedType).ToList());
 
@@ -220,12 +221,12 @@ public sealed record CallArgument(
     IExpression Value
 ) : INode;*/
 
-public sealed record ExpressionStatement(
+public sealed class ExpressionStatement(
     IExpression Expression,
     SourePosition Pos = default
 ) : IStatement
 { 
-    public IExpression Expression { get; set; } = Expression;
+    public IExpression Expression  = Expression;
     public SourePosition Pos { get; } = Pos;
 }
 

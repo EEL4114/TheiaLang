@@ -45,6 +45,7 @@ public enum TypeKind
 
 public class TypeInfo(string type,
                       TypeKind typeKind,
+                      BuiltinType? builtinType,
                       uint size = 0,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
@@ -55,6 +56,7 @@ public class TypeInfo(string type,
     public string TypeName { get; init; } = type;
     
     public TypeKind TypeKind {get; set; } = typeKind; 
+    public BuiltinType? BuiltinType {get; set; } = builtinType; 
 
     public TypeInfo? Pointee { get; set; } = pointee;
 

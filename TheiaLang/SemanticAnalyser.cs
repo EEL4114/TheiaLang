@@ -2,6 +2,7 @@ namespace TheiaLang;
 
 using static CastOp;
 using static TypeKind;
+using static BuiltinType;
 
 public static class SemanticAnalyser
 {
@@ -127,7 +128,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, IRGenerator.PTR_SIZE, structDeclaration.ResolvedType);
+            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, PTR, IRGenerator.PTR_SIZE, structDeclaration.ResolvedType);
             function.Parameters.Insert(0, new TypeNamePair(ptrType, "this", SourePosition.None));
             ResolveFunctionTypeAndArgs(function);
         }
@@ -272,7 +273,7 @@ public static class SemanticAnalyser
                 else
                 {
                     returnStatement.Expression = new LiteralExpression(null!, "void", SourePosition.None);
-                    returnStatement.Expression.ResolvedType = new TypeInfo("void", Void);
+                    returnStatement.Expression.ResolvedType = new TypeInfo("void", Void, VOID);
                 }
 
                 if (currentScope.DeclaringNode is FunctionDeclaration function)
@@ -330,7 +331,7 @@ public static class SemanticAnalyser
                         uint sizeValue = SizeOf(i.Name);
 
                         expression = new LiteralExpression((int)sizeValue, sizeValue.ToString(), SourePosition.None);
-                        expression.ResolvedType = new TypeInfo("s32", Scalar, 4);
+                        expression.ResolvedType = new TypeInfo("s32", Scalar, S32, 4);
                     }
                     else if (id.Name == "Alloc")
                     {
@@ -515,6 +516,7 @@ public static class SemanticAnalyser
                             Log.Error(22, $"Can't take address of non-assignable {unary.Operand}");
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           Pointer,
+                                                          PTR, 
                                                           SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
                                                           pointee: unary.Operand.ResolvedType);
                     }
@@ -649,7 +651,7 @@ public static class SemanticAnalyser
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, Pointer, IRGenerator.PTR_SIZE, GetTypeInfo(typeOrName[1..]));
+            return new TypeInfo(typeOrName, Pointer, PTR, IRGenerator.PTR_SIZE, GetTypeInfo(typeOrName[1..]));
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
@@ -947,17 +949,17 @@ public static class SemanticAnalyser
             return typeInfo;
 
         if (typeInfo.TypeName.StartsWith('@') && builtinB < 8)    // int - ,ptr
-            return new TypeInfo("s64", Scalar);
+            return new TypeInfo("s64", Scalar, S64);
 
         if (expectedType.StartsWith('@') && builtinA < 8)
-            return new TypeInfo("s64", Scalar);
+            return new TypeInfo("s64", Scalar, S64);
 
         if (builtinA < 0 || builtinB < 0)
             throw new Exception($"Cannot resolve {typeInfo.TypeName} to {expectedType}");
 
         if (LosslessTypeInterop[builtinA, builtinB])
         {
-            TypeInfo type = new TypeInfo(expectedType, Scalar);
+            TypeInfo type = new TypeInfo(expectedType, Scalar, S64);
             type.Size = SizeOf(type.TypeName);
             return type;    // literals always cast to the more concrete value
         }
