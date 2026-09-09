@@ -3,6 +3,7 @@ namespace TheiaLang;
 using System.Text;
 using static TypeKind;
 using static BuiltinType;
+using System.Globalization;
 
 public static class IRGenerator
 {
@@ -461,49 +462,101 @@ public static class IRGenerator
     }
 
     static (StringBuilder code, string value) EmitLiteralExpression(
-    LiteralExpression literalExpression,
-    StringBuilder code)
+        LiteralExpression literal,
+        StringBuilder code)
     {
-        // Make sure the semantic pass has filled in the type
-        TypeInfo typeInfo = literalExpression.ResolvedType
+        TypeInfo type = literal.ResolvedType
             ?? throw new InvalidOperationException("Literal has no ResolvedType");
 
-        // TODO switch
-        // Integer literals
-        if (literalExpression.Value is int i)
+        return type.BuiltinType switch
         {
-            return typeInfo.TypeName switch
-            {
-                "f16" or "f32" or "f64" => (code, $"{i}.0"),// decimal is fine
-                "f128" => (code, FP128ToHex(i)),
-                _ => (code, literalExpression.Lexeme),
-            };
+            BOOL => literal.Value is bool b
+                ? (code, b ? "1" : "0")
+                : throw new Exception($"Invalid literal: {literal}, {type}"),
+
+            S8 or S16 or S32 or S64 =>
+                EmitIntegerLiteral(literal, code),
+
+            F16 or F32 or F64 or F128 =>
+                EmitFloatLiteral(literal, code, type.BuiltinType),
+
+            VOID => literal.Value is null
+                ? (code, "")
+                : throw new Exception($"Invalid literal: {literal}, {type}"),
+
+            _ => throw new Exception($"Invalid literal: {literal}, {type}"),
+        };
+    }
+
+    static (StringBuilder code, string value) EmitIntegerLiteral(
+        LiteralExpression literal,
+        StringBuilder code)
+    {
+        if (literal.Value is not long value)
+            throw new Exception($"Invalid literal: {literal}, {literal.ResolvedType}");
+
+        return (code, value.ToString(CultureInfo.InvariantCulture));
+    }
+
+    static (StringBuilder code, string value) EmitFloatLiteral(
+        LiteralExpression literal,
+        StringBuilder code,
+        BuiltinType? type)
+    {
+        double value = literal.Value switch
+        {
+            long l => l,
+            double d => d,
+            _ => throw new Exception($"Invalid literal: {literal}, {literal.ResolvedType}")
+        };
+
+        return type switch
+        {
+            F16 or F32 or F64 =>
+                (code, FormatLLVMFloat(value, (BuiltinType)literal.ResolvedType!.BuiltinType!)),
+
+            F128 =>
+                (code, FP128ToHex(value)),
+
+            _ => throw new Exception($"Invalid literal: {literal}, {literal.ResolvedType}")
+        };
+    }
+
+    static string FormatLLVMFloat(double value, BuiltinType type)
+    {
+        string text = type switch
+        {
+            F32 => ((float)value).ToString("R", CultureInfo.InvariantCulture),
+            F64 => value.ToString("R", CultureInfo.InvariantCulture),
+            _ => throw new ArgumentException($"Unsupported float type: {type}")
+        };
+
+        // Handle these explicitly if Theia permits them.
+        if (double.IsPositiveInfinity(value))
+            return "+inf";
+        if (double.IsNegativeInfinity(value))
+            return "-inf";
+        if (double.IsNaN(value))
+            return "+qnan";
+
+        // LLVM decimal floating literals require a decimal point.
+        int exponent = text.IndexOfAny(['e', 'E']);
+
+        if (exponent >= 0)
+        {
+            string mantissa = text[..exponent];
+            string exp = text[exponent..];
+
+            if (!mantissa.Contains('.'))
+                mantissa += ".0";
+
+            return mantissa + exp;
         }
 
-        // Floating‐point literals
-        if (literalExpression.Value is double d)
-        {
-            return typeInfo.TypeName switch
-            {
-                "f128" => (code, FP128ToHex(d)),        // the original Lexeme is decimal; convert to hex‐float
-                _ => (code, literalExpression.Lexeme),  // leave as written for f32/f64
-            };
-        }
+        if (!text.Contains('.'))
+            text += ".0";
 
-        // Booleans
-        if (literalExpression.Value is bool b)
-            return (code, b ? "1" : "0");
-
-        // void
-        if (literalExpression.Value is null)
-        {
-            return typeInfo.TypeName switch
-            {
-                "void" => (code, ""),
-                _ => throw new Exception($"Unexpected type name: {literalExpression.Lexeme}")
-            };
-        }
-        throw new Exception("Unknown literal");
+        return text;
     }
 
     static (StringBuilder code, string value) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)

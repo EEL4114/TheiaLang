@@ -491,7 +491,7 @@ public static class SemanticAnalyser
                         string lexeme = "-" + literal.Lexeme;
                         if (literal.ResolvedType!.TypeName == "int")
                         {
-                            int.TryParse(lexeme, out int j);
+                            long.TryParse(lexeme, out long j);
                             v = j;
                         }
                         else
