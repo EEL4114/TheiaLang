@@ -32,7 +32,7 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_allocB",
-                new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, new TypeInfo("void", Void, VOID)),
+                Builtins.GetTypeInfo(PTR),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "size", SourePosition.None)]
             ));
@@ -40,10 +40,10 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_reallocB",
-                new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, new TypeInfo("void", Void, VOID)),
+                new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, pointee: new TypeInfo("void", Void, VOID)),
                 SymbolKind.Function,
-                [   new TypeNamePair(new TypeInfo("@void", Pointer, PTR, pointee: Builtins.GetTypeInfo(PTR)), "alloc", SourePosition.None),
-                    new TypeNamePair(new TypeInfo("s64", Scalar, S64, pointee: Builtins.GetTypeInfo(S64)), "newSize", SourePosition.None)]
+                [   new TypeNamePair(Builtins.GetTypeInfo(PTR), "alloc", SourePosition.None),
+                    new TypeNamePair(new TypeInfo("s64", Scalar, S64), "newSize", SourePosition.None)]
             ));
 
         globalScope.Declare(
@@ -51,13 +51,13 @@ public class Parser(List<Token> tokens)
                 "__th_free",
                 new TypeInfo("void", Void, VOID, 0),
                 SymbolKind.Function,
-                [new TypeNamePair(new TypeInfo("@void", Pointer, PTR, pointee: Builtins.GetTypeInfo(PTR)), "ptr", SourePosition.None)
+                [new TypeNamePair(Builtins.GetTypeInfo(PTR), "ptr", SourePosition.None)
             ]));
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_alloc",
-                new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, new TypeInfo("void", Void, VOID)),
+                Builtins.GetTypeInfo(PTR),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "size", SourePosition.None)]
             ));

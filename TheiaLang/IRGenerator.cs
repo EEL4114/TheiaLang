@@ -691,6 +691,9 @@ public static class IRGenerator
         (StringBuilder argCode, string argReg) = EmitExpression(cast.Target);
         code.Append(argCode);
 
+        if (cast.CastKind == CastOp.NoOp)
+            return (code, argReg);
+
         string sourceLLVMType = TypeToLLVM(cast.Target.ResolvedType!)!;
         string targetLLVMType = TypeToLLVM(cast.ResolvedType!)!;
 
@@ -720,7 +723,6 @@ public static class IRGenerator
             case CastOp.PtrToInt:   code.AppendLine($"  {tmp} = ptrtoint ptr {argReg} to {targetLLVMType}"); break;
             case CastOp.IntToPtr:   code.AppendLine($"  {tmp} = inttoptr {sourceLLVMType} {argReg} to ptr"); break;
             case CastOp.PtrToBool:  code.AppendLine($"  {tmp} = icmp ne ptr {argReg}, null"); break;
-
             default: throw new Exception($"Unhandled cast op {cast.CastKind}");
         }
 
@@ -886,11 +888,9 @@ public static class IRGenerator
 
     static string? TypeToLLVM(TypeInfo type)
     {
-        if (type.Pointee != null)
-        {
-            if (type.Pointee != null)
-                return "ptr";
-        }
+        if (type.BuiltinType == PTR)
+            return "ptr";
+
         // TODO make this work with n-Dimensional arrays
         if (type.ArrayLength != null && type.ArrayLength > 0)
             return $"[{type.ArrayLength} x {TypeToLLVM(type.ElementType!)}]";
