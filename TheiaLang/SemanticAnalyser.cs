@@ -337,22 +337,24 @@ public static class SemanticAnalyser
                     {
                         Log.Info("ALLOC");
                     }
-                    else if (IRGenerator.BuiltinTypes.Contains(id.Name)|| id.Name.StartsWith('@'))
+                    else if (StringToBuiltin(id.Name) != null)
                     {
+                        BuiltinType builtinType = (BuiltinType)StringToBuiltin(id.Name)!;
                         for (int i = 0; i < call.Arguments.Count; i++)
                         {
                             IExpression argument = AnalyseExpression(call.Arguments[i]);
                             call.Arguments[i] = argument;
                         }
-                        if (IRGenerator.BuiltinTypes.Contains(id.Name))
+                        if (builtinType != PTR)
                         {
-                            int targetTypeIndex = IRGenerator.BuiltinTypes.IndexOf(id.Name);
-                            int sourceTypeIndex = IRGenerator.BuiltinTypes.IndexOf(call.Arguments[0].ResolvedType!.TypeName);
+                            
+                            int targetTypeIndex = Builtins.BuiltinTypeIndex(builtinType);
+                            int sourceTypeIndex = Builtins.BuiltinTypeIndex(call.Arguments[0].ResolvedType!.BuiltinType);
 
                             if (targetTypeIndex < 0 || sourceTypeIndex < 0)
                             {
-                                if(targetTypeIndex == IRGenerator.BuiltinTypeIndex("s64") && call.Arguments[0].ResolvedType!.TypeName.StartsWith('@') )
-                                    sourceTypeIndex = 13;
+                                if(targetTypeIndex == Builtins.BuiltinTypeIndex(S64) && call.Arguments[0].ResolvedType!.BuiltinType == PTR)
+                                    sourceTypeIndex = Builtins.BuiltinTypeIndex(VOID);
                                 else
                                     throw new Exception($"Invalid cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
                             }                            
@@ -468,7 +470,7 @@ public static class SemanticAnalyser
                 memberAccess.Member = (IdentifierExpression)AnalyseExpression(memberAccess.Member);
                 memberAccess.ResolvedType = memberAccess.Member.ResolvedType;
 
-                if (!IRGenerator.BuiltinTypes.Contains(memberAccess.Member.ResolvedType!.TypeName))
+                if (memberAccess.Member.ResolvedType!.BuiltinType == null)
                 {
                     if (!currentScope!.TryFindChild(memberAccess.Member.ResolvedType!.TypeName, out Scope? memberScope))
                         throw new Exception($"{memberAccess.Pos} Could not find {memberAccess.Member.ResolvedType!.TypeName} in {currentScope.FullName}");
@@ -537,9 +539,9 @@ public static class SemanticAnalyser
                 binary.Left.ResolvedType = PromoteIfLiteral(binary.Left.ResolvedType!, binary.Right.ResolvedType!.TypeName);
                 binary.Right.ResolvedType = PromoteIfLiteral(binary.Right.ResolvedType, binary.Left.ResolvedType.TypeName);
 
-                binary.ResolvedType = GetTypeInfo(GetBinaryOpReturnType(binary.Op,
-                    binary.Left.ResolvedType.TypeName,
-                    binary.Right.ResolvedType.TypeName));
+                binary.ResolvedType = GetBinaryOpReturnType(binary.Op,
+                    binary.Left.ResolvedType,
+                    binary.Right.ResolvedType);
                 break;
             case InstantiationExpression instantiation:
                 if (!currentScope.TryLookup(instantiation.TypeName, out SymbolInfo? typeSymbolInfo, out _)
@@ -567,7 +569,7 @@ public static class SemanticAnalyser
                 indexExpression.Index = AnalyseExpression(indexExpression.Index);
                 indexExpression.Index.ResolvedType = PromoteIfLiteral(indexExpression.Index.ResolvedType!, "s64");
 
-                if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.TypeName, "int"))
+                if (!CanTypesInteropScalar(indexExpression.Index.ResolvedType!.BuiltinType, INT))
                     throw new Exception($"Invalid index type: '{indexExpression.Index.ResolvedType.TypeName}'");
                 // dynamic array
                 if (indexExpression.Target.ResolvedType!.ArrayLength == null)
@@ -672,7 +674,7 @@ public static class SemanticAnalyser
 
     public static uint SizeOf(TypeInfo type)
     {
-        int i = IRGenerator.BuiltinTypeIndex(type.TypeName);
+        int i = Builtins.BuiltinTypeIndex(type.BuiltinType);
         if (i >= 0)
             return SizeOfBuiltin[i];
         if (type.TypeName.StartsWith('@'))
@@ -690,7 +692,7 @@ public static class SemanticAnalyser
             return size;
         }
         else if (type.ArrayLength is uint length && type.ElementType != null)
-            return length! * SizeOf(type.ElementType);
+            return length * SizeOf(type.ElementType);
         else
             return type.Size;
 
@@ -699,7 +701,7 @@ public static class SemanticAnalyser
 
     public static uint SizeOf(string typeName)
     {
-        int i = IRGenerator.BuiltinTypeIndex(typeName);
+        int i = Builtins.BuiltinTypeIndex(StringToBuiltin(typeName));
 
         if (typeName.StartsWith('@'))
             return IRGenerator.PTR_SIZE;
@@ -743,21 +745,23 @@ public static class SemanticAnalyser
 
     static IExpression GenerateImplicitCast(IExpression expression, TypeInfo target)
     {
-        string sourceType = expression.ResolvedType!.TypeName;
-        string targetType = target.TypeName;
+        TypeInfo sourceType = expression.ResolvedType!;
 
-        if (!CanImplicitlyCast(sourceType, targetType))
-            throw new Exception($"{expression.Pos}: Cannot implicitly convert {sourceType} -> {targetType}");
+        // string sourceType = expression.ResolvedType!.TypeName;
+        // string targetType = target.TypeName;
 
-        if (sourceType != targetType)
+        if (!CanImplicitlyCast(sourceType, target))
+            throw new Exception($"{expression.Pos}: Cannot implicitly convert {sourceType.TypeName} -> {target.TypeName}");
+
+        if (sourceType != target)
         {
-            if (IRGenerator.BuiltinTypes.Contains(sourceType)
-             && IRGenerator.BuiltinTypes.Contains(targetType))
+            if (sourceType.BuiltinType != null
+             && target.BuiltinType != null)
             {
-                CastOp? op = TypeCast[IRGenerator.BuiltinTypeIndex(sourceType),
-                                      IRGenerator.BuiltinTypeIndex(targetType)];
+                CastOp? op = TypeCast[Builtins.BuiltinTypeIndex(sourceType.BuiltinType),
+                                      Builtins.BuiltinTypeIndex(target.BuiltinType)];
                 if (op == null)
-                    throw new Exception($"Invalid cast: {sourceType} -> {targetType}");
+                    throw new Exception($"Invalid cast: {sourceType.TypeName} -> {target.TypeName}");
                 expression = new CastExpression((CastOp)op, expression, SourePosition.None);
                 expression.ResolvedType = target;
             }
@@ -806,22 +810,55 @@ public static class SemanticAnalyser
         /*f128  */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true  },
     };
 
-    static readonly string[,] ImplicitPromotion = new string[13, 13]
+    static BuiltinType? StringToBuiltin(string s)
     {
-        // A   \    B   bool    int      s8      s16     s32     s64     s128    s256   float   f16     f32     f64     f128
-        /*bool  */  {   "bool", "",     "",     "",     "",     "",     "",     "",     "",     "",     "",     "",     ""     },
-        /*int   */  {   "",     "int",  "s8",   "s16",  "s32",  "s64",  "s128", "s256", "float","f16",  "f32",  "f64",  "f128 "},
-        /*s8    */  {   "",     "s8",   "s8",   "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
-        /*s16   */  {   "",     "s16",  "s16",  "s16",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
-        /*s32   */  {   "",     "s32",  "s32",  "s32",  "s32",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
-        /*s64   */  {   "",     "s64",  "s64",  "s64",  "s64",  "s64",  "s128", "s256", "",     "",     "",     "",     ""     },
-        /*s128  */  {   "",     "s128", "s128", "s128", "s128", "s128", "s128", "s256", "",     "",     "",     "",     ""     },
-        /*s256  */  {   "",     "s256", "s256", "s256", "s256", "s256", "s256", "s256", "",     "",     "",     "",     ""     },
-        /*float */  {   "",     "float","",      "",     "",     "",     "",     "",    "float","f16",  "f32",  "f64",  "f128" },
-        /*f16   */  {   "",     "f16",  "",      "",     "",     "",     "",     "",    "f16",  "f16",  "",     "",     ""     },
-        /*f32   */  {   "",     "f32",  "",      "",     "",     "",     "",     "",    "f32",  "",     "f32",  "",     ""     },
-        /*f64   */  {   "",     "f64",  "",      "",     "",     "",     "",     "",    "f64",  "",     "",     "f64",  ""     },
-        /*f128  */  {   "",     "f128", "",      "",     "",     "",     "",     "",    "f128", "",     "",     "",     "f128" },
+        if(s.StartsWith('@'))
+            return PTR;
+        
+        return s switch
+        {
+            "void" => VOID,
+
+            "bool" => BOOL,
+
+            "s8"   => S8,
+            "s16"  => S16,
+            "s32"  => S32,
+            "s64"  => S64,
+            "s128" => S128,
+            "s256" => S256,
+
+            "u8"   => U8,
+            "u16"  => U16,
+            "u32"  => U32,
+            "u64"  => U64,
+            "u128" => U128,
+            "u256" => U256,
+
+            "f16"  => F16,
+            "f32"  => F32,
+            "f64"  => F64,
+            "f128" => F128,
+            _      => null
+        };
+    }
+
+    static readonly BuiltinType?[,] ImplicitPromotion = new BuiltinType?[13, 13]
+    {
+        // A   \    B   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128
+        /*bool  */  {   BOOL,   null,   null,   null,   null,   null,   null,   null,   null,   null,   null,   null,   null },
+        /*int   */  {   null,   INT,    S8,     S16,    S32,    S64,    S128,   S256,   FLOAT,  F16,    F32,    F64,    F128 },
+        /*s8    */  {   null,   S8,     S8,     S16,    S32,    S64,    S128,   S256,   null,   null,   null,   null,   null },
+        /*s16   */  {   null,   S16,    S16,    S16,    S32,    S64,    S128,   S256,   null,   null,   null,   null,   null },
+        /*s32   */  {   null,   S32,    S32,    S32,    S32,    S64,    S128,   S256,   null,   null,   null,   null,   null },
+        /*s64   */  {   null,   S64,    S64,    S64,    S64,    S64,    S128,   S256,   null,   null,   null,   null,   null },
+        /*s128  */  {   null,   S128,   S128,   S128,   S128,   S128,   S128,   S256,   null,   null,   null,   null,   null },
+        /*s256  */  {   null,   S256,   S256,   S256,   S256,   S256,   S256,   S256,   null,   null,   null,   null,   null },
+        /*float */  {   null,   FLOAT,  null,   null,   null,   null,   null,   null,   FLOAT,  F16,    F32,    F64,    F128 },
+        /*f16   */  {   null,   F16,    null,   null,   null,   null,   null,   null,   F16,    F16,    null,   null,   null },
+        /*f32   */  {   null,   F32,    null,   null,   null,   null,   null,   null,   F32,    null,   F32,    null,   null },
+        /*f64   */  {   null,   F64,    null,   null,   null,   null,   null,   null,   F64,    null,   null,   F64,    null },
+        /*f128  */  {   null,   F128,   null,   null,   null,   null,   null,   null,   F128,   null,   null,   null,   F128 },
     };
 
     static readonly CastOp?[,] TypeCast = new CastOp?[14, 14]
@@ -843,60 +880,58 @@ public static class SemanticAnalyser
         /*@void */  {   null,       null,       null,       null,       null,       PtrToInt,   null,       null,       null,       null,       null,       null,       null,       NoOp},
     };
 
-    static string GetBinaryOpReturnType(BinaryOperator binaryOperator, string typeA, string typeB)
+    static TypeInfo GetBinaryOpReturnType(BinaryOperator binaryOperator, TypeInfo typeA, TypeInfo typeB)
     {
-        string shared = GetImplicitPromotionType(typeA, typeB)!;
-
         if (binaryOperator == BinaryOperator.EqualEqual
          || binaryOperator == BinaryOperator.NotEqual)
-            return "bool";
+            return Builtins.GetBuiltingTypeInfo(BOOL);
 
-        if (typeA == "bool" && typeB == "bool"
+        if (typeA.BuiltinType == BOOL && typeB.BuiltinType == BOOL
          && binaryOperator == BinaryOperator.AND
          || binaryOperator == BinaryOperator.OR)
-            return "bool";
+            return Builtins.GetBuiltingTypeInfo(BOOL);
 
-        if (shared != "bool" && IRGenerator.IsBuiltinType(shared) || shared.StartsWith('@'))
+        BuiltinType? shared = GetImplicitPromotionType(typeA, typeB)!;
+
+        if (shared != BOOL && shared != null || shared == PTR)
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
-                return "bool";
+                return Builtins.GetBuiltingTypeInfo(BOOL);
             else
-                return shared;
+                return Builtins.GetBuiltingTypeInfo((BuiltinType)shared)    ;
 
         throw new Exception($"Operator '{binaryOperator}' is not valid for type {shared}");
     }
 
-    static bool CanTypesInteropScalar(string typeA, string typeB)  // a + b; a * b;
+    static bool CanTypesInteropScalar(BuiltinType? typeA, BuiltinType? typeB)  // a + b; a * b;
     {
-        int indexA = IRGenerator.BuiltinTypeIndex(typeA);
-        int indexB = IRGenerator.BuiltinTypeIndex(typeB);
-
-        if (typeA.StartsWith('@')
-        && (typeB == "s8" || typeB == "s16" || typeB == "s32" || typeB == "s64"))
-            return true;
-
-        if (typeB.StartsWith('@')
-        && (typeA == "s8" || typeA == "s16" || typeA == "s32" || typeA == "s64"))
-            return true;
-
-        if (indexA < 0 || indexB < 0)   // scalar math only allowed for built in types
+        if(typeA == null || typeB == null)
             return false;
+
+        int indexA = Builtins.BuiltinTypeIndex(typeA);
+        int indexB = Builtins.BuiltinTypeIndex(typeB);
+
+        if (typeA == PTR
+        && (typeB == S8 || typeB == S16 || typeB == S32 || typeB == S64))
+            return true;
+
+        if (typeB == PTR
+        && (typeA == S8 || typeA == S16 || typeA == S32 || typeA == S64))
+            return true;
 
         return ScalarTypeInterop[indexA, indexB];
     }
 
-    static bool CanImplicitlyCast(string fromType, string toType)
+    static bool CanImplicitlyCast(TypeInfo fromType, TypeInfo toType)
     {
-        if (fromType.StartsWith('@') && toType.StartsWith('@'))
-        {
-            return CanImplicitlyCast(fromType.TrimStart('@'),
-                                     toType.TrimStart('@'));
-        }
+        if (fromType.BuiltinType == PTR && toType.BuiltinType == PTR)
+            return CanImplicitlyCast(fromType.Pointee!,
+                                     toType.Pointee!);
 
-        if (fromType == "s64" && toType.StartsWith('@'))    // assigning ptr address to s64
+        if (fromType.BuiltinType == S64 && toType.BuiltinType == PTR)    // assigning ptr address to s64
             return true;
 
-        int indexA = IRGenerator.BuiltinTypeIndex(fromType);
-        int indexB = IRGenerator.BuiltinTypeIndex(toType);
+        int indexA = Builtins.BuiltinTypeIndex(fromType.BuiltinType);
+        int indexB = Builtins.BuiltinTypeIndex(toType.BuiltinType);
 
         if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
             return fromType == toType;
@@ -904,54 +939,54 @@ public static class SemanticAnalyser
         return LosslessTypeInterop[indexA, indexB];
     }
 
-    static string? GetImplicitPromotionType(string typeA, string typeB)
+    static BuiltinType? GetImplicitPromotionType(TypeInfo fromType, TypeInfo toType)
     {
-        int i = IRGenerator.BuiltinTypeIndex(typeA);
-        int j = IRGenerator.BuiltinTypeIndex(typeB);
+        BuiltinType? fromBuiltin = fromType.BuiltinType;
+        BuiltinType? toBuiltin   = toType.BuiltinType;
+        
+        int i = Builtins.BuiltinTypeIndex(fromBuiltin);
+        int j = Builtins.BuiltinTypeIndex(toBuiltin);
 
-        string? result = null;
+        BuiltinType? result = null;
 
         if (i >= 0 && j >= 0)       // only promote built-in types
             result = ImplicitPromotion[i, j];
         else
         {
-            if (typeA == typeB)     // two of the same structs can still interop for comparison
-                result = typeA;
+            if (fromType == toType)     // two of the same structs can still interop for comparison
+                return fromBuiltin;
         }
 
-        if (typeA.StartsWith('@')
-        && (typeB == "s8" || typeB == "s16" || typeB == "s32" || typeB == "s64"))
-            result = typeA;
+        if (fromBuiltin == PTR
+        && (toBuiltin == S8 || toBuiltin == S16 || toBuiltin == S32 || toBuiltin == S64))
+            result = fromBuiltin;
 
-        if (typeB.StartsWith('@')
-        && (typeA == "s8" || typeA == "s16" || typeA == "s32" || typeA == "s64"))
-            result = typeB;
-
-        if (string.IsNullOrEmpty(result))
-            result = null;
+        if (toBuiltin == PTR
+        && (fromBuiltin == S8 || fromBuiltin == S16 || fromBuiltin == S32 || fromBuiltin == S64))
+            result = toBuiltin;
 
         if (result == null)
-            Log.Error(13, $"Cannot implicitly convert between {typeA} and {typeB}");
+            Log.Error(13, $"Cannot implicitly convert between {fromType} and {toType}");
 
         return result;
     }
 
     static TypeInfo PromoteIfLiteral(TypeInfo typeInfo, string expectedType)
     {
-        if (typeInfo.TypeName.StartsWith('@'))
+        if (typeInfo.BuiltinType == PTR)
             return typeInfo;
 
         // TODO do some enum stuff instead??
-        int builtinA = IRGenerator.BuiltinTypeIndex(typeInfo.TypeName);
-        int builtinB = IRGenerator.BuiltinTypeIndex(expectedType);
+        int builtinA = Builtins.BuiltinTypeIndex(typeInfo.BuiltinType);
+        int builtinB = Builtins.BuiltinTypeIndex(StringToBuiltin(expectedType));
 
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
 
-        if (typeInfo.TypeName.StartsWith('@') && builtinB < 8)    // int - ,ptr
+        if (typeInfo.BuiltinType == PTR && Builtins.IsSignedInt(StringToBuiltin(expectedType)))    // int - ,ptr
             return new TypeInfo("s64", Scalar, S64);
 
-        if (expectedType.StartsWith('@') && builtinA < 8)
+        if (StringToBuiltin(expectedType) == PTR && Builtins.IsSignedInt(typeInfo.BuiltinType))
             return new TypeInfo("s64", Scalar, S64);
 
         if (builtinA < 0 || builtinB < 0)

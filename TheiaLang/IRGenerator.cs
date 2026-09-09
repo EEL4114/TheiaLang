@@ -2,35 +2,35 @@ namespace TheiaLang;
 
 using System.Text;
 using static TypeKind;
+using static BuiltinType;
 
 public static class IRGenerator
 {
     // for now, this will be const
     public const uint PTR_SIZE = 8;
 
-    public static readonly List<string> BuiltinTypes =
-    [
-        /*  0  */    "bool",
+    // public static readonly List<string> BuiltinTypes =
+    // [
+        // /*  0  */    "bool",
 
-        /*  1   */    "int",      // literals only
-        /*  2   */    "s8",
-        /*  3   */    "s16",
-        /*  4   */    "s32",
-        /*  5   */    "s64",
-        /*  6   */    "s128",
-        /*  7   */    "s256",
+        // /*  1   */    "int",      // literals only
+        // /*  2   */    "s8",
+        // /*  3   */    "s16",
+        // /*  4   */    "s32",
+        // /*  5   */    "s64",
+        // /*  6   */    "s128",
+        // /*  7   */    "s256",
 
-        /*  8   */    "float",    // literals only
-        /*  9   */    "f16",
-        /*  10  */    "f32",
-        /*  11  */    "f64",
-        /*  12  */    "f128",
+        // /*  8   */    "float",    // literals only
+        // /*  9   */    "f16",
+        // /*  10  */    "f32",
+        // /*  11  */    "f64",
+        // /*  12  */    "f128",
 
-        /*  13  */    "void",
-    ];
+        // /*  13  */    "void",
+    // ];
 
-    public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
-    public static int BuiltinTypeIndex(string type) => BuiltinTypes.IndexOf(type);
+    // public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
 
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
@@ -554,11 +554,11 @@ public static class IRGenerator
         string tmp = $"tmp{tmpCounter++}";
         string op;
 
-        if (!IsBuiltinType(typeInfo.TypeName))
+        if (typeInfo.BuiltinType == null)
         {
             throw new Exception($"Unsupported type '{typeInfo.TypeName}'");
         }
-        else if (typeInfo.TypeName == "bool") op = binaryExpression.Op switch
+        else if (typeInfo.BuiltinType == BOOL) op = binaryExpression.Op switch
         {
             BinaryOperator.EqualEqual => "icmp eq",
             BinaryOperator.NotEqual   => "icmp ne",
@@ -566,7 +566,7 @@ public static class IRGenerator
             BinaryOperator.OR         => "or",
             _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type 'bool'")
         };
-        else if (typeInfo.TypeName.StartsWith('s')) op = binaryExpression.Op switch
+        else if (Builtins.IsSignedInt(typeInfo.BuiltinType)) op = binaryExpression.Op switch
         {
             BinaryOperator.Add        => "add",
             BinaryOperator.Subtract   => "sub",
@@ -578,7 +578,7 @@ public static class IRGenerator
             BinaryOperator.NotEqual   => "icmp ne",
             _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type {typeInfo.TypeName}")
         };
-        else if (typeInfo.TypeName.StartsWith('f')) op = binaryExpression.Op switch
+        else if (Builtins.IsIEE754Float(typeInfo.BuiltinType)) op = binaryExpression.Op switch
         {
             BinaryOperator.Add        => "fadd",
             BinaryOperator.Subtract   => "fsub",
@@ -896,24 +896,24 @@ public static class IRGenerator
             return $"[{type.ArrayLength} x {TypeToLLVM(type.ElementType!)}]";
 
         string typeName = type.TypeName;
-        if (IsBuiltinType(typeName))
-            return typeName switch
+        if (type.BuiltinType != null)
+            return type.BuiltinType switch
             {
-                "bool" => "i1",
+                BOOL => "i1",
 
-                "s8" => "i8",
-                "s16" => "i16",
-                "s32" => "i32",
-                "s64" => "i64",
-                "s128" => "i128",
-                "s256" => "i256",
+                S8   => "i8",
+                S16  => "i16",
+                S32  => "i32",
+                S64  => "i64",
+                S128 => "i128",
+                S256 => "i256",
 
-                "f16" => "half",
-                "f32" => "float",
-                "f64" => "double",
-                "f128" => "fp128",
+                F16  => "half",
+                F32  => "float",
+                F64  => "double",
+                F128 => "fp128",
 
-                "void" => "void",
+                VOID => "void",
 
                 _ => throw new NotImplementedException(typeName),
             };

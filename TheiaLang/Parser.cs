@@ -789,9 +789,9 @@ public class Parser(List<Token> tokens)
         {
             (object Value, string Type, TypeKind kind, BuiltinType? builtinType) lit = Previous().Lexeme switch
             {
-                string s when int.TryParse(s, out int i)       => (i, "int", Scalar, null),
-                string s when double.TryParse(s, out double d) => (d, "float", Scalar, null),
-                string s when bool.TryParse(s, out bool b)     => (b, "bool", Scalar, BOOL),
+                string s when int.TryParse(s, out int i)       => (i, "int",   Scalar, INT),
+                string s when double.TryParse(s, out double d) => (d, "float", Scalar, FLOAT),
+                string s when bool.TryParse(s, out bool b)     => (b, "bool",  Scalar, BOOL),
                 _ => throw new Exception("Invalid literal")
             };
 
