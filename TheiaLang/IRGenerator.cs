@@ -10,29 +10,6 @@ public static class IRGenerator
     // for now, this will be const
     public const uint PTR_SIZE = 8;
 
-    // public static readonly List<string> BuiltinTypes =
-    // [
-        // /*  0  */    "bool",
-
-        // /*  1   */    "int",      // literals only
-        // /*  2   */    "s8",
-        // /*  3   */    "s16",
-        // /*  4   */    "s32",
-        // /*  5   */    "s64",
-        // /*  6   */    "s128",
-        // /*  7   */    "s256",
-
-        // /*  8   */    "float",    // literals only
-        // /*  9   */    "f16",
-        // /*  10  */    "f32",
-        // /*  11  */    "f64",
-        // /*  12  */    "f128",
-
-        // /*  13  */    "void",
-    // ];
-
-    // public static bool IsBuiltinType(string type) => BuiltinTypes.Contains(type);
-
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
@@ -45,9 +22,6 @@ public static class IRGenerator
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
     static readonly string INTRINSICS_PATH_REL = Path.Combine(AppContext.BaseDirectory, INTRINSICS_PATH);
-
-    static bool IsSIntegerType(int i) => i >= 2 && i <= 7;
-    static bool IsFloatIdx(int i) => i >= 9 && i <= 12;
 
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
     {
