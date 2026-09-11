@@ -320,8 +320,9 @@ public static class SemanticAnalyser
                             throw new Exception($"Could not resolve {id.Name}");
                         */
                         // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
-                        
+
                         id.ResolvedType = Builtins.GetTypeInfo(S64);
+                        call.ResolvedType = Builtins.GetTypeInfo(S64);
                     }
                     else if (id.Name == "Alloc")
                     {
