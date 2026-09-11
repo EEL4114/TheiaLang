@@ -77,7 +77,7 @@ static class AstPrinter
 
     static void PrintVariableDeclaration(VariableDeclaration vd, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)}{vd.Name}"
+        w.WriteLine($"{Indent(indent)}VariableDeclaration: {TryType(vd.ResolvedType)} {vd.Name}"
             + (vd.Init != null ? " =" : ""));
         if (vd.Init != null)
             PrintExpression(vd.Init, w, indent + 1);

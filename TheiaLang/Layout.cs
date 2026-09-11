@@ -34,11 +34,16 @@ public class Layout(CompilationTarget target)
         foreach(INode node in program.Nodes)
         {
             if (node is StructDeclaration sd)
+            {
                 if(Layouts.TryAdd(sd.ResolvedType.TypeName, null!))
                     Layouts[sd.ResolvedType.TypeName] = GenerateLayout(sd.ResolvedType);
+                
+            }
             else if(node is UnionDeclaration ud)
+            {
                 if(Layouts.TryAdd(ud.ResolvedType.TypeName, null!))
                     Layouts[ud.ResolvedType.TypeName] = GenerateLayout(ud.ResolvedType);
+            }
         }
     }
 
