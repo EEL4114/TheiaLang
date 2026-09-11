@@ -181,10 +181,13 @@ int CompileFile(string filePath,
     AstPrinter.Print(ast, writer2, timestamps);
     Log.Link(writer2Path, "Full AST: ");
 
+    Layout layout = new Layout(CompilationTarget.x86_64_windows);
+    layout.GenerateLayout(ast);
+
     IRGenTimer.Start();
 
     string irgenPath = $"{OUTPUT_PATH_REL}{programName}.ll";
-    IRGenerator.Emit(ast, globalScope, irgenPath, insertLogs);
+    IRGenerator.Emit(ast, globalScope, irgenPath, layout, insertLogs);
     Log.Link(irgenPath, "IR: ");
 
     IRGenTimer.Stop();

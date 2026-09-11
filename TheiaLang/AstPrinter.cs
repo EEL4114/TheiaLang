@@ -32,7 +32,7 @@ static class AstPrinter
 
     static void PrintStruct(StructDeclaration structDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}({structDeclaration.ResolvedType.Size} B){TryScope(structDeclaration.Scope!)}{TryPos(structDeclaration.Pos)}");
+        w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}{TryScope(structDeclaration.Scope!)}{TryPos(structDeclaration.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Fields:");
         foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
             PrintTypeNamePair(typeNamePair, w, indent + 2);
@@ -47,7 +47,7 @@ static class AstPrinter
 
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}({unionDeclaration.ResolvedType.Size} B){TryScope(unionDeclaration.Scope!)}{TryPos(unionDeclaration.Pos)}");
+        w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}{TryScope(unionDeclaration.Scope!)}{TryPos(unionDeclaration.Pos)}");
         foreach (TypeNamePair variant in unionDeclaration.Variants)
             PrintTypeNamePair(variant, w, indent + 1);
         w.WriteLine();
@@ -218,7 +218,7 @@ static class AstPrinter
     #region Helpers
 
     static string Indent(int n) => new string(' ', 2 * n);
-    static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeKind}:{typeInfo.TypeName} ({typeInfo.Size} B) ";
+    static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeKind}:{typeInfo.TypeName}";
     static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
     static string TryPos(SourePosition position) => position == SourePosition.None ? " | ()" : $" | ({position.Row} : {position.Column})";
     

@@ -25,14 +25,14 @@ public class Parser(List<Token> tokens)
 
         foreach(BuiltinType builtinType in Builtins.AllTypes)
         {
-            if(builtinType != PTR)
+            if(builtinType != VOIDPTR)
                 DeclareBuiltin(builtinType);
         }
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_allocB",
-                Builtins.GetTypeInfo(PTR),
+                Builtins.GetTypeInfo(VOIDPTR),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "size", SourePosition.None)]
             ));
@@ -40,24 +40,24 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_reallocB",
-                new TypeInfo("@void", Pointer, PTR, IRGenerator.PTR_SIZE, pointee: new TypeInfo("void", Void, VOID)),
+                new TypeInfo("@void", Pointer, VOIDPTR, pointee: new TypeInfo("void", Void, VOID)),
                 SymbolKind.Function,
-                [   new TypeNamePair(Builtins.GetTypeInfo(PTR), "alloc", SourePosition.None),
+                [   new TypeNamePair(Builtins.GetTypeInfo(VOIDPTR), "alloc", SourePosition.None),
                     new TypeNamePair(new TypeInfo("s64", Scalar, S64), "newSize", SourePosition.None)]
             ));
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_free",
-                new TypeInfo("void", Void, VOID, 0),
+                new TypeInfo("void", Void, VOID),
                 SymbolKind.Function,
-                [new TypeNamePair(Builtins.GetTypeInfo(PTR), "ptr", SourePosition.None)
+                [new TypeNamePair(Builtins.GetTypeInfo(VOIDPTR), "ptr", SourePosition.None)
             ]));
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_alloc",
-                Builtins.GetTypeInfo(PTR),
+                Builtins.GetTypeInfo(VOIDPTR),
                 SymbolKind.Function,
                 [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "size", SourePosition.None)]
             ));
@@ -573,7 +573,7 @@ public class Parser(List<Token> tokens)
             typeInfo = new TypeInfo(
                 type: $"@{pointeeInfo.TypeName}",
                 typeKind: Pointer,
-                builtinType: PTR,
+                builtinType: VOIDPTR,
                 pointee: pointeeInfo);
             return true;
         }
@@ -606,8 +606,7 @@ public class Parser(List<Token> tokens)
 
             typeInfo = new TypeInfo($"{typeName}",
                                     kind,
-                                    GetBuiltinType(Peek().TokenType),
-                                    size: SemanticAnalyser.SizeOf(typeName));
+                                    GetBuiltinType(Peek().TokenType));
             Advance();
             return true;
         }
@@ -782,7 +781,7 @@ public class Parser(List<Token> tokens)
             };
 
             LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme, startPosition);
-            literal.ResolvedType = new TypeInfo(lit.Type, lit.kind, lit.builtinType, SemanticAnalyser.SizeOf(lit.Type));
+            literal.ResolvedType = new TypeInfo(lit.Type, lit.kind, lit.builtinType);
             expression = literal;
         }
         else if (Peek().TokenType == TokenType.Identifier)
@@ -1012,7 +1011,7 @@ public class Parser(List<Token> tokens)
 
     void DeclareBuiltin(BuiltinType builtinType)
     {
-        if(builtinType == PTR)
+        if(builtinType == VOIDPTR)
             throw new Exception();
 
         TypeKind kind = Scalar;
@@ -1032,7 +1031,7 @@ public class Parser(List<Token> tokens)
         globalScope!.Declare(
             new SymbolInfo(
                 "@" + typeName,
-                new TypeInfo("@" + typeName, Pointer, PTR, pointee: typeInfo),
+                new TypeInfo("@" + typeName, Pointer, VOIDPTR, pointee: typeInfo),
                 SymbolKind.Type,
                 null
             ));

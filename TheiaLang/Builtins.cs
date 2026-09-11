@@ -6,7 +6,6 @@ public enum BuiltinType
 {
     VOID = 1,
 
-
     BOOL = 10,
 
     INT  = 20,
@@ -30,7 +29,7 @@ public enum BuiltinType
     F64   = 103,
     F128  = 104,
 
-    PTR = 200,
+    VOIDPTR = 200,
 }
 
 public static class Builtins
@@ -43,13 +42,13 @@ public static class Builtins
             U8, U16, U32, U64, U128, U256, 
         FLOAT,
             F16, F32, F64, F128, 
-        PTR];
+        VOIDPTR];
 
     public static int BuiltinTypeIndex(BuiltinType? builtinType) 
         => builtinType switch
         {
             null => -1,
-            PTR  => 14,
+            VOIDPTR  => 14,
 
             BOOL => 0,
 
@@ -126,30 +125,30 @@ public static class Builtins
     public static TypeInfo GetTypeInfo(BuiltinType builtin)
         => builtin switch
         {
-            VOID => new TypeInfo("void", Void, VOID, 0),
+            VOID => new TypeInfo("void", Void, VOID),
 
-            BOOL => new TypeInfo("bool", Scalar, BOOL, 1),
+            BOOL => new TypeInfo("bool", Scalar, BOOL),
 
-            S8   => new TypeInfo("s8",   Scalar, S8,   1),
-            S16  => new TypeInfo("s16",  Scalar, S16,  2),
-            S32  => new TypeInfo("s32",  Scalar, S32,  4),
-            S64  => new TypeInfo("s64",  Scalar, S64,  8),
-            S128 => new TypeInfo("s128", Scalar, S128, 16),
-            S256 => new TypeInfo("s256", Scalar, S256, 32),
+            S8   => new TypeInfo("s8",   Scalar, S8),
+            S16  => new TypeInfo("s16",  Scalar, S16),
+            S32  => new TypeInfo("s32",  Scalar, S32),
+            S64  => new TypeInfo("s64",  Scalar, S64),
+            S128 => new TypeInfo("s128", Scalar, S128),
+            S256 => new TypeInfo("s256", Scalar, S256),
 
-            U8   => new TypeInfo("u8",   Scalar, U8,   1),
-            U16  => new TypeInfo("u16",  Scalar, U16,  2),
-            U32  => new TypeInfo("u32",  Scalar, U32,  4),
-            U64  => new TypeInfo("u64",  Scalar, U64,  8),
-            U128 => new TypeInfo("u128", Scalar, U128, 16),
-            U256 => new TypeInfo("u256", Scalar, U256, 32),
+            U8   => new TypeInfo("u8",   Scalar, U8),
+            U16  => new TypeInfo("u16",  Scalar, U16),
+            U32  => new TypeInfo("u32",  Scalar, U32),
+            U64  => new TypeInfo("u64",  Scalar, U64),
+            U128 => new TypeInfo("u128", Scalar, U128),
+            U256 => new TypeInfo("u256", Scalar, U256),
 
-            F16  => new TypeInfo("f16",  Scalar, F16,  2),
-            F32  => new TypeInfo("f32",  Scalar, F32,  4),
-            F64  => new TypeInfo("f64",  Scalar, F64,  8),
-            F128 => new TypeInfo("f128", Scalar, F128, 16),
+            F16  => new TypeInfo("f16",  Scalar, F16),
+            F32  => new TypeInfo("f32",  Scalar, F32),
+            F64  => new TypeInfo("f64",  Scalar, F64),
+            F128 => new TypeInfo("f128", Scalar, F128),
 
-            PTR  => new TypeInfo("@void", Pointer, PTR, 8, pointee: GetTypeInfo(VOID)),
+            VOIDPTR  => new TypeInfo("@void", Pointer, VOIDPTR, pointee: GetTypeInfo(VOID)),
 
             _ => throw new NotImplementedException(),
         };

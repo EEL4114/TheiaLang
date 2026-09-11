@@ -8,7 +8,6 @@ using System.Globalization;
 public static class IRGenerator
 {
     // for now, this will be const
-    public const uint PTR_SIZE = 8;
 
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
@@ -17,19 +16,21 @@ public static class IRGenerator
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;
+    static Layout Layout2;
 
     static bool AutoLog;
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
     static readonly string INTRINSICS_PATH_REL = Path.Combine(AppContext.BaseDirectory, INTRINSICS_PATH);
 
-    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, bool autoLog = true)
+    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, Layout layout, bool autoLog = true)
     {
         if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
 
         string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH_REL);
         StringBuilder sb = new StringBuilder();
+        Layout2 = layout;
 
         sb.AppendLine($"; Creaded at: {DateTime.Now}'");
         sb.AppendLine("; =============================================================================");
@@ -125,13 +126,10 @@ public static class IRGenerator
 
     static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
     {
-        long alignment = GetAlignment(ud.ResolvedType);
-        long maxVariantSize = 0;
-        
-        foreach(TypeNamePair variant in ud.Variants)
-            maxVariantSize = Math.Max(maxVariantSize, variant.ResolvedType.Size);
+        TypeLayout unionLayout = Layout2.GetLayout(ud.ResolvedType);
+        long alignment = unionLayout.Alignment;
 
-        long size = TMath.RoundUp(maxVariantSize, alignment);
+        long size = unionLayout.Size;
         long padding = size - alignment;
 
         string llvmName = $"%{ud.Name}";
@@ -842,32 +840,6 @@ public static class IRGenerator
         }
     }
 
-    static long GetAlignment(TypeInfo type)
-    {
-        switch(type.TypeKind)
-        {
-            case Void:    return 0;
-            case Scalar:  return type.Size;
-            case Pointer: return 8;
-            case Array:   return GetAlignment(type.ElementType!);
-            case Struct:
-                long maxFieldAlignment = 0;
-                if(type.FieldTypes == null)
-                    Log.Info(type.ToString());
-
-                foreach(TypeInfo typeInfo in type.FieldTypes!)
-                    maxFieldAlignment = Math.Max(maxFieldAlignment, GetAlignment(typeInfo));
-                return maxFieldAlignment;
-            case Union:
-                long maxVariantAlignment = 0;
-                foreach(TypeInfo typeInfo in type.FieldTypes!)
-                    maxVariantAlignment = Math.Max(maxVariantAlignment, GetAlignment(typeInfo));
-                return maxVariantAlignment;
-            default:
-                throw new NotImplementedException($"TypeKind {type.TypeKind}");
-        }
-    }
-
     static string NewTempVar() => $"tmp{tmpCounter++}";
 
     static bool TryResolveSlot(string name, out (string ptr, string? ssa) alloc, out TypeInfo typeInfo)
@@ -915,7 +887,7 @@ public static class IRGenerator
 
     static string? TypeToLLVM(TypeInfo type)
     {
-        if (type.BuiltinType == PTR)
+        if (type.BuiltinType == VOIDPTR)
             return "ptr";
 
         // TODO make this work with n-Dimensional arrays

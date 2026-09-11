@@ -46,7 +46,6 @@ public enum TypeKind
 public class TypeInfo(string type,
                       TypeKind typeKind,
                       BuiltinType? builtinType,
-                      uint size = 0,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
                       uint? arrayLength = null,
@@ -65,10 +64,9 @@ public class TypeInfo(string type,
 
     public List<string>? FieldNames { get; set; } = fieldNames;
     public List<TypeInfo>? FieldTypes { get; set; } = fieldTypes;
-    public uint Size { get; set; } = size;
     public override string ToString()
     {
-        string s = $"{TypeName}: Size = {Size} B";
+        string s = $"{TypeName}";
 
         if (Pointee != null)
             s += $", Pointee = {Pointee}";

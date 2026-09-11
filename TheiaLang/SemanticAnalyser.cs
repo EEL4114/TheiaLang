@@ -66,7 +66,6 @@ public static class SemanticAnalyser
 
     static void ResolveStruct(StructDeclaration structDeclaration)
     {
-        uint size = 0;
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
@@ -83,7 +82,6 @@ public static class SemanticAnalyser
             }
             else
                 fieldInfo.Type = ResolveType(field.ResolvedType.TypeName);
-            size += fieldInfo.Type.Size;
             field.ResolvedType = fieldInfo.Type;
         }
 
@@ -91,13 +89,11 @@ public static class SemanticAnalyser
                                                         .Select(f => f.ResolvedType)
                                                         .ToList();
 
-        structDeclaration.ResolvedType.Size = size;
         ExitScope();
     }
 
     static void ResolveUnion(UnionDeclaration unionDeclaration)
     {
-        uint size = 0;
         currentScope = unionDeclaration.Scope!;
 
         foreach (TypeNamePair variant in unionDeclaration.Variants)
@@ -109,8 +105,6 @@ public static class SemanticAnalyser
                 throw new Exception($"Could not find union variant '{variant.Identifier}' in {currentScope.FullName}");
 // #endif
             variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
-            size = Math.Max(variantInfo.Type.Size, size);
-
             variant.ResolvedType = variantInfo.Type;
         }
 
@@ -118,7 +112,6 @@ public static class SemanticAnalyser
                                                        .Select(v => v.ResolvedType)
                                                        .ToList();
 
-        unionDeclaration.ResolvedType.Size = size;
         ExitScope();
     }
 
@@ -128,7 +121,7 @@ public static class SemanticAnalyser
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
         {
-            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, PTR, IRGenerator.PTR_SIZE, structDeclaration.ResolvedType);
+            TypeInfo ptrType = new TypeInfo($"@{structDeclaration.ResolvedType.TypeName}", Pointer, VOIDPTR, structDeclaration.ResolvedType);
             function.Parameters.Insert(0, new TypeNamePair(ptrType, "this", SourePosition.None));
             ResolveFunctionTypeAndArgs(function);
         }
@@ -327,11 +320,8 @@ public static class SemanticAnalyser
                             throw new Exception($"Could not resolve {id.Name}");
                         */
                         // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
-
-                        uint sizeValue = SizeOf(i.Name);
-
-                        expression = new LiteralExpression((long)sizeValue, sizeValue.ToString(), SourePosition.None);
-                        expression.ResolvedType = Builtins.GetTypeInfo(S64);
+                        
+                        id.ResolvedType = Builtins.GetTypeInfo(S64);
                     }
                     else if (id.Name == "Alloc")
                     {
@@ -345,7 +335,7 @@ public static class SemanticAnalyser
                             IExpression argument = AnalyseExpression(call.Arguments[i]);
                             call.Arguments[i] = argument;
                         }
-                        if (builtinType != PTR)
+                        if (builtinType != VOIDPTR)
                         {
                             
                             int targetTypeIndex = Builtins.BuiltinTypeIndex(builtinType);
@@ -353,7 +343,7 @@ public static class SemanticAnalyser
 
                             if (targetTypeIndex < 0 || sourceTypeIndex < 0)
                             {
-                                if(targetTypeIndex == Builtins.BuiltinTypeIndex(S64) && call.Arguments[0].ResolvedType!.BuiltinType == PTR)
+                                if(targetTypeIndex == Builtins.BuiltinTypeIndex(S64) && call.Arguments[0].ResolvedType!.BuiltinType == VOIDPTR)
                                     sourceTypeIndex = Builtins.BuiltinTypeIndex(VOID);
                                 else
                                     throw new Exception($"Invalid cast: {call.Arguments[0].ResolvedType!.TypeName} -> {id.Name}");
@@ -518,8 +508,7 @@ public static class SemanticAnalyser
                             Log.Error(22, $"Can't take address of non-assignable {unary.Operand}");
                         unary.ResolvedType = new TypeInfo("@" + unary.Operand.ResolvedType!.TypeName,
                                                           Pointer,
-                                                          PTR, 
-                                                          SizeOf("@" + unary.Operand.ResolvedType!.TypeName),
+                                                          VOIDPTR, 
                                                           pointee: unary.Operand.ResolvedType);
                     }
                 }
@@ -639,14 +628,11 @@ public static class SemanticAnalyser
         if (type.ArrayLength != null)
         {
             type.ElementType = UpdateTypeInfo(type.ElementType!);
-            // TODO!!
-            type.Size = SizeOf(type);
             return type;
         }
         else if (type.Pointee != null)
         {
             type.Pointee = UpdateTypeInfo(type.Pointee);
-            type.Size = SizeOf(type);
             return type;
         }
         else
@@ -656,14 +642,13 @@ public static class SemanticAnalyser
     static TypeInfo ResolveType(string typeOrIdentifier)
     {
         TypeInfo typeInfo = GetTypeInfo(typeOrIdentifier);
-        typeInfo.Size = SizeOf(typeInfo.TypeName);
         return typeInfo;
     }
 
     static TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, Pointer, PTR, IRGenerator.PTR_SIZE, GetTypeInfo(typeOrName[1..]));
+            return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..]));
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
@@ -681,48 +666,7 @@ public static class SemanticAnalyser
 
         return symbolInfo!.Type;
     }
-
-    public static uint SizeOf(TypeInfo type)
-    {
-        int i = Builtins.BuiltinTypeIndex(type.BuiltinType);
-        if (i >= 0)
-            return SizeOfBuiltin[i];
-        if (type.TypeName.StartsWith('@'))
-            return IRGenerator.PTR_SIZE;
-
-        if (type.FieldTypes != null)
-        {
-            uint size = 0;
-            foreach(TypeInfo fieldType in type.FieldTypes!)
-            {
-                // _ = ResolveType(fieldTypeName);
-                size += SizeOf(fieldType);
-            }
-
-            return size;
-        }
-        else if (type.ArrayLength is uint length && type.ElementType != null)
-            return length * SizeOf(type.ElementType);
-        else
-            return type.Size;
-
-        throw new Exception($"Cannot determine size of type '{type.TypeName}'");
-    }
-
-    public static uint SizeOf(string typeName)
-    {
-        int i = Builtins.BuiltinTypeIndex(StringToBuiltin(typeName));
-
-        if (typeName.StartsWith('@'))
-            return IRGenerator.PTR_SIZE;
-        if (i >= 0)
-            return SizeOfBuiltin[i];
-
-        TypeInfo type = GetTypeInfo(typeName);
-        // @Speed this is wasteful and dirt cheap to fix
-        return SizeOf(type);
-    }
-
+    
     public static readonly uint[] SizeOfBuiltin =
     [
         //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void    ptr
@@ -824,7 +768,7 @@ public static class SemanticAnalyser
     static BuiltinType? StringToBuiltin(string s)
     {
         if(s.StartsWith('@'))
-            return PTR;
+            return VOIDPTR;
         
         return s switch
         {
@@ -907,7 +851,7 @@ public static class SemanticAnalyser
 
         BuiltinType? shared = GetImplicitPromotionType(typeA, typeB)!;
 
-        if (shared != BOOL && shared != null || shared == PTR)
+        if (shared != BOOL && shared != null || shared == VOIDPTR)
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
                 return Builtins.GetTypeInfo(BOOL);
             else
@@ -924,11 +868,11 @@ public static class SemanticAnalyser
         int indexA = Builtins.BuiltinTypeIndex(typeA);
         int indexB = Builtins.BuiltinTypeIndex(typeB);
 
-        if (typeA == PTR
+        if (typeA == VOIDPTR
         && (typeB == S8 || typeB == S16 || typeB == S32 || typeB == S64))
             return true;
 
-        if (typeB == PTR
+        if (typeB == VOIDPTR
         && (typeA == S8 || typeA == S16 || typeA == S32 || typeA == S64))
             return true;
 
@@ -937,11 +881,11 @@ public static class SemanticAnalyser
 
     static bool CanImplicitlyCast(TypeInfo fromType, TypeInfo toType)
     {
-        if (fromType.BuiltinType == PTR && toType.BuiltinType == PTR)
+        if (fromType.BuiltinType == VOIDPTR && toType.BuiltinType == VOIDPTR)
             return CanImplicitlyCast(fromType.Pointee!,
                                      toType.Pointee!);
 
-        if (fromType.BuiltinType == S64 && toType.BuiltinType == PTR)    // assigning ptr address to s64
+        if (fromType.BuiltinType == S64 && toType.BuiltinType == VOIDPTR)    // assigning ptr address to s64
             return true;
 
         int indexA = Builtins.BuiltinTypeIndex(fromType.BuiltinType);
@@ -971,11 +915,11 @@ public static class SemanticAnalyser
                 return fromBuiltin;
         }
 
-        if (fromBuiltin == PTR
+        if (fromBuiltin == VOIDPTR
         && (toBuiltin == S8 || toBuiltin == S16 || toBuiltin == S32 || toBuiltin == S64))
             result = fromBuiltin;
 
-        if (toBuiltin == PTR
+        if (toBuiltin == VOIDPTR
         && (fromBuiltin == S8 || fromBuiltin == S16 || fromBuiltin == S32 || fromBuiltin == S64))
             result = toBuiltin;
 
@@ -987,7 +931,7 @@ public static class SemanticAnalyser
 
     static TypeInfo PromoteIfLiteral(TypeInfo typeInfo, string expectedType)
     {
-        if (typeInfo.BuiltinType == PTR)
+        if (typeInfo.BuiltinType == VOIDPTR)
             return typeInfo;
 
         // TODO do some enum stuff instead??
@@ -997,10 +941,10 @@ public static class SemanticAnalyser
         if (builtinA != 1 && builtinA != 8)     // 1 == 'int'; 8 == 'float'
             return typeInfo;
 
-        if (typeInfo.BuiltinType == PTR && Builtins.IsInt(StringToBuiltin(expectedType)))    // int - ,ptr
+        if (typeInfo.BuiltinType == VOIDPTR && Builtins.IsInt(StringToBuiltin(expectedType)))    // int - ,ptr
             return new TypeInfo("s64", Scalar, S64);
 
-        if (StringToBuiltin(expectedType) == PTR && Builtins.IsInt(typeInfo.BuiltinType))
+        if (StringToBuiltin(expectedType) == VOIDPTR && Builtins.IsInt(typeInfo.BuiltinType))
             return new TypeInfo("s64", Scalar, S64);
 
         if (builtinA < 0 || builtinB < 0)
@@ -1009,7 +953,6 @@ public static class SemanticAnalyser
         if (LosslessTypeInterop[builtinA, builtinB])
         {
             TypeInfo type = new TypeInfo(expectedType, Scalar, StringToBuiltin(expectedType));
-            type.Size = SizeOf(type.TypeName);
             return type;    // literals always cast to the more concrete value
         }
 
