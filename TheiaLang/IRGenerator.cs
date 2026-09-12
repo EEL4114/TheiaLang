@@ -396,23 +396,21 @@ public static class IRGenerator
 
                 string tmp = NewTempVar();
 
-                string instr = typeInfo.TypeName switch
+                string instr;
+                string zero;
+
+                if(Builtins.IsInt(typeInfo.BuiltinType))
                 {
-                    "s8"   => "sub",
-                    "s16"  => "sub",
-                    "s32"  => "sub",
-                    "s64"  => "sub",
-                    "s128" => "sub",
-                    "s256" => "sub",
-
-                    "f16"  => "fsub",
-                    "f32"  => "fsub",
-                    "f64"  => "fsub",
-                    "f128" => "fsub",
-                    _ => throw new NotSupportedException($"Unary '-' on {typeInfo.TypeName}")
-                };
-
-                string zero = typeInfo.TypeName.StartsWith('f') ? "0.0" : "0";
+                    instr = "sub";
+                    zero = "0";   
+                }
+                else if(Builtins.IsIEE754Float(typeInfo.BuiltinType))
+                {
+                    instr = "fsub";
+                    zero = "0.0";   
+                }
+                else
+                    throw new NotSupportedException($"Unary '-' on {typeInfo}");
 
                 string llvmType = TypeToLLVM(typeInfo)!;
 
