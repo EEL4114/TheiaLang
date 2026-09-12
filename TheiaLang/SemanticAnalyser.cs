@@ -666,12 +666,6 @@ public static class SemanticAnalyser
         return symbolInfo!.Type;
     }
     
-    public static readonly uint[] SizeOfBuiltin =
-    [
-        //  bool    int     s8      s16     s32     s64     s128    s256   float    f16     f32     f64     f128    void    ptr
-            1,      0,      1,      2,      4,      8,      16,     32,     0,      2,      4,      8,      16,     0,      8,
-    ];
-
     static Scope SetScope(Scope scope)
     {
         Scope previous = currentScope;
