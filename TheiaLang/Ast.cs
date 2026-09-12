@@ -1,9 +1,13 @@
 namespace TheiaLang;
 
-public sealed record ProgramNode(
-    string Name,
-    List<INode> Nodes
-);
+public sealed class ProgramNode(
+    string name,
+    List<INode> nodes
+)
+{
+    public string Name = name;
+    public List<INode> Nodes = nodes;
+};
 
 public interface INode
 {
@@ -156,27 +160,32 @@ public class StructDeclaration : IDeclaration
     }
 }
 
-public record UnionDeclaration(
-    string Name,
-    List<TypeNamePair> Variants,
+public class UnionDeclaration(
+    string name,
+    List<TypeNamePair> variants,
     // List<FunctionDeclaration> Functions,
     TypeInfo ResolvedType,
     SourePosition Pos = default
 ) : IDeclaration
 {
     // public List<FunctionDeclaration> Functions {get; set;} = Functions;
+    public string Name {get; set;} = name;
+    public List<TypeNamePair> Variants = variants;
+
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
     public Scope? Scope { get; set; }
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record VariableDeclaration(
-    string TypeName,            // "int", "float", "bool"
-    string Name,
+public sealed class VariableDeclaration(
+    string typeName,            // "int", "float", "bool"
+    string name,
     IExpression? Init,          // null if no initializer
     SourePosition Pos = default
 ) : IDeclaration
 {
+    public string Name {get; set;} = name;
+    public string TypeName = typeName;
     public TypeInfo? ResolvedType { get; set; }
     public IExpression? Init { get; set; } = Init;
 
@@ -230,7 +239,7 @@ public sealed class ExpressionStatement(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record AssignmentStatement(
+public sealed class AssignmentStatement(
     IExpression Target,
     IExpression Expression,
     SourePosition Pos = default
@@ -243,50 +252,62 @@ public sealed record AssignmentStatement(
 }
 
 
-public sealed record CompoundAssignmentStatement(
+public sealed class CompoundAssignmentStatement(
     IExpression Target,
     IExpression Expression,
-    BinaryOperator Op,
+    BinaryOperator op,
     SourePosition Pos = default
 ) : IStatement
 {
     public IExpression Target { get; set; } = Target;
     public IExpression Expression { get; set; } = Expression;
+    public BinaryOperator Op = op;
  
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record IfStatement(
+public sealed class IfStatement(
     IExpression Condition,
-    List<IStatement> ThenBranch,
-    List<IStatement>? ElseBranch,
-    Scope ThenScope,
-    Scope? ElseScope,
+    List<IStatement> thenBranch,
+    List<IStatement>? elseBranch,
+    Scope thenScope,
+    Scope? elseScope,
     SourePosition Pos = default
 ) : IStatement
 { 
     public IExpression Condition { get; set; } = Condition; 
+
+    public List<IStatement> ThenBranch = thenBranch;
+    public List<IStatement>? ElseBranch = elseBranch;
+    public Scope ThenScope = thenScope;
+    public Scope? ElseScope = elseScope;
  
     public SourePosition Pos { get; } = Pos;
 }
 
 
-public sealed record ForStatement(
-    IStatement? Initialiser,
+public sealed class ForStatement(
+    IStatement? initialiser,
     IExpression? Condition,
-    IStatement? Iterator,
-    List<IStatement> Body,
-    Scope Scope,
+    IStatement? iterator,
+    List<IStatement> body,
+    Scope scope,
     SourePosition Pos = default
 ) : IStatement
 { 
-    public IExpression? Condition { get; set; } = Condition; 
+
+    public IStatement? Initialiser = initialiser;
+    public IExpression? Condition { get; set; } = Condition;
+
+    public IStatement? Iterator = iterator;
+    public List<IStatement> Body = body;
+    public Scope Scope = scope;
 
     public SourePosition Pos { get; } = Pos;
 }
 
 
-public sealed record ReturnStatement(
+public sealed class ReturnStatement(
     IExpression? Expression,
     SourePosition Pos = default
 ) : IStatement
@@ -299,7 +320,7 @@ public sealed record ReturnStatement(
 
 #region  Expressions
 
-public sealed record MemberAccessExpression(
+public sealed class MemberAccessExpression(
     IExpression Target,
     IdentifierExpression Member,
     SourePosition Pos,
@@ -316,14 +337,15 @@ public sealed record MemberAccessExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record CallExpression(
+public sealed class CallExpression(
     IExpression Target,                // both functions and types
-    List<IExpression> Arguments,       // positional & named args
+    List<IExpression> arguments,       // positional & named args
     SourePosition Pos = default,
     Scope? Scope = null
 ) : IExpression
 {
     public IExpression Target { get; set; } = Target;
+    public List<IExpression> Arguments = arguments;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public Scope? Scope { get; set; } = Scope;
@@ -331,38 +353,42 @@ public sealed record CallExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record CastExpression(
+public sealed class CastExpression(
     CastOp CastKind,
-    IExpression Target,
+    IExpression target,
     SourePosition Pos = default
 ) : IExpression
 {
     public TypeInfo? ResolvedType { get; set; }
+    public IExpression Target = target;
     public bool Assignable => false;
     public CastOp CastKind { get; set; } = CastKind;
 
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record InstantiationExpression(
-    string TypeName,
-    List<IExpression> Arguments,
+public sealed class InstantiationExpression(
+    string typeName,
+    List<IExpression> arguments,
     SourePosition Pos = default
 ) : IExpression
 {
+    public string TypeName = typeName;
+    public List<IExpression> Arguments = arguments;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record UnaryExpression(
-    UnaryOperator Op,
+public sealed class UnaryExpression(
+    UnaryOperator op,
     IExpression Operand,
     SourePosition Pos = default,
     bool assignable = false
 ) : IExpression
 {
+    public UnaryOperator Op = op;
     public bool Assignable => assignable;
     public IExpression Operand = Operand;
     private TypeInfo? _resolvedType;
@@ -381,14 +407,15 @@ public sealed record UnaryExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record BinaryExpression(
+public sealed class BinaryExpression(
     IExpression Left,
-    BinaryOperator Op,    // "+", "*", ">", etc.
+    BinaryOperator op,    // "+", "*", ">", etc.
     IExpression Right,
     SourePosition Pos = default
 )
  : IExpression
 {
+    public BinaryOperator Op = op;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
     public IExpression Left { get; set; } = Left;
@@ -397,24 +424,28 @@ public sealed record BinaryExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record LiteralExpression(
-    object Value,       // boxed int, float, bool
-    string Lexeme,
+public sealed class LiteralExpression(
+    object value,       // boxed int, float, bool
+    string lexeme,
     SourePosition Pos = default
 ) : IExpression
 {
+
+    public object Value = value;
+    public string Lexeme = lexeme;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record IdentifierExpression(
-    string Name,
+public sealed class IdentifierExpression(
+    string name,
     SourePosition Pos = default,
     Scope? Scope = null
 ) : IExpression
 {
+    public string Name = name;
     public TypeInfo? ResolvedType { get; set; }
     public Scope? Scope = Scope;
     public bool Assignable => true;
@@ -422,7 +453,7 @@ public sealed record IdentifierExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
-public sealed record IndexExpression(
+public sealed class IndexExpression(
     IExpression Target,
     IExpression Index,
     SourePosition Pos = default
