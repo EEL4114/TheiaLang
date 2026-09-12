@@ -29,45 +29,47 @@ public class ConstantFolding(LayoutCalc layout)
 
     void WalkBlock(List<IStatement> block)
     {
-        foreach(IStatement statement in block)
-            WalkStatement(statement);
+        for(int i = 0; i < block.Count; i++)
+            block[i] = WalkStatement(block[i]);
     }
 
-    void WalkStatement(IStatement statement)
+    IStatement WalkStatement(IStatement statement)
     {
         switch (statement)
         {
             case VariableDeclaration vd:
                 if(vd.Init != null)
                     vd.Init = WalkExpression(vd.Init);
-                break;
+                return vd;
             case AssignmentStatement a:
                 a.Target = WalkExpression(a.Target);
                 a.Expression = WalkExpression(a.Expression);
-                break;
+                return a;
             case IfStatement ifStatement:
                 ifStatement.Condition = WalkExpression(ifStatement.Condition);
                 WalkBlock(ifStatement.ThenBranch);
                 if(ifStatement.ElseBranch != null)
                     WalkBlock(ifStatement.ElseBranch);
-                break;
+                return ifStatement;
             case ForStatement forStatement:
-                WalkStatement(forStatement.Initialiser!);
+                forStatement.Initialiser = WalkStatement(forStatement.Initialiser!);
                 forStatement.Condition = WalkExpression(forStatement.Condition!);
-                WalkStatement(forStatement.Iterator!);
-                break;
+                forStatement.Iterator = WalkStatement(forStatement.Iterator!);
+                return forStatement;
             case ReturnStatement r:
                 if(r.Expression != null)
                     r.Expression = WalkExpression(r.Expression);
-                break;
+                return r;
             case ExpressionStatement exprS:
                 exprS.Expression = WalkExpression(exprS.Expression);
-            break;
+                return exprS;
             case CompoundAssignmentStatement compound:
                 compound.Target = WalkExpression(compound.Target);
                 compound.Expression = WalkExpression(compound.Expression);
-            break;
+                return compound;
         }
+
+        return statement;
     }
 
     IExpression WalkExpression(IExpression expression)
