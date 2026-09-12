@@ -157,7 +157,7 @@ static class AstPrinter
                 break;
 
             case IdentifierExpression id:
-                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)}{id.Name}{TryScope(id.Scope!)}");
+                w.WriteLine($"{Indent(indent)}Identifier: {TryType(id.ResolvedType)} {id.Name}{TryScope(id.Scope!)}");
                 break;
 
             case BinaryExpression bin:
@@ -183,7 +183,7 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent)}MemberAccess: {TryType(mem.ResolvedType)}{TryScope(mem.Scope!)}");
                 w.WriteLine($"{Indent(indent + 1)}Target: {TryType(mem.Target.ResolvedType)}");
                 PrintExpression(mem.Target, w, indent + 2);
-                w.WriteLine($"{Indent(indent + 1)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
+                w.WriteLine($"{Indent(indent + 1)}Member: {TryType(mem.Member.ResolvedType)} {mem.Member.Name}");
                 break;
             case InstantiationExpression inst:
                 string type = TryType(inst.ResolvedType);
