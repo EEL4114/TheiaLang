@@ -55,6 +55,7 @@ public class ConstantFolding(LayoutCalc layout)
                 forStatement.Initialiser = WalkStatement(forStatement.Initialiser!);
                 forStatement.Condition = WalkExpression(forStatement.Condition!);
                 forStatement.Iterator = WalkStatement(forStatement.Iterator!);
+                WalkBlock(forStatement.Body);
                 return forStatement;
             case ReturnStatement r:
                 if(r.Expression != null)
@@ -77,18 +78,34 @@ public class ConstantFolding(LayoutCalc layout)
         switch(expression)
         {
             case BinaryExpression binary:
+                binary.Left  = WalkExpression(binary.Left);
                 binary.Right = WalkExpression(binary.Right);
                 return binary;
             case CallExpression call:
-                if(call.Target is IdentifierExpression id && id.Name == "TypeSize")
+            {
+                if (call.Target is IdentifierExpression id &&
+                    id.Name == "TypeSize")
                 {
-                    TypeLayout typeLayout = Layout.GetLayout(call.Arguments[0].ResolvedType!);
-                    expression = new LiteralExpression(typeLayout.Size, typeLayout.Size.ToString());
-                    expression.ResolvedType = Builtins.GetTypeInfo(S64);
+                    TypeLayout typeLayout =
+                        Layout.GetLayout(call.Arguments[0].ResolvedType!);
+
+                    return new LiteralExpression(
+                        (long)typeLayout.Size,
+                        typeLayout.Size.ToString(),
+                        call.Pos)
+                    {
+                        ResolvedType = call.ResolvedType
+                            ?? throw new InvalidOperationException(
+                                "Resolved TypeSize call has no result type")
+                    };
                 }
-                else
-                    call.Target = WalkExpression(call.Target);
-                    return call;
+
+                call.Target = WalkExpression(call.Target);
+                for (int i = 0; i < call.Arguments.Count; i++)
+                    call.Arguments[i] = WalkExpression(call.Arguments[i]);
+
+                return call;
+            }
             case UnaryExpression unary:
                 unary.Operand = WalkExpression(unary.Operand);
                 return unary;
