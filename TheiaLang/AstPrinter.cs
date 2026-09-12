@@ -60,7 +60,7 @@ static class AstPrinter
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {function.TypeName} {function.Name}{TryScope(function.Scope!)}{TryPos(function.Pos)}");
+        w.WriteLine($"{Indent(indent)}FunctionDeclaration: {TryType(function.ResolvedType)} {function.Name}{TryScope(function.Scope!)}{TryPos(function.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Arguments:");
         foreach (TypeNamePair typeNamePair in function.Parameters)
             PrintTypeNamePair(typeNamePair, w, indent + 2);

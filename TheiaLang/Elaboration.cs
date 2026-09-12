@@ -240,9 +240,7 @@ static class Elaboration
 
         List<FunctionDeclaration> functions = [
             new FunctionDeclaration(
-                typeName:   elementType.TypeName, 
-                typeKind:   elementType.TypeKind,
-                builtinType:elementType.BuiltinType,
+                resolvedType:   elementType, 
                 name:       DYNAMIC_ARRAY_INDEX,
                 paramaters: [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "index")],
                 statements: [new ReturnStatement(new UnaryExpression(UnaryOperator.Dereference,

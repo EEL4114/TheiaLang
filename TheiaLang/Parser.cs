@@ -140,7 +140,7 @@ public class Parser(List<Token> tokens)
         List<TypeNamePair> parameters = [];
         List<IStatement> body = [];
 
-        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo.TypeName, returnTypeInfo.TypeKind, returnTypeInfo.BuiltinType, name, parameters, body, startPosition);
+        FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo, name, parameters, body, startPosition);
 
         EnterNewScope(name, functionDeclaration);
         if (!Check(TokenType.Punctuation_ParenthesisR))

@@ -73,7 +73,6 @@ public enum Type
 public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public string TypeName { get; }
     public TypeInfo ResolvedType { get; set; }
     public string Name { get; set; }
     public readonly List<TypeNamePair> Parameters;
@@ -82,27 +81,24 @@ public class FunctionDeclaration : IDeclaration
     public SourePosition Pos { get; }
 
 
-    public FunctionDeclaration(string typeName,     // possibly change this?
-                               TypeKind typeKind,
-                               BuiltinType? builtinType,
+    public FunctionDeclaration(TypeInfo resolvedType,
                                string name,
                                List<TypeNamePair> paramaters,
                                List<IStatement> statements,
                                SourePosition pos = default)
     {
-        TypeName = typeName;
         Name = name;
         Parameters = paramaters;
         Statements = statements;
 
-        ResolvedType = new TypeInfo(TypeName, typeKind, builtinType);
+        ResolvedType = resolvedType;
     
         Pos = pos;
     }
 
     public override string ToString()
     {
-        string s = $"{TypeName} {Name} (";
+        string s = $"{ResolvedType.TypeName} {Name} (";
 
         if (Parameters != null)
             for (int i = 0; i < Parameters.Count; i++)
