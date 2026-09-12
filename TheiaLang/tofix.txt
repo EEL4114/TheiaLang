@@ -19,7 +19,7 @@ BUGS
 
 ENTRY                                                           STATUS  TEST?
 Lexer parsing '!=' incorrectly                                  Fixed   
-SizeOf not including ABI alignment                              
+SizeOf not including ABI alignment                              Fixed
 @realloc signature                                              Fixed   
 @realloc OOM handling                                           
 Integer overflow in requestedSize + headerSize                  
@@ -29,6 +29,6 @@ scope handling (esp. same identifier)                           Fixed
 union variants not beling lowered                               
 Builtin types vs types with scope                               
 MemberAccess allowed expressions                                
-Pointer size                                                    
+Pointer size                                                    Fixed
 DynamicArrayCache                                               
 short-circuit && / ||                                           
