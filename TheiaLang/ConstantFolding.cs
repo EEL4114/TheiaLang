@@ -21,7 +21,7 @@ public class ConstantFolding(LayoutCalc layout)
                 break;
                 case VariableDeclaration vd:
                     if(vd.Init != null)
-                        WalkExpression(vd.Init);
+                        vd.Init = WalkExpression(vd.Init);
                 break;
             }
         }
@@ -39,18 +39,44 @@ public class ConstantFolding(LayoutCalc layout)
         {
             case VariableDeclaration vd:
                 if(vd.Init != null)
-                    WalkExpression(vd.Init);
+                    vd.Init = WalkExpression(vd.Init);
                 break;
+            case AssignmentStatement a:
+                a.Target = WalkExpression(a.Target);
+                a.Expression = WalkExpression(a.Expression);
+                break;
+            case IfStatement ifStatement:
+                ifStatement.Condition = WalkExpression(ifStatement.Condition);
+                WalkBlock(ifStatement.ThenBranch);
+                if(ifStatement.ElseBranch != null)
+                    WalkBlock(ifStatement.ElseBranch);
+                break;
+            case ForStatement forStatement:
+                WalkStatement(forStatement.Initialiser!);
+                forStatement.Condition = WalkExpression(forStatement.Condition!);
+                WalkStatement(forStatement.Iterator!);
+                break;
+            case ReturnStatement r:
+                if(r.Expression != null)
+                    r.Expression = WalkExpression(r.Expression);
+                break;
+            case ExpressionStatement exprS:
+                exprS.Expression = WalkExpression(exprS.Expression);
+            break;
+            case CompoundAssignmentStatement compound:
+                compound.Target = WalkExpression(compound.Target);
+                compound.Expression = WalkExpression(compound.Expression);
+            break;
         }
     }
 
-    void WalkExpression(IExpression expression)
+    IExpression WalkExpression(IExpression expression)
     {
         switch(expression)
         {
             case BinaryExpression binary:
-                WalkExpression(binary.Right);
-                break;
+                binary.Right = WalkExpression(binary.Right);
+                return binary;
             case CallExpression call:
                 if(call.Target is IdentifierExpression id && id.Name == "TypeSize")
                 {
@@ -59,25 +85,27 @@ public class ConstantFolding(LayoutCalc layout)
                     expression.ResolvedType = Builtins.GetTypeInfo(S64);
                 }
                 else
-                    WalkExpression(call.Target);
-                break;
+                    call.Target = WalkExpression(call.Target);
+                    return call;
             case UnaryExpression unary:
-                WalkExpression(unary.Operand);
-                break;
+                unary.Operand = WalkExpression(unary.Operand);
+                return unary;
             case MemberAccessExpression mem:
-                WalkExpression(mem.Target);
-                break;
+                mem.Target = WalkExpression(mem.Target);
+                return mem;
             case InstantiationExpression inst:
-                foreach (IExpression argument in inst.Arguments)
-                    WalkExpression(argument);
-                break;
+                for(int i = 0; i < inst.Arguments.Count; i++)
+                    inst.Arguments[i] = WalkExpression(inst.Arguments[i]);
+                return inst;
             case IndexExpression index:
-                WalkExpression(index.Target);
-                WalkExpression(index.Index);
-                break;
+                index.Target = WalkExpression(index.Target);
+                index.Index = WalkExpression(index.Index);
+                return index;
             case CastExpression cast:
-                WalkExpression(cast.Target);
-                break;
+                cast.Target = WalkExpression(cast.Target);
+                return cast;
         }
+
+        return expression;
     }
 }
