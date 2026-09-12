@@ -23,7 +23,7 @@ public sealed class StructLayout(
     public IReadOnlyList<uint> FieldOffsets { get; } = fieldOffsets;
 }
 
-public class Layout(CompilationTarget target)
+public class LayoutCalc(CompilationTarget target)
 {
     Dictionary<string, TypeLayout> Layouts = [];
 

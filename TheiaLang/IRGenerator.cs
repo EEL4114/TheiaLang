@@ -1,8 +1,9 @@
 namespace TheiaLang;
 
-using System.Text;
 using static TypeKind;
 using static BuiltinType;
+
+using System.Text;
 using System.Globalization;
 
 public static class IRGenerator
@@ -16,21 +17,21 @@ public static class IRGenerator
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;
-    static Layout Layout2;
+    static LayoutCalc Layout;
 
     static bool AutoLog;
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
     static readonly string INTRINSICS_PATH_REL = Path.Combine(AppContext.BaseDirectory, INTRINSICS_PATH);
 
-    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, Layout layout, bool autoLog = true)
+    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, LayoutCalc layout, bool autoLog = true)
     {
         if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
 
         string intrinsicsIR = File.ReadAllText(INTRINSICS_PATH_REL);
         StringBuilder sb = new StringBuilder();
-        Layout2 = layout;
+        Layout = layout;
 
         sb.AppendLine($"; Creaded at: {DateTime.Now}'");
         sb.AppendLine("; =============================================================================");
@@ -126,7 +127,7 @@ public static class IRGenerator
 
     static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
     {
-        TypeLayout unionLayout = Layout2.GetLayout(ud.ResolvedType);
+        TypeLayout unionLayout = Layout.GetLayout(ud.ResolvedType);
         long alignment = unionLayout.Alignment;
 
         long size = unionLayout.Size;

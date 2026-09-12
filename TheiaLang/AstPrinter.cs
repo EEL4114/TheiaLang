@@ -166,7 +166,7 @@ static class AstPrinter
                 PrintExpression(bin.Right, w, indent + 1);
                 break;
             case CallExpression call:
-                w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)}");
+                w.WriteLine($"{Indent(indent)}Call: {TryType(call.ResolvedType)}{TryScope(call.Scope!)}");
                 w.WriteLine($"{Indent(indent + 1)}Target:");
                 PrintExpression(call.Target, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Arguments:");
@@ -185,14 +185,14 @@ static class AstPrinter
                 PrintExpression(mem.Target, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Member: {TryType(mem.Member.ResolvedType)}{mem.Member.Name}");
                 break;
-            case InstantiationExpression isnt:
-                string type = TryType(isnt.ResolvedType);
-                type = string.IsNullOrEmpty(type) ? isnt.TypeName : type;
+            case InstantiationExpression inst:
+                string type = TryType(inst.ResolvedType);
+                type = string.IsNullOrEmpty(type) ? inst.TypeName : type;
                 w.WriteLine($"{Indent(indent)}Instantiation: {type}");
                 w.WriteLine($"{Indent(indent + 1)}Arguments:");
                 // TODO write the field names maybe?
-                foreach (IExpression arument in isnt.Arguments)
-                    PrintExpression(arument, w, indent + 2);
+                foreach (IExpression argument in inst.Arguments)
+                    PrintExpression(argument, w, indent + 2);
                 break;
             case IndexExpression index:
                 w.WriteLine($"{Indent(indent)}IndexExpression: {TryType(index.ResolvedType)}");

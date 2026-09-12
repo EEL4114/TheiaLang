@@ -313,15 +313,13 @@ public static class SemanticAnalyser
                         if (call.Arguments[0] is not IdentifierExpression i)
                             throw new Exception($"Unexpected argument in call 'TypeSize': expected identifer, got: {call.Arguments[0].GetType()}");
 
-                        /*TypeInfo typeInfo;
+                        TypeInfo typeInfo;
                         if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
                             typeInfo = symbolInfo!.Type;
                         else
-                            throw new Exception($"Could not resolve {id.Name}");
-                        */
-                        // Log.Info($"{call.CalleeName} {id.Name} {typeInfo}");
+                            throw new Exception($"Could not resolve type {id.Name}");
 
-                        id.ResolvedType = Builtins.GetTypeInfo(S64);
+                        id.ResolvedType = typeInfo;
                         call.ResolvedType = Builtins.GetTypeInfo(S64);
                     }
                     else if (id.Name == "Alloc")

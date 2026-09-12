@@ -181,8 +181,11 @@ int CompileFile(string filePath,
     AstPrinter.Print(ast, writer2, timestamps);
     Log.Link(writer2Path, "Full AST: ");
 
-    Layout layout = new Layout(CompilationTarget.x86_64_windows);
+    LayoutCalc layout = new LayoutCalc(CompilationTarget.x86_64_windows);
     layout.GenerateLayout(ast);
+
+    ConstantFolding cf = new ConstantFolding(layout);
+    cf.ConstFold(ast);
 
     IRGenTimer.Start();
 
