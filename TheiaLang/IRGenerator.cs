@@ -195,8 +195,6 @@ public static class IRGenerator
 
     static void EmitStatement(IStatement statement, StringBuilder sb)
     {
-        int[] ints = [];
-        int j = ints.Length;
         switch (statement)
         {
             case VariableDeclaration v:         EmitVariableDeclaration(v, sb); break;
