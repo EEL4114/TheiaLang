@@ -530,38 +530,34 @@ public static class IRGenerator
 
     static string FormatLLVMFloat(double value, BuiltinType type)
     {
-        string text = type switch
+        string text;
+        switch (type)
         {
-            F32 => ((float)value).ToString("R", CultureInfo.InvariantCulture),
-            F64 => value.ToString("R", CultureInfo.InvariantCulture),
-            _ => throw new ArgumentException($"Unsupported float type: {type}")
-        };
+            case F16:
+                    Half half = (Half)value;
+                    ushort bits = BitConverter.HalfToUInt16Bits(half);
+                    text = $"0xH{bits:X4}";
+                    break;
 
-        // Handle these explicitly if Theia permits them.
-        if (double.IsPositiveInfinity(value))
-            return "+inf";
-        if (double.IsNegativeInfinity(value))
-            return "-inf";
-        if (double.IsNaN(value))
-            return "+qnan";
+            case F32:
+                    text = ((float)value).ToString("R", CultureInfo.InvariantCulture);
 
-        // LLVM decimal floating literals require a decimal point.
-        int exponent = text.IndexOfAny(['e', 'E']);
+                    if (!text.Contains('.') && !text.Contains('E') && !text.Contains('e'))
+                        text += ".0";
 
-        if (exponent >= 0)
-        {
-            string mantissa = text[..exponent];
-            string exp = text[exponent..];
+                    break;
 
-            if (!mantissa.Contains('.'))
-                mantissa += ".0";
+            case F64:
+                    text = value.ToString("R", CultureInfo.InvariantCulture);
 
-            return mantissa + exp;
+                    if (!text.Contains('.') && !text.Contains('E') && !text.Contains('e'))
+                        text += ".0";
+
+                    break;
+
+            default:
+                throw new ArgumentException($"Unsupported float type: {type}");
         }
-
-        if (!text.Contains('.'))
-            text += ".0";
-
         return text;
     }
 

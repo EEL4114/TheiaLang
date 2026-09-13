@@ -13,7 +13,6 @@ realloc(ptr, 0)
 Free(null)                                                      
 Allocator pairing                                               
 memory ownership/lifetime                                       
-Control block termination                                       
 static statements                                               
 DynamicArrayCache                                               
 IRGenerator.BuiltinTypes is not a great place                   
@@ -39,3 +38,5 @@ MemberAccess allowed expressions
 Pointer size                                                    Fixed   
 DynamicArrayCache                                               
 short-circuit && / ||                                           
+Control block termination                                       Fixed
+f16 not working                                                 
