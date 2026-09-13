@@ -11,7 +11,6 @@ public static class IRGenerator
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
-    static Dictionary<(string, Scope), string> MethodsToFunctions = [];
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;
@@ -78,7 +77,6 @@ public static class IRGenerator
             {
                 // create a synthetic FunctionDeclaration with a mangled name
                 string mangle = $"{function.Scope!.FullName}";
-                MethodsToFunctions.Add((function.Name, function.Scope!.Parent!), mangle);
                 function.Name = mangle;
             }
         }
@@ -162,7 +160,7 @@ public static class IRGenerator
         if (AutoLog)
             sb.AppendLine($"@.fn_{currentScope!.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
 
-        sb.AppendLine($"define {returnTypeLLVM} @{fn.Name}({paramList}) {{");
+        sb.AppendLine($"define {returnTypeLLVM} @{fn.Scope!.FullName}({paramList}) {{");
         sb.AppendLine("entry:");
 
         foreach (TypeNamePair parameter in fn.Parameters)
@@ -652,7 +650,7 @@ public static class IRGenerator
         {
             string calleeName = id.Name;
 
-            call.Scope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out Scope? defScope);
+            // call.Scope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out Scope? defScope);
 
             string retTy = TypeToLLVM(call.ResolvedType!)!;
 
@@ -681,10 +679,9 @@ public static class IRGenerator
 
             string tmp = $"%{NewTempVar()}";
 
-            calleeName = calleeInfo.Name;
+            calleeName = ((IdentifierExpression)call.Target).Name;
 
-            if(MethodsToFunctions.ContainsKey((calleeName, defScope!)))
-                calleeName = MethodsToFunctions[(calleeName, defScope!)];
+            calleeName = string.IsNullOrEmpty(call.Scope!.FullName) ? calleeName : $"{call.Scope!.FullName}.{calleeName}";
 
             if (retTy != "void")
                 code.AppendLine($"  {tmp} = call {retTy} @{calleeName}({string.Join(", ", argumentList)})");
