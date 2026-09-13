@@ -8,8 +8,6 @@ using System.Globalization;
 
 public static class IRGenerator
 {
-    // for now, this will be const
-
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
     static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
@@ -656,15 +654,7 @@ public static class IRGenerator
 
             call.Scope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out Scope? defScope);
 
-            if (calleeInfo!.Kind != SymbolKind.Function)
-                throw new Exception($"'{calleeName}' is not a function in scope '{currentScope.FullName}'");
-
-            if (call.Arguments.Count != calleeInfo.Parameters!.Count)
-                Log.Error(11,
-                    $"Function '{calleeName}' expects {calleeInfo.Parameters.Count} arguments, " +
-                    $"but got {call.Arguments.Count}");
-
-            string retTy = TypeToLLVM(calleeInfo.Type)!;
+            string retTy = TypeToLLVM(call.ResolvedType!)!;
 
             List<string> argumentList = [];
 
@@ -679,11 +669,11 @@ public static class IRGenerator
                 TypeInfo actualType = argument.ResolvedType!;
 
                 string actualLLVMType = TypeToLLVM(actualType)!;
-                string expectedLLVMType = TypeToLLVM(calleeInfo.Parameters[i].ResolvedType!)!;
+                string expectedLLVMType = TypeToLLVM(call.Arguments[i].ResolvedType!)!;
 
                 if (actualType.TypeName != call.Arguments[i].ResolvedType!.TypeName && AutoLog)
                     Log.Error(12,
-                        $"Type mismatch in call to '{"call.CalleeName"}.{calleeInfo.Parameters[i].Identifier}' " +
+                        $"Type mismatch in call to '{"call.CalleeName"}.{call.Arguments[i]}' " +
                         $"expected {call.Arguments[i].ResolvedType!.TypeName}, got {actualType.TypeName}");
 
                 argumentList.Add($"{actualLLVMType} {argReg}");
@@ -692,7 +682,6 @@ public static class IRGenerator
             string tmp = $"%{NewTempVar()}";
 
             calleeName = calleeInfo.Name;
-
 
             if(MethodsToFunctions.ContainsKey((calleeName, defScope!)))
                 calleeName = MethodsToFunctions[(calleeName, defScope!)];
