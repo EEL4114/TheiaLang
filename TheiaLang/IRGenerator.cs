@@ -648,10 +648,6 @@ public static class IRGenerator
     {
         if (call.Target is IdentifierExpression id)
         {
-            string calleeName = id.Name;
-
-            // call.Scope!.TryLookup(calleeName, out SymbolInfo? calleeInfo, out Scope? defScope);
-
             string retTy = TypeToLLVM(call.ResolvedType!)!;
 
             List<string> argumentList = [];
@@ -679,7 +675,7 @@ public static class IRGenerator
 
             string tmp = $"%{NewTempVar()}";
 
-            calleeName = ((IdentifierExpression)call.Target).Name;
+            string calleeName = ((IdentifierExpression)call.Target).Name;
 
             calleeName = string.IsNullOrEmpty(call.Scope!.FullName) ? calleeName : $"{call.Scope!.FullName}.{calleeName}";
 
