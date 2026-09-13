@@ -39,4 +39,4 @@ Pointer size                                                    Fixed
 DynamicArrayCache                                               
 short-circuit && / ||                                           
 Control block termination                                       Fixed
-f16 not working                                                 
+f16 not working                                                 Fixed
