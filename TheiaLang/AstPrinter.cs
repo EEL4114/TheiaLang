@@ -175,7 +175,7 @@ static class AstPrinter
                     PrintExpression(arument, w, indent + 2);
                 break;
             case UnaryExpression u:
-                w.WriteLine($"{Indent(indent)}UnaryExpression: {TryType(u.ResolvedType)}{u.Op}");
+                w.WriteLine($"{Indent(indent)}UnaryExpression: {TryType(u.ResolvedType)} {u.Op}");
                 w.WriteLine($"{Indent(indent + 1)}Operand:");
                 PrintExpression(u.Operand, w, indent + 2);
                 break;
