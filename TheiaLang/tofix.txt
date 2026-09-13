@@ -2,6 +2,7 @@ FEATURES
 
 ENTRY                                                           STATUS
 Count references                                                
+more proper compiler messages                                   
 
 STABILITY
 

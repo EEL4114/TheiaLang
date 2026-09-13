@@ -69,23 +69,9 @@ public static class IRGenerator
         sb.AppendLine();
 
         foreach (INode node in program.Nodes)
-        {
-            if(node is not StructDeclaration sd)
-                continue;
-                
-            foreach (FunctionDeclaration function in sd.Functions)
-            {
-                // create a synthetic FunctionDeclaration with a mangled name
-                string mangle = $"{function.Scope!.FullName}";
-                function.Name = mangle;
-            }
-        }
-
-        foreach (INode node in program.Nodes)
             switch (node)
             {
                 case FunctionDeclaration fn:
-                    fn.Name = $"{fn.Scope!.FullName}";
                     EmitFunction(fn, sb);
                     break;
 

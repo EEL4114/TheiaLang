@@ -14,18 +14,18 @@ basic arrays                            done
 testing                                 done
 comments                                done
 dynamic arrays                          partial
-namespaces
-improve parser debugging
-operator overloading
-strings
-scope annotations for functions
-lambdas
-strucural typing
-hex literals
-owning ptrs
-named parameters
-comptime execution
-array ops
-const
-nullability
+namespaces                              
+improve parser debugging                
+function overloading                    
+strings                                 
+scope annotations for functions         
+lambdas                                 
+strucural typing                        
+hex literals                            
+owning ptrs                             
+named parameters                        
+comptime execution                      
+array ops                               
+const                                   
+nullability                             
 anonymous data structures               done

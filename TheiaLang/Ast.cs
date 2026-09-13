@@ -74,7 +74,7 @@ public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
     public TypeInfo ResolvedType { get; set; }
-    public string Name { get; set; }
+    public string Name { get; }
     public readonly List<TypeNamePair> Parameters;
     public readonly List<IStatement> Statements;    // the { … } body
 
