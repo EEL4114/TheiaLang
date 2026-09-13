@@ -55,7 +55,7 @@ static class AstPrinter
 
     static void PrintTypeNamePair(TypeNamePair typeNamePair, TextWriter w, int indent)
     {
-        w.WriteLine($"{Indent(indent)}{TryType(typeNamePair.ResolvedType)}{typeNamePair.Identifier}{TryPos(typeNamePair.Pos)}");
+        w.WriteLine($"{Indent(indent)}{TryType(typeNamePair.ResolvedType)} {typeNamePair.Identifier}{TryPos(typeNamePair.Pos)}");
     }
 
     static void PrintFunction(FunctionDeclaration function, TextWriter w, int indent)
@@ -161,7 +161,7 @@ static class AstPrinter
                 break;
 
             case BinaryExpression bin:
-                w.WriteLine($"{Indent(indent)}BinaryExpression: {TryType(bin.ResolvedType)}{bin.Op}");
+                w.WriteLine($"{Indent(indent)}BinaryExpression: {TryType(bin.ResolvedType)} {bin.Op}");
                 PrintExpression(bin.Left, w, indent + 1);
                 PrintExpression(bin.Right, w, indent + 1);
                 break;
