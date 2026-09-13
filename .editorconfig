@@ -5,3 +5,6 @@ csharp_style_implicit_object_creation_when_type_is_apparent = false
 
 # IDE0017: Simplify object initialization
 dotnet_style_object_initializer = false
+
+# CS0219: Variable is assigned but its value is never used
+dotnet_diagnostic.CS0219.severity = suggestion
