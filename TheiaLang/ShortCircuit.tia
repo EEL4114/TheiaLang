@@ -1,0 +1,29 @@
+int main() 
+{ 
+    return 0; 
+}
+
+bool SideEffect()
+{
+    return true;
+}
+
+bool A(bool a, bool b)
+{
+    return a && b;
+}
+
+bool B(bool a, bool b)
+{
+    return a || b;
+}
+
+bool C(bool a, bool b, bool c)
+{
+    return a && (b || c);
+}
+
+bool D(bool a, bool b, bool c, bool d)
+{
+    return (a && b) || (c && d);
+}

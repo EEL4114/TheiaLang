@@ -15,6 +15,8 @@ public static class IRGenerator
     static ulong tmpCounter = 0;
     static Scope? currentScope;
     static ulong labelCounter = 0;
+    static string currentBlock;
+
     static LayoutCalc Layout;
 
     static bool AutoLog;
@@ -149,6 +151,7 @@ public static class IRGenerator
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Scope!.FullName}({paramList}) {{");
         sb.AppendLine("entry:");
+        currentBlock = "entry";
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
@@ -281,6 +284,7 @@ public static class IRGenerator
               $"  br i1 {condReg}, label %{thenLabel}, label %{elseLabel ?? mergeLabel}");
 
         sb.AppendLine($"{thenLabel}:");
+        currentBlock = thenLabel;
         EnterScope(ifStatement.ThenScope);
 
         BlockTermination thenTermination = NotTerminated;
@@ -306,6 +310,7 @@ public static class IRGenerator
         {
             EnterScope(ifStatement.ElseScope!);
             sb.AppendLine($"{elseLabel}:");
+            currentBlock = elseLabel!;
 
             foreach (IStatement statement in ifStatement.ElseBranch)
             {
@@ -325,7 +330,10 @@ public static class IRGenerator
             blockTermination = Terminated;
         
         if(blockTermination == NotTerminated)
+        {
             sb.AppendLine($"{mergeLabel}:");
+            currentBlock = mergeLabel;   
+        }
         return blockTermination;
     }
 
@@ -344,11 +352,13 @@ public static class IRGenerator
 
         // Loop Condition
         sb.AppendLine($"{condLabel}:");
+        currentBlock = condLabel;
         (StringBuilder condCode, string condReg) = EmitExpression(forStatement.Condition!);
         sb.Append(condCode);
         sb.AppendLine($"  br i1 {condReg}, label %{bodyLabel}, label %{endLabel}");
         // Loop Body
         sb.AppendLine($"{bodyLabel}:");
+        currentBlock = bodyLabel;
 
         BlockTermination bodyTermination = NotTerminated;
 
@@ -365,10 +375,12 @@ public static class IRGenerator
             sb.AppendLine($"  br label %{iterLabel}");
         // Loop Iterator
         sb.AppendLine($"{iterLabel}:");
+        currentBlock = iterLabel;
         EmitStatement(forStatement.Iterator!, sb);
         sb.AppendLine($"  br label %{condLabel}");
         // Loop End
         sb.AppendLine($"{endLabel}:");
+        currentBlock = endLabel;
 
         ExitScope();
         return NotTerminated;
@@ -593,6 +605,12 @@ public static class IRGenerator
 
     static (StringBuilder code, string value) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
     {
+        if (binaryExpression.Op == BinaryOperator.AND ||
+            binaryExpression.Op == BinaryOperator.OR)
+        {
+            return EmitShortCircuitBinaryExpression(binaryExpression);
+        }
+
         (StringBuilder cl, string vl) = EmitExpression(binaryExpression.Left);
         (StringBuilder cr, string vr) = EmitExpression(binaryExpression.Right);
         code.Append(cl);
@@ -617,8 +635,6 @@ public static class IRGenerator
         {
             BinaryOperator.EqualEqual => "icmp eq",
             BinaryOperator.NotEqual   => "icmp ne",
-            BinaryOperator.AND        => "and",
-            BinaryOperator.OR         => "or",
             _ => throw new Exception($"Unsupported operation '{binaryExpression.Op}' for type 'bool'")
         };
         else if (Builtins.IsSignedInt(typeInfo.BuiltinType)) op = binaryExpression.Op switch
@@ -653,6 +669,65 @@ public static class IRGenerator
         code.AppendLine();
 
         return (code, $"%{tmp}");
+    }
+
+    static (StringBuilder Code, string Result)
+    EmitShortCircuitBinaryExpression(BinaryExpression binaryExpression)
+    {
+        StringBuilder code = new();
+
+        (StringBuilder leftCode, string leftReg) =
+            EmitExpression(binaryExpression.Left);
+
+        code.Append(leftCode);
+
+        ulong id = labelCounter++;
+
+        string rhsLabel = $"logic_rhs_{id}";
+        string endLabel = $"logic_end_{id}";
+
+        string leftBlockLabel = currentBlock;
+
+        if (binaryExpression.Op == BinaryOperator.AND)
+        {
+            code.AppendLine(
+                $"  br i1 {leftReg}, label %{rhsLabel}, label %{endLabel}");
+        }
+        else
+        {
+            code.AppendLine(
+                $"  br i1 {leftReg}, label %{endLabel}, label %{rhsLabel}");
+        }
+
+        code.AppendLine($"{rhsLabel}:");
+        currentBlock = rhsLabel;
+
+        (StringBuilder rightCode, string rightReg) =
+            EmitExpression(binaryExpression.Right);
+
+        code.Append(rightCode);
+
+        string rightBlockLabel = currentBlock;
+
+        code.AppendLine($"  br label %{endLabel}");
+
+        code.AppendLine($"{endLabel}:");
+        currentBlock = endLabel;
+
+        string result = $"%{NewTempVar()}";
+
+        if (binaryExpression.Op == BinaryOperator.AND)
+        {
+            code.AppendLine(
+                $"  {result} = phi i1 [ 0, %{leftBlockLabel} ], [ {rightReg}, %{rightBlockLabel} ]");
+        }
+        else
+        {
+            code.AppendLine(
+                $"  {result} = phi i1 [ 1, %{leftBlockLabel} ], [ {rightReg}, %{rightBlockLabel} ]");
+        }
+
+        return (code, result);
     }
 
     static (StringBuilder code, string value) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
