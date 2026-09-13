@@ -2,6 +2,7 @@ namespace TheiaLang;
 
 using static TypeKind;
 using static BuiltinType;
+using static BlockTermination;
 
 using System.Text;
 using System.Globalization;
@@ -144,7 +145,7 @@ public static class IRGenerator
         }
         paramList = string.Join(", ", args);
         if (AutoLog)
-            sb.AppendLine($"@.fn_{currentScope!.Name}_str = private constant [{currentScope.Name.Length + 1} x i8] c\"{currentScope.Name}\\00\"");
+            sb.AppendLine($"@.fn_{fn.Scope!.Name}_str = private constant [{fn.Scope.Name.Length + 1} x i8] c\"{fn.Scope.Name}\\00\"");
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Scope!.FullName}({paramList}) {{");
         sb.AppendLine("entry:");
@@ -175,22 +176,22 @@ public static class IRGenerator
 
     #region Statements
 
-    static void EmitStatement(IStatement statement, StringBuilder sb)
-    {
-        switch (statement)
+    // true: terminated (return)
+    // false: not terminated
+    static BlockTermination EmitStatement(IStatement statement, StringBuilder sb)
+        => statement switch
         {
-            case VariableDeclaration v:         EmitVariableDeclaration(v, sb); break;
-            case AssignmentStatement a:         EmitAssignmentStatement(a, sb); break;
-            case CompoundAssignmentStatement c: EmitCompoundAssignmentStatement(c, sb); break;
-            case IfStatement i:                 EmitIfStatement(i, sb); break;
-            case ForStatement f:                EmitForStatement(f, sb); break;
-            case ReturnStatement r:             EmitReturnStatement(r, sb); break;
-            case ExpressionStatement e:         EmitExpressionStatement(e, sb); break;
-            default: throw new Exception($"Unknown Statement: {statement.GetType().Name}");
-        }
-    }
+            VariableDeclaration v         => EmitVariableDeclaration(v, sb),
+            AssignmentStatement a         => EmitAssignmentStatement(a, sb),
+            CompoundAssignmentStatement c => EmitCompoundAssignmentStatement(c, sb),
+            IfStatement i                 => EmitIfStatement(i, sb),
+            ForStatement f                => EmitForStatement(f, sb),
+            ReturnStatement r             => EmitReturnStatement(r, sb),
+            ExpressionStatement e         => EmitExpressionStatement(e, sb),
+            _ => throw new Exception($"Unknown Statement: {statement.GetType().Name}"),
+        };
 
-    static void EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
+    static BlockTermination EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
 
@@ -226,18 +227,22 @@ public static class IRGenerator
             sb.AppendLine(
               $"  store {LLVMType} {initReg}, ptr {slot}");
         }
+        
+        return NotTerminated;
     }
 
-    static void EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
+    static BlockTermination EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
         (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
         (StringBuilder code, string val) = EmitExpression(assignment.Expression);
         sb.Append(code);
         sb.AppendLine($"  store {LLVMType} {val}, ptr {ptr}");
+
+        return NotTerminated;
     }
 
-    static void EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
+    static BlockTermination EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
     {
         (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
@@ -254,10 +259,14 @@ public static class IRGenerator
 
         sb.Append(code);
         sb.AppendLine($"  store {LLVMType} {val}, ptr {ptr}");
+
+        return NotTerminated;
     }
 
-    static void EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
+    static BlockTermination EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
     {
+        BlockTermination blockTermination = NotTerminated;
+        
         (StringBuilder condCode, string condReg) = EmitExpression(ifStatement.Condition);
         sb.Append(condCode);  // discard the result, but emit code for side effects
 
@@ -273,24 +282,54 @@ public static class IRGenerator
 
         sb.AppendLine($"{thenLabel}:");
         EnterScope(ifStatement.ThenScope);
+
+        BlockTermination thenTermination = NotTerminated;
+
         foreach (IStatement statement in ifStatement.ThenBranch)
-            EmitStatement(statement, sb);
+        {
+            BlockTermination bt = EmitStatement(statement, sb);
+            if(bt == Terminated)
+            {
+                thenTermination = Terminated;
+                break;  // no need to emit unreachable remaining statements
+            }
+        }
+
         ExitScope();
-        sb.AppendLine($"  br label %{mergeLabel}");
+        if(thenTermination == NotTerminated)
+            sb.AppendLine($"  br label %{mergeLabel}");
+
+
+        BlockTermination elseTermination = NotTerminated;
 
         if (ifStatement.ElseBranch != null)
         {
             EnterScope(ifStatement.ElseScope!);
             sb.AppendLine($"{elseLabel}:");
+
             foreach (IStatement statement in ifStatement.ElseBranch)
-                EmitStatement(statement, sb);
+            {
+                BlockTermination bt = EmitStatement(statement, sb);
+                if(bt == Terminated)
+                {
+                    elseTermination = Terminated;
+                    break;  // no need to emit unreachable remaining statements
+                }
+            }
             ExitScope();
-            sb.AppendLine($"  br label %{mergeLabel}");
+            if(elseTermination == NotTerminated)
+                sb.AppendLine($"  br label %{mergeLabel}");
         }
-        sb.AppendLine($"{mergeLabel}:");
+
+        if(thenTermination == Terminated && elseTermination == Terminated)
+            blockTermination = Terminated;
+        
+        if(blockTermination == NotTerminated)
+            sb.AppendLine($"{mergeLabel}:");
+        return blockTermination;
     }
 
-    static void EmitForStatement(ForStatement forStatement, StringBuilder sb)
+    static BlockTermination EmitForStatement(ForStatement forStatement, StringBuilder sb)
     {
         // Loop init
         EmitStatement(forStatement.Initialiser!, sb);
@@ -310,9 +349,20 @@ public static class IRGenerator
         sb.AppendLine($"  br i1 {condReg}, label %{bodyLabel}, label %{endLabel}");
         // Loop Body
         sb.AppendLine($"{bodyLabel}:");
+
+        BlockTermination bodyTermination = NotTerminated;
+
         foreach (IStatement statement in forStatement.Body)
-            EmitStatement(statement, sb);
-        sb.AppendLine($"  br label %{iterLabel}");
+        {
+            BlockTermination bt = EmitStatement(statement, sb);
+            if (bt == Terminated)
+            {
+                bodyTermination = Terminated;
+                break;
+            }
+        }
+        if (bodyTermination == NotTerminated)
+            sb.AppendLine($"  br label %{iterLabel}");
         // Loop Iterator
         sb.AppendLine($"{iterLabel}:");
         EmitStatement(forStatement.Iterator!, sb);
@@ -321,9 +371,10 @@ public static class IRGenerator
         sb.AppendLine($"{endLabel}:");
 
         ExitScope();
+        return NotTerminated;
     }
 
-    static void EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
+    static BlockTermination EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
@@ -337,12 +388,16 @@ public static class IRGenerator
             $"{LLVMType} {val})");
 
         sb.AppendLine($"  ret {LLVMType} {val}");
+
+        return Terminated;
     }
 
-    static void EmitExpressionStatement(ExpressionStatement stmt, StringBuilder sb)
+    static BlockTermination EmitExpressionStatement(ExpressionStatement stmt, StringBuilder sb)
     {
         (StringBuilder code, _) = EmitExpression(stmt.Expression);
         sb.Append(code);  // discard the result, but emit code for side effects
+
+        return NotTerminated;
     }
 
     #endregion
@@ -906,5 +961,13 @@ public static class IRGenerator
 
         currentScope = currentScope.Exit();
     }
+
     #endregion
+
+}
+
+enum BlockTermination
+{
+    NotTerminated = 0,
+    Terminated    = 1,
 }

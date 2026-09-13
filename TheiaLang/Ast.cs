@@ -112,7 +112,7 @@ public class FunctionDeclaration : IDeclaration
 public class StructDeclaration : IDeclaration
 {
     public Scope? Scope;
-    public string Name { get; set; }
+    public string Name { get; }
     public TypeInfo ResolvedType { get; set; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
@@ -165,7 +165,7 @@ public class UnionDeclaration(
 ) : IDeclaration
 {
     // public List<FunctionDeclaration> Functions {get; set;} = Functions;
-    public string Name {get; set;} = name;
+    public string Name { get; } = name;
     public List<TypeNamePair> Variants = variants;
 
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
