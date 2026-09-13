@@ -694,9 +694,6 @@ public static class SemanticAnalyser
     {
         TypeInfo sourceType = expression.ResolvedType!;
 
-        // string sourceType = expression.ResolvedType!.TypeName;
-        // string targetType = target.TypeName;
-
         if (!CanImplicitlyCast(sourceType, target))
             throw new Exception($"{expression.Pos}: Cannot implicitly convert {sourceType.TypeName} -> {target.TypeName}");
 
@@ -709,6 +706,12 @@ public static class SemanticAnalyser
                                       Builtins.BuiltinTypeIndex(target.BuiltinType)];
                 if (op == null)
                     throw new Exception($"Invalid cast: {sourceType.TypeName} -> {target.TypeName}");
+                if (op == NoOp)
+                {
+                    expression.ResolvedType = target;   
+                    return expression;
+                }
+                
                 expression = new CastExpression((CastOp)op, expression, SourePosition.None);
                 expression.ResolvedType = target;
             }
