@@ -269,12 +269,11 @@ public static class SemanticAnalyser
                     returnStatement.Expression.ResolvedType = new TypeInfo("void", Void, VOID);
                 }
 
-                if (currentScope.DeclaringNode is FunctionDeclaration function)
-                {
-                    returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType!,
-                                                                               function.ResolvedType.TypeName);
-                    returnStatement.Expression = GenerateImplicitCast(returnStatement.Expression, function.ResolvedType);
-                }
+                FunctionDeclaration function = GetEnclosingFunction();
+                returnStatement.Expression.ResolvedType = PromoteIfLiteral(returnStatement.Expression.ResolvedType!,
+                                                                           function.ResolvedType.TypeName);
+                returnStatement.Expression = GenerateImplicitCast(returnStatement.Expression, 
+                                                                  function.ResolvedType);
                 break;
             default:
                 throw new Exception($"Unknown Statement: {statement.GetType().Name}");
@@ -717,6 +716,22 @@ public static class SemanticAnalyser
             }
         }
         return expression;
+    }
+
+    static FunctionDeclaration GetEnclosingFunction()
+    {
+        Scope? scope = currentScope;
+
+        while (scope != null)
+        {
+            if (scope.DeclaringNode is FunctionDeclaration function)
+                return function;
+
+            scope = scope.Parent;
+        }
+
+        throw new Exception(
+            $"Return statement outside of function in {currentScope.FullName}");
     }
 
     #endregion

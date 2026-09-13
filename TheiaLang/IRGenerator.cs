@@ -490,7 +490,7 @@ public static class IRGenerator
                 ? (code, "")
                 : throw new Exception($"Invalid literal: {literal}, {type}"),
 
-            _ => throw new Exception($"Invalid literal: {literal}, {type}"),
+            _ => throw new Exception($"{literal.Pos} Invalid literal: {literal}, {type} {type.BuiltinType}"),
         };
     }
 
