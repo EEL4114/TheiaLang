@@ -61,7 +61,6 @@ int main()
     @void v = AllocB(4);
     v = ReallocB(v, 8);         // grow the allocation 'v' to 8 B
 
-
     Free(v);
 
     //@f32 floatPtr;

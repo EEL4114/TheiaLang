@@ -343,6 +343,12 @@ public static class SemanticAnalyser
 
                         expression = AnalyseExpression(expr);
                     }
+                    else if(id.Name == "Free")
+                    {
+                        call.Arguments[0] = new CallExpression(new IdentifierExpression("@void"), [call.Arguments[0]]);
+                        id.Name = "__th_free";
+                        expression = AnalyseExpression(call);
+                    }
                     else if (StringToBuiltin(id.Name) != null)
                     {
                         BuiltinType builtinType = (BuiltinType)StringToBuiltin(id.Name)!;

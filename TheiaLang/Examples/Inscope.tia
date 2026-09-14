@@ -8,6 +8,7 @@ struct Vector3
 int main() 
 {
     @Vector3 v = Alloc(Vector3);
+    Free(v);
 
     return 0;
 }
