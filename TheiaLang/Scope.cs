@@ -66,7 +66,7 @@ public class TypeInfo(string type,
     public List<TypeInfo>? FieldTypes { get; set; } = fieldTypes;
     public override string ToString()
     {
-        string s = $"{TypeName}";
+        string s = $"{TypeKind}:{BuiltinType}:{TypeName}";
 
         if (Pointee != null)
             s += $", Pointee = {Pointee}";
@@ -77,7 +77,7 @@ public class TypeInfo(string type,
         // @Robust
         if (FieldNames != null && FieldNames.Count != 0)
         {
-            s += ",\nFields = {";
+            s += ",\n  Fields = {";
             s += $"\n    {FieldTypes![0]} {FieldNames[0]}";
             for (int i = 1; i < FieldNames.Count; i++)
                 s += $",\n    {FieldTypes![i]} {FieldNames[i]}";
