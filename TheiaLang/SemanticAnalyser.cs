@@ -323,7 +323,25 @@ public static class SemanticAnalyser
                     }
                     else if (id.Name == "Alloc")
                     {
-                        Log.Info("ALLOC");
+                        if (call.Arguments.Count != 1)
+                            throw new Exception($"Function 'Alloc' expects 1 argument, got {call.Arguments.Count}");
+                        if (call.Arguments[0] is not IdentifierExpression argIdent)
+                            throw new Exception($"Unexpected argument in call 'Alloc': expected identifer, got: {call.Arguments[0].GetType()}");
+                        
+                        TypeInfo typeInfo;
+                        if (currentScope.TryLookup(argIdent.Name, out SymbolInfo? symbolInfo, out _))
+                            typeInfo = symbolInfo!.Type;
+                        else
+                            throw new Exception($"Could not resolve type {argIdent.Name}");
+
+                        CallExpression expr = 
+                        new CallExpression(new IdentifierExpression($"@{typeInfo.TypeName}"), [
+                        new CallExpression(
+                            new IdentifierExpression("AllocB"), [
+                                new CallExpression(new IdentifierExpression("TypeSize"), [argIdent])
+                            ])]);
+
+                        expression = AnalyseExpression(expr);
                     }
                     else if (StringToBuiltin(id.Name) != null)
                     {

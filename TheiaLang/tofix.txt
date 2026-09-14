@@ -27,8 +27,8 @@ ENTRY                                                           STATUS  TEST?
 Lexer parsing '!=' incorrectly                                  Fixed   
 SizeOf not including ABI alignment                              Fixed   
 @realloc signature                                              Fixed   
-@realloc OOM handling                                           
-Integer overflow in requestedSize + headerSize                  
+@realloc OOM handling                                           Fixed
+Integer overflow in requestedSize + headerSize                  Fixed
 FP128                                                           
 Dynamic array struct fields                                     
 scope handling (esp. same identifier)                           Fixed   
