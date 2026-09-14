@@ -5,19 +5,32 @@ target triple = "x86_64-pc-windows-msvc19.44.35211"
 declare ptr @realloc(ptr, i64) nounwind allocsize(1)
 declare noalias ptr @malloc(i64) nounwind willreturn
 declare void @free(ptr) nounwind
+declare void @llvm.trap()
 
 %theia.header = type { i64, i64 }           ; { sizeBytes, magic }
 @theia.magic  = internal constant i64 4114, align 8
 
 define internal noalias ptr @__th_allocB(i64 %n) nounwind allocsize(0) {
 entry:
-  ; total = (n == 0 ? 16 : n + 16)
-  %is0   = icmp eq i64 %n, 0
-  %np16  = add i64 %n, 16
-  %total = select i1 %is0, i64 16, i64 %np16
+  ;we don't want to exceed the 64-bit unsigned integer limit
+  %tooLarge = icmp ugt i64 %n, 18446744073709551599
+  br i1 %tooLarge, label %overflow, label %alloc
 
+overflow:
+    call void @llvm.trap()
+    unreachable
+
+alloc:
+  %total = add i64 %n, 16
   %raw   = call noalias ptr @malloc(i64 %total)
+  %failed = icmp eq ptr %raw, null
+  br i1 %failed, label %fail, label %init
 
+fail:
+  call void @llvm.trap()
+  unreachable
+
+init:
   ; write header
   %h_size  = getelementptr %theia.header, ptr %raw, i32 0, i32 0
   store i64 %n, ptr %h_size
@@ -30,7 +43,7 @@ entry:
   ret ptr %user
 }
 
-define internal noalias ptr @__th_reallocB(ptr %user, i64 %newB) nounwind {
+define internal ptr @__th_reallocB(ptr %user, i64 %newB) nounwind {
 entry:
   ; user ptr == null → behaves like alloc
   %isNull = icmp eq ptr %user, null
@@ -43,16 +56,34 @@ alloc:
 have:
   ; newBytes == 0 → free and return null (so arrays can have data = null, cap = 0)
   %isZero = icmp eq i64 %newB, 0
-  br i1 %isZero, label %freeNull, label %grow
+  br i1 %isZero, label %freeNull, label %checksize
+
+checksize:
+  ;we don't want to exceed the 64-bit unsigned integer limit
+  %tooLarge = icmp ugt i64 %newB, 18446744073709551599
+  br i1 %tooLarge, label %overflow, label %grow
 
 freeNull:
   call void @__th_free(ptr %user)
   ret ptr null
 
+overflow:
+    call void @llvm.trap()
+    unreachable
+
 grow:
   %raw    = getelementptr i8, ptr %user, i64 -16
   %total  = add i64 %newB, 16
   %newRaw = call ptr @realloc(ptr %raw, i64 %total)
+
+  %failed = icmp eq ptr %newRaw, null
+  br i1 %failed, label %fail, label %updheader
+
+fail:
+  call void @llvm.trap()
+  unreachable
+
+updheader:
   ; update header.size
   %h_sz = getelementptr %theia.header, ptr %newRaw, i32 0, i32 0
   store i64 %newB, ptr %h_sz
