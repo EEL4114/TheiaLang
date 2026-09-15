@@ -75,7 +75,7 @@ static class Elaboration
                 ProgramAST.Nodes.Add(node);
                 if (!PreloadScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
                     throw new Exception($"Could not find template {name}");
-                functionDeclaration.Scope = new Scope(name, node, GlobalScope);
+                functionDeclaration.Scope = new Scope(name, true, node, GlobalScope);
                 GlobalScope.Declare(symbolInfo!);
             }
     }
@@ -259,7 +259,7 @@ static class Elaboration
                                 ]))
             )])];
 
-        functions[0].Scope = new Scope(functions[0].Name, functions[0], currentScope);
+        functions[0].Scope = new Scope(functions[0].Name, true, functions[0], currentScope);
 
         foreach (TypeNamePair field in fields)
             currentScope.Declare(new SymbolInfo(field.Identifier,
@@ -285,9 +285,9 @@ static class Elaboration
         return sd;
     }
 
-    static Scope EnterNewScope(string name, INode? declaringNode = null)
+    static Scope EnterNewScope(string name, bool canShadowParent = true, INode? declaringNode = null)
     {
-        currentScope = new Scope(name, declaringNode, currentScope);
+        currentScope = new Scope(name, canShadowParent, declaringNode, currentScope);
         return currentScope;
     }
 

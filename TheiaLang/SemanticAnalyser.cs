@@ -8,6 +8,8 @@ public static class SemanticAnalyser
 {
     static Scope currentScope = new Scope("");
     static Scope GlobalScope;
+    static Stack<ForStatement> loopStack = [];
+
     public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         currentScope = globalScope;
@@ -246,19 +248,24 @@ public static class SemanticAnalyser
                 }
                 break;
             case ForStatement forStatement:
-                EnterScope(forStatement.Scope);
+                EnterScope(forStatement.HeadScope);
                 AnalyseStatement(forStatement.Initialiser!);
                 forStatement.Condition = AnalyseExpression(forStatement.Condition!);
 
-                if (forStatement.Condition.ResolvedType!.TypeName != "bool")
+                if (forStatement.Condition.ResolvedType!.BuiltinType != BOOL)
                     throw new Exception($"Condition of for loop must resolve to type 'bool', got: {forStatement.Condition.ResolvedType.TypeName}");
 
                 AnalyseStatement(forStatement.Iterator!);
 
+                EnterScope(forStatement.BodyScope);
+                loopStack.Push(forStatement);
+
                 foreach (IStatement s in forStatement.Body)
                     AnalyseStatement(s);
 
-                ExitScope();
+                loopStack.Pop();
+                ExitScope(); // body
+                ExitScope(); // head
                 break;
             case ReturnStatement returnStatement:
                 if (returnStatement.Expression != null)
@@ -274,6 +281,16 @@ public static class SemanticAnalyser
                                                                            function.ResolvedType.TypeName);
                 returnStatement.Expression = GenerateImplicitCast(returnStatement.Expression, 
                                                                   function.ResolvedType);
+                break;
+            case BreakStatement breakStatement:
+                if(loopStack.Count == 0)    // currently only in loops; later: maybe also for switch (depending on impl.)
+                    Log.Error(25, $"{breakStatement.Pos} Invalid break statement outside loop");
+                breakStatement.Target = loopStack.Peek();
+                break;
+            case ContinueStatement continueStatement:
+                if(loopStack.Count == 0)
+                    Log.Error(26, $"{continueStatement.Pos} Invalid continue outside loop");
+                continueStatement.Target = loopStack.Peek();
                 break;
             default:
                 throw new Exception($"Unknown Statement: {statement.GetType().Name}");

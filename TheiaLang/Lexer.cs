@@ -30,11 +30,13 @@ public enum TokenType
     Keyword_struct = 540,
     Keyword_union  = 541,
 
-    Keyword_if     = 542,
-    Keyword_else   = 543,
-    Keyword_for    = 544,
-    Keyword_new    = 545,
-    Keyword_return = 546,
+    Keyword_if      = 542,
+    Keyword_else    = 543,
+    Keyword_for     = 544,
+    Keyword_new     = 545,
+    Keyword_return  = 546,
+    Keyword_break   = 547,
+    Keyword_continue = 548,
 
     Operator_Equal   = 600,
     Operator_Plus    = 601,
@@ -250,7 +252,10 @@ class Lexer(string sourceCode)
 
             "for" => new Token(TokenType.Keyword_for, lexeme, new SourePosition(row, startCol)),
 
-            "return" => new Token(TokenType.Keyword_return, lexeme, new SourePosition(row, startCol)),
+            "return"   => new Token(TokenType.Keyword_return, lexeme, new SourePosition(row, startCol)),
+            "break"    => new Token(TokenType.Keyword_break, lexeme, new SourePosition(row, startCol)),
+            "continue" => new Token(TokenType.Keyword_continue, lexeme, new SourePosition(row, startCol)),
+
             "true"   => new Token(TokenType.Literal, lexeme, new SourePosition(row, startCol)),
             "false"  => new Token(TokenType.Literal, lexeme, new SourePosition(row, startCol)),
             "new"    => new Token(TokenType.Keyword_new, lexeme, new SourePosition(row, startCol)),

@@ -27,16 +27,22 @@ ENTRY                                                           STATUS  TEST?
 Lexer parsing '!=' incorrectly                                  Fixed   
 SizeOf not including ABI alignment                              Fixed   
 @realloc signature                                              Fixed   
-@realloc OOM handling                                           Fixed
-Integer overflow in requestedSize + headerSize                  Fixed
+@realloc OOM handling                                           Fixed   
+Integer overflow in requestedSize + headerSize                  Fixed   
 FP128                                                           
 Dynamic array struct fields                                     
 scope handling (esp. same identifier)                           Fixed   
-union variants not beling lowered                               Fixed
+union variants not beling lowered                               Fixed   
 Builtin types vs types with scope                               
 MemberAccess allowed expressions                                
 Pointer size                                                    Fixed   
-DynamicArrayCache                                               Fixed
-short-circuit && / ||                                           Fixed
-Control block termination                                       Fixed
-f16 not working                                                 Fixed
+DynamicArrayCache                                               Fixed   
+short-circuit && / ||                                           Fixed   
+Control block termination                                       Fixed   
+f16 not working                                                 Fixed   
+static state                                                    
+
+TO BE INVESTIGATED
+
+for initializer scope in IRGenerator                            
+BinaryExpression return type on AND/OR                          

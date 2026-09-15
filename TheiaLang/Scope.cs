@@ -99,12 +99,15 @@ public class Scope : INode
     public Dictionary<string, Scope> Children { get; } = [];
     public Dictionary<string, SymbolInfo> Symbols { get; } = [];
     public SourePosition Pos => default;
+    public bool CanShadowParent { get; }
 
-    public Scope(string name, INode? declaringNode = null, Scope? parent = null)
+    public Scope(string name, bool canShadowParent = true, INode? declaringNode = null, Scope? parent = null)
     {
         Name = name;
         DeclaringNode = declaringNode;
         Parent = parent;
+        CanShadowParent = canShadowParent;
+
         if (Parent == null)
             return;
 
@@ -122,6 +125,8 @@ public class Scope : INode
     {
         if (Symbols.ContainsKey(symbolInfo.Name))
             Log.Error(6, $"Identifier '{symbolInfo.Name}' is already declared in the scope '{FullName}'");
+        if(!CanShadowParent && Parent != null && Parent.Symbols.ContainsKey(symbolInfo.Name))
+                Log.Error(27, $"Identifier '{symbolInfo.Name}' is already declared in the parent scope scope '{Parent.FullName}'");        
         Symbols[symbolInfo.Name] = symbolInfo;
     }
 

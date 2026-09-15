@@ -17,6 +17,13 @@ public static class IRGenerator
     static ulong labelCounter = 0;
     static string currentBlock;
 
+    readonly record struct LoopIRTarget(
+        string ContinueLabel,
+        string BreakLabel
+    );
+
+    static readonly Dictionary<ForStatement, LoopIRTarget> loopTargets = [];
+
     static LayoutCalc Layout;
 
     static bool AutoLog;
@@ -26,6 +33,7 @@ public static class IRGenerator
 
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, LayoutCalc layout, bool autoLog = true)
     {
+            
         if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
 
@@ -41,6 +49,7 @@ public static class IRGenerator
         AutoLog = autoLog;
         allocas.Clear();
         varTypes.Clear();
+        loopTargets.Clear();
 
         allocas.Push([]);
         varTypes.Push([]);
@@ -190,6 +199,8 @@ public static class IRGenerator
             IfStatement i                 => EmitIfStatement(i, sb),
             ForStatement f                => EmitForStatement(f, sb),
             ReturnStatement r             => EmitReturnStatement(r, sb),
+            BreakStatement b              => EmitBreakStatement(b, sb),
+            ContinueStatement c           => EmitContinueStatement(c, sb),
             ExpressionStatement e         => EmitExpressionStatement(e, sb),
             _ => throw new Exception($"Unknown Statement: {statement.GetType().Name}"),
         };
@@ -340,8 +351,8 @@ public static class IRGenerator
     static BlockTermination EmitForStatement(ForStatement forStatement, StringBuilder sb)
     {
         // Loop init
+        EnterScope(forStatement.HeadScope);
         EmitStatement(forStatement.Initialiser!, sb);
-        EnterScope(forStatement.Scope);
         string condLabel = $"for_cond{labelCounter}";
         string bodyLabel = $"for_body{labelCounter}";
         string iterLabel = $"for_iter{labelCounter}";
@@ -362,6 +373,16 @@ public static class IRGenerator
 
         BlockTermination bodyTermination = NotTerminated;
 
+        EnterScope(forStatement.BodyScope);
+
+        loopTargets.Add(
+            forStatement,
+            new LoopIRTarget(
+                ContinueLabel: iterLabel,
+                BreakLabel: endLabel
+            )
+        );
+
         foreach (IStatement statement in forStatement.Body)
         {
             BlockTermination bt = EmitStatement(statement, sb);
@@ -371,6 +392,9 @@ public static class IRGenerator
                 break;
             }
         }
+
+        ExitScope();    // body
+
         if (bodyTermination == NotTerminated)
             sb.AppendLine($"  br label %{iterLabel}");
         // Loop Iterator
@@ -382,7 +406,7 @@ public static class IRGenerator
         sb.AppendLine($"{endLabel}:");
         currentBlock = endLabel;
 
-        ExitScope();
+        ExitScope();    // head
         return NotTerminated;
     }
 
@@ -401,6 +425,24 @@ public static class IRGenerator
 
         sb.AppendLine($"  ret {LLVMType} {val}");
 
+        return Terminated;
+    }
+
+    static BlockTermination EmitBreakStatement(BreakStatement breakStatement, StringBuilder sb)
+    {
+        if(breakStatement.Target == null
+        || !loopTargets.TryGetValue(breakStatement.Target, out LoopIRTarget target))
+            throw new Exception("BreakStatement has no active resolved loop target");
+        sb.AppendLine($"  br label %{target.BreakLabel}");
+        return Terminated;
+    }
+
+    static BlockTermination EmitContinueStatement(ContinueStatement continueStatement, StringBuilder sb)
+    {
+        if(continueStatement.Target == null
+        || !loopTargets.TryGetValue(continueStatement.Target, out LoopIRTarget target))
+            throw new Exception("BreakStatement has no active resolved loop target");
+        sb.AppendLine($"  br label %{target.ContinueLabel}");
         return Terminated;
     }
 

@@ -112,20 +112,36 @@ static class AstPrinter
                 }
                 break;
             case ForStatement forStatement:
-                w.WriteLine($"{Indent(indent)}For:{TryScope(forStatement.Scope)}");
+                w.WriteLine($"{Indent(indent)}For:{TryScope(forStatement.HeadScope)}");
                 w.WriteLine($"{Indent(indent + 1)}Initialiser:");
                 PrintStatement(forStatement.Initialiser!, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Condition:");
                 PrintExpression(forStatement.Condition!, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Iterator:");
                 PrintStatement(forStatement.Iterator!, w, indent + 2);
+                w.WriteLine($"{Indent(indent + 1)}Body:{TryScope(forStatement.BodyScope)}");
                 PrintBlock(forStatement.Body, w, indent + 2);
                 break;
             case ReturnStatement r:
                     w.WriteLine($"{Indent(indent)}Return: {TryType(r.Expression?.ResolvedType)}");
                 if(r.Expression != null)
                     PrintExpression(r.Expression, w, indent + 1);
-                    
+                break;
+            case BreakStatement b:
+                    string bts = TryScope(null);
+                    if(b.Target != null)
+                    bts = $"{b.Target.HeadScope.Name}";
+                    w.WriteLine($"{Indent(indent)}Break: Target: '{bts}'");
+                break;
+            case ContinueStatement c:
+                    string chs = TryScope(null);
+                    string cbs = TryScope(null);
+                    if(c.Target != null)
+                    {
+                        chs = $"{c.Target.HeadScope.Name}";
+                        cbs = $"{c.Target.BodyScope.Name}";
+                    }
+                    w.WriteLine($"{Indent(indent)}Continue: Loop: '{chs}' Target: '{cbs}'");
                 break;
             case ExpressionStatement e:
                 w.WriteLine($"{Indent(indent)}Expression:");
@@ -219,7 +235,7 @@ static class AstPrinter
 
     static string Indent(int n) => new string(' ', 2 * n);
     static string TryType(TypeInfo? typeInfo) => string.IsNullOrEmpty(typeInfo?.TypeName) ? "" : $"{typeInfo.TypeKind}:{typeInfo.TypeName}";
-    static string TryScope(Scope scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
+    static string TryScope(Scope? scope) => scope == null ? " | Scope: ---" : $" | Scope: '{scope.Name}'";
     static string TryPos(SourePosition position) => position == SourePosition.None ? " | ()" : $" | ({position.Row} : {position.Column})";
     
     #endregion

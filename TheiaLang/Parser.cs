@@ -142,7 +142,7 @@ public class Parser(List<Token> tokens)
 
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo, name, parameters, body, startPosition);
 
-        EnterNewScope(name, functionDeclaration);
+        EnterNewScope(name, true, functionDeclaration);
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
@@ -356,19 +356,19 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Keyword_for))
         {
-            EnterNewScope($"for_{pos}");
+            Scope headScope = EnterNewScope($"for_head{pos}");
             Consume(TokenType.Punctuation_ParenthesisL, "Expected '(' after for keyword");
             IStatement initialiser = ParseDeclaration();
             IExpression condition = ParseExpression();
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after loop condition");
             IStatement iterator = ParseStatement(requireSemicolon: false);
             Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after loop head");
-
-            Scope bodyScope = currentScope!;
+            Scope bodyScope = EnterNewScope($"for_body{pos}", canShadowParent: false);
             List<IStatement> body = ParseBlock();
-            ExitScope();
+            ExitScope();    // body
+            ExitScope();    // head
 
-            return new ForStatement(initialiser, condition, iterator, body, bodyScope, startPosition);
+            return new ForStatement(initialiser, condition, iterator, body, headScope, bodyScope, startPosition);
         }
 
         if (Match(TokenType.Keyword_return))
@@ -381,6 +381,20 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_Semicolon, "Expected ';' after return value");
             return returnStatement;
+        }
+
+        if (Match(TokenType.Keyword_break))
+        {
+            BreakStatement breakStatement = new BreakStatement(null, startPosition);
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after break statement");
+            return breakStatement;
+        }
+
+        if (Match(TokenType.Keyword_continue))
+        {
+            ContinueStatement continueStatement = new ContinueStatement(null, startPosition);
+            Consume(TokenType.Punctuation_Semicolon, "Expected ';' after continue statement");
+            return continueStatement;
         }
 
         // assignment: identifier '=' expr ';'
@@ -998,9 +1012,9 @@ public class Parser(List<Token> tokens)
 
     Token Previous() => tokens[pos - 1];
 
-    public Scope EnterNewScope(string name, INode? declaringNode = null)
+    public Scope EnterNewScope(string name, bool canShadowParent = true, INode? declaringNode = null)
     {
-        currentScope = new Scope(name, declaringNode, currentScope);
+        currentScope = new Scope(name, canShadowParent, declaringNode, currentScope);
         return currentScope;
     }
 

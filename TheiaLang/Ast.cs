@@ -287,7 +287,8 @@ public sealed class ForStatement(
     IExpression? Condition,
     IStatement? iterator,
     List<IStatement> body,
-    Scope scope,
+    Scope headScope,
+    Scope bodyScope,
     SourePosition Pos = default
 ) : IStatement
 { 
@@ -297,7 +298,8 @@ public sealed class ForStatement(
 
     public IStatement? Iterator = iterator;
     public List<IStatement> Body = body;
-    public Scope Scope = scope;
+    public Scope HeadScope = headScope;
+    public Scope BodyScope = bodyScope;
 
     public SourePosition Pos { get; } = Pos;
 }
@@ -312,6 +314,25 @@ public sealed class ReturnStatement(
 
     public SourePosition Pos { get; } = Pos;
 }
+
+public sealed class BreakStatement(
+    ForStatement? target,
+    SourePosition Pos = default
+) : IStatement
+{
+    public ForStatement? Target { get; set; } = target;
+    public SourePosition Pos { get; } = Pos;
+}
+
+public sealed class ContinueStatement(
+    ForStatement? target,
+    SourePosition Pos = default
+) : IStatement
+{
+    public ForStatement? Target { get; set; } = target;
+    public SourePosition Pos { get; } = Pos;
+}
+
 #endregion
 
 #region  Expressions
