@@ -781,7 +781,7 @@ public static class SemanticAnalyser
     
     static readonly bool[,] LosslessTypeInterop = new bool[15, 15]
     {
-        //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void
+        //from  \  to   bool    int     s8      s16     s32     s64     s128    s256    float   f16     f32     f64     f128    void    ptr
         /*bool  */  {   true,   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false},
         /*int   */  {   false,  true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true,   true ,  false,  false},
         /*s8    */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false,  false,  false},
@@ -933,9 +933,13 @@ public static class SemanticAnalyser
 
     static bool CanImplicitlyCast(TypeInfo fromType, TypeInfo toType)
     {
-        if (fromType.BuiltinType == VOIDPTR && toType.BuiltinType == VOIDPTR)
-            return CanImplicitlyCast(fromType.Pointee!,
-                                     toType.Pointee!);
+        if (fromType.BuiltinType == VOIDPTR && toType.BuiltinType == VOIDPTR)   // only implicit @T -> @void allowed
+        {
+            if(fromType.Pointee!.TypeKind != Void && toType.Pointee!.TypeKind != Void)
+                return CanImplicitlyCast(fromType.Pointee!,
+                                         toType.Pointee!);
+            return toType.Pointee!.TypeKind == Void;
+        }
 
         if (fromType.BuiltinType == S64 && toType.BuiltinType == VOIDPTR)    // assigning ptr address to s64
             return true;

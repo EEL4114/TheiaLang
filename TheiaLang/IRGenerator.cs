@@ -33,7 +33,6 @@ public static class IRGenerator
 
     public static void Emit(ProgramNode program, Scope globalScope, string pathLl, LayoutCalc layout, bool autoLog = true)
     {
-            
         if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
 

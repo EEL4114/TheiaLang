@@ -32,4 +32,4 @@ anonymous data structures               done
 break, continue                         done
 for body scope without shadowig         done
 require return value handling           
-allow implicit @T -> @void              
+allow implicit @T -> @void              done

@@ -94,11 +94,11 @@ int main()
 
     f32 HP = entity.health;
     @f32 healthPtr = @HP;       // address of 'HP'
-    $healthPtr = 5;              // implicit ptr dereference of 'healthPtr'
+    $healthPtr = 5;             // implicit ptr dereference of 'healthPtr'
     
     float moreHealth = 1 + entity.health;
     healthPtr = @moreHealth;
-    voidPtr = @void(healthPtr);
+    voidPtr = healthPtr;        // implicit @T -> @void allowed
     HP = $healthPtr;
 
     @[8]f32 FPptr;
