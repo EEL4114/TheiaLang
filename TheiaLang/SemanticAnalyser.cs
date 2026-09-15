@@ -884,13 +884,13 @@ public static class SemanticAnalyser
          || binaryOperator == BinaryOperator.OR)
             return Builtins.GetTypeInfo(BOOL);
 
-        BuiltinType? shared = GetImplicitPromotionType(typeA, typeB)!;
+        BuiltinType? shared = GetImplicitPromotionType(typeA, typeB);
 
         if (shared != BOOL && shared != null || shared == VOIDPTR)
             if (binaryOperator == BinaryOperator.Greater || binaryOperator == BinaryOperator.Less)
                 return Builtins.GetTypeInfo(BOOL);
             else
-                return Builtins.GetTypeInfo((BuiltinType)shared)    ;
+                return Builtins.GetTypeInfo((BuiltinType)shared);
 
         throw new Exception($"Operator '{binaryOperator}' is not valid for type {shared}");
     }
