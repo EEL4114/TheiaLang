@@ -41,8 +41,11 @@ short-circuit && / ||                                           Fixed
 Control block termination                                       Fixed   
 f16 not working                                                 Fixed   
 static state                                                    
+for initializer scope in IRGenerator                            Fixed
+Disallow struct A{B b;} struct B{A a;}                          
+Disallow struct A{A a;}                                         
+Disallow struct A{[]A a;}                                       
 
 TO BE INVESTIGATED
 
-for initializer scope in IRGenerator                            
 BinaryExpression return type on AND/OR                          

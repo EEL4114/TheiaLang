@@ -162,6 +162,10 @@ int CompileFile(string filePath,
     using StreamWriter writer = new StreamWriter(writerPath);
     AstPrinter.Print(ast, writer, timestamps);
     Log.Link(writerPath, "Preload AST: ");
+    string sw2Path = $"{DEBUG_PATH_REL}{programName}.scope";
+    using StreamWriter sw2 = new StreamWriter(sw2Path);
+    ScopePrinter.Print(filePath, globalScope, sw2);
+    Log.Link(sw2Path, "Scope Tree: ");
 
 
     printTimer.Stop();
@@ -171,10 +175,10 @@ int CompileFile(string filePath,
 
     analysisTimer.Stop();
     printTimer.Start();
-    string sw2Path = $"{DEBUG_PATH_REL}{programName}.scope";
-    using StreamWriter sw2 = new StreamWriter(sw2Path);
-    ScopePrinter.Print(filePath, globalScope, sw2);
-    Log.Link(sw2Path, "Scope Tree: ");
+    string sw3Path = $"{DEBUG_PATH_REL}{programName}_full.scope";
+    using StreamWriter sw3 = new StreamWriter(sw3Path);
+    ScopePrinter.Print(filePath, globalScope, sw3);
+    Log.Link(sw3Path, "Full Scope Tree: ");
 
     string writer2Path = $"{DEBUG_PATH_REL}{programName}_full.ast";
     using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH_REL}{programName}_full.ast");
