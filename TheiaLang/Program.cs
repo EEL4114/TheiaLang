@@ -180,6 +180,7 @@ int CompileFile(string filePath,
     using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH_REL}{programName}_full.ast");
     AstPrinter.Print(ast, writer2, timestamps);
     Log.Link(writer2Path, "Full AST: ");
+    printTimer.Stop();
 
     LayoutCalc layout = new LayoutCalc(CompilationTarget.x86_64_windows);
     layout.GenerateLayout(ast);
