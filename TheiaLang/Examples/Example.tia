@@ -24,7 +24,7 @@ struct Vector2
 
 float Foo(Entity entity)
 {
-    float f = entity.transform.position.x;
+    float f = entity/*/*super*/nasty comment*/.transform.position.x;
     return f * 2;
 }
 
