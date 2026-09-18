@@ -141,8 +141,16 @@ public class Parser(List<Token> tokens)
         List<IStatement> body = [];
 
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo, name, parameters, body, startPosition);
+        currentScope!.Declare(new SymbolInfo(
+                        functionDeclaration.Name,
+                        returnTypeInfo,
+                        SymbolKind.Function,
+                        functionDeclaration.Parameters
+                        ));
 
         EnterNewScope(name, true, functionDeclaration);
+        functionDeclaration.Scope = currentScope;
+
         if (!Check(TokenType.Punctuation_ParenthesisR))
         {
             do
@@ -159,23 +167,12 @@ public class Parser(List<Token> tokens)
             } while (Match(TokenType.Punctuation_Comma));
         }
 
-        // we will not deal with this for now!!!
-
         Consume(TokenType.Punctuation_ParenthesisR, "Expected ')' after parameters");
 
-        functionDeclaration.Scope = currentScope;
         // currentScope!.DeclaringNode = functionDeclaration;
         body.AddRange(ParseBlock());
 
-        // fill out AST reference
         ExitScope();
-
-        currentScope!.Declare(new SymbolInfo(
-                                functionDeclaration.Name,
-                                returnTypeInfo,
-                                SymbolKind.Function,
-                                functionDeclaration.Parameters
-                                ));
 
         return functionDeclaration;
     }
@@ -190,13 +187,28 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
 
         List<TypeNamePair> fields = [];
-        List<string> fieldNames = [];
+        List<string> fieldNames   = [];
         List<TypeInfo> fieldTypes = [];
         List<FunctionDeclaration> functions = [];
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
+        structDeclaration.ResolvedType = new TypeInfo(
+            name,
+            Struct,
+            null,
+            fieldNames: fieldNames,
+            fieldTypes: fieldTypes);
+
+        SymbolInfo symbolInfo = new SymbolInfo(
+            name,
+            structDeclaration.ResolvedType,
+            SymbolKind.Type,
+            fields);
+
+        currentScope!.Declare(symbolInfo);
+
         structDeclaration.Scope = EnterNewScope(name);
-        currentScope!.DeclaringNode = structDeclaration;
+        currentScope.DeclaringNode = structDeclaration;
 
         if (!Check(TokenType.Punctuation_BraceR))
         {
@@ -223,20 +235,7 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
 
         ExitScope();
-        structDeclaration.ResolvedType = new TypeInfo(
-            name,
-            Struct,
-            null,
-            fieldNames: fieldNames,
-            fieldTypes: fieldTypes);
 
-        SymbolInfo symbolInfo = new SymbolInfo(
-            name,
-            structDeclaration.ResolvedType,
-            SymbolKind.Type,
-            fields);
-
-        currentScope.Declare(symbolInfo);
         return structDeclaration;
     }
 
@@ -261,6 +260,14 @@ public class Parser(List<Token> tokens)
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
         unionDeclaration.Scope = EnterNewScope(name);
+
+        currentScope!.Declare(new SymbolInfo(
+                        name,
+                        unionInfo,
+                        SymbolKind.Type,
+                        variants
+        ));
+
         currentScope!.DeclaringNode = unionDeclaration;
 
         if (!Check(TokenType.Punctuation_BraceR))
@@ -293,12 +300,6 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_BraceR, "Expected '}' after union variants");
 
         ExitScope();
-        currentScope!.Declare(new SymbolInfo(
-                              name,
-                              unionInfo,
-                              SymbolKind.Type,
-                              variants
-        ));
 
         return unionDeclaration;
     }

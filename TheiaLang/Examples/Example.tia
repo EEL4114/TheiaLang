@@ -259,3 +259,12 @@ s32 LoopTermination2()
 
     return 3;
 }
+
+s32 Rec(s32 a, s32 n) {
+    if(n == 0) {
+        return 1;
+    }
+    else {
+        return a * Rec(a, n - 1);
+    }
+}

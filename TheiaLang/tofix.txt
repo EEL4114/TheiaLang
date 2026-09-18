@@ -7,7 +7,7 @@ more proper compiler messages
 STABILITY
 
 ENTRY                                                           STATUS
-Reserve function / struct names early                           
+Reserve function / struct names early                           Fixed
 Unique var names                                                
 realloc(ptr, 0)                                                 
 Free(null)                                                      
