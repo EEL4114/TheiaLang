@@ -1,35 +1,36 @@
-execution                               done
-structs                                 done
-struct functions                        done
-basic scope                             done
-unions                                  partial
-basic function calls                    done
-instantiation                           done
-member access                           done
-basic semantic analysis                 done
-basic if statements                     done
-basic for loops                         done
-basic ptrs                              done
-basic arrays                            done
-testing                                 done
-comments                                done
-dynamic arrays                          partial
-namespaces                              
-improve parser debugging                
-function overloading                    
-strings                                 
-scope annotations for functions         
-lambdas                                 
-strucural typing                        
-hex literals                            
-owning ptrs                             
-named parameters                        
-comptime execution                      
-array ops                               
-const                                   
-nullability                             
-anonymous data structures               done
-break, continue                         done
-for body scope without shadowig         done
-require return value handling           
-allow implicit @T -> @void              done
+execution                                                       done
+structs                                                         done
+struct functions                                                done
+basic scope                                                     done
+unions                                                          partial
+basic function calls                                            done
+instantiation                                                   done
+member access                                                   done
+basic semantic analysis                                         done
+basic if statements                                             done
+basic for loops                                                 done
+basic ptrs                                                      done
+basic arrays                                                    done
+testing                                                         done
+comments                                                        done
+dynamic arrays                                                  partial
+namespaces                                                      
+improve parser debugging                                        
+function overloading                                            
+strings                                                         
+scope annotations for functions                                 
+lambdas                                                         
+strucural typing                                                
+hex literals                                                    
+owning ptrs                                                     
+named parameters                                                
+comptime execution                                              
+array ops                                                       
+const                                                           
+nullability                                                     
+anonymous data structures                                       done
+break, continue                                                 done
+for body scope without shadowig                                 done
+require return value handling                                   
+allow implicit @T -> @void                                      done
+improve error messages for cyclic type defs                     

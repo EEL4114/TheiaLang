@@ -42,9 +42,9 @@ Control block termination                                       Fixed
 f16 not working                                                 Fixed   
 static state                                                    
 for initializer scope in IRGenerator                            Fixed
-Disallow struct A{B b;} struct B{A a;}                          
-Disallow struct A{A a;}                                         
-Disallow struct A{[]A a;}                                       
+Disallow struct A{B b;} struct B{A a;}                          Fixed
+Disallow struct A{A a;}                                         Fixed
+Disallow struct A{[]A a;}                                       Fixed
 
 TO BE INVESTIGATED
 

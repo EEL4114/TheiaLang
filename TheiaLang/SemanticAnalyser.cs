@@ -87,10 +87,12 @@ public static class SemanticAnalyser
             field.ResolvedType = fieldInfo.Type;
         }
 
+
         structDeclaration.ResolvedType.FieldTypes = structDeclaration.Fields
                                                         .Select(f => f.ResolvedType)
                                                         .ToList();
 
+        ValidateType(structDeclaration.ResolvedType, []);
         ExitScope();
     }
 
@@ -110,11 +112,43 @@ public static class SemanticAnalyser
             variant.ResolvedType = variantInfo.Type;
         }
 
+
         unionDeclaration.ResolvedType.FieldTypes = unionDeclaration.Variants
                                                        .Select(v => v.ResolvedType)
                                                        .ToList();
 
+        ValidateType(unionDeclaration.ResolvedType, []);
         ExitScope();
+    }
+
+    static bool ValidateType(TypeInfo type, HashSet<TypeInfo> active)
+    {
+        switch(type.TypeKind)
+        {
+            case Array:
+                return ValidateType(type.ElementType!, active);
+            case Struct or Union:
+                if(active.Contains(type))
+                {
+                    Log.Error(29, $"{type.TypeName}: Cyclic type definition.");
+                }
+
+                active.Add(type);
+
+                foreach(TypeInfo fieldtype in type.FieldTypes!)
+                {
+                    if(!ValidateType(fieldtype, active))
+                    {
+                        Log.Error(29, $"{type.TypeName}: Cyclic type definition.");
+                        return false;
+                    }
+                }
+
+                active.Remove(type);
+                return true;
+            default: 
+                return true;
+        };
     }
 
     // TODO: generalise this a bit more (unions etc.)
