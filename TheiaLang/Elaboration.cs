@@ -1,18 +1,18 @@
 namespace TheiaLang;
 using static TypeKind;
 using static BuiltinType;
-static class Elaboration
+class Elaboration
 {
     // the template we use for dynamic arrays
     public const string DYNAMIC_ARRAY_PREFIX = "__dynamic_array";
     public const string DYNAMIC_ARRAY_INDEX = "__index";
 
-    static Dictionary<string, SymbolInfo> DynamicArrayCache = [];
-    static Scope currentScope;
-    static ProgramNode PreloadAST;
-    static ProgramNode ProgramAST;
-    static Scope GlobalScope;
-    static Scope PreloadScope;
+    Dictionary<string, SymbolInfo> DynamicArrayCache = [];
+    Scope currentScope;
+    ProgramNode PreloadAST;
+    ProgramNode ProgramAST;
+    Scope GlobalScope;
+    Scope PreloadScope;
 
     static readonly string[] builtinFunctions =
     [
@@ -22,7 +22,7 @@ static class Elaboration
         "TypeSize",
     ];
 
-    public static (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
+    public (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
                                                                      Scope programScope, ProgramNode programAST)
     {
         GlobalScope = programScope;
@@ -65,7 +65,7 @@ static class Elaboration
         return (ProgramAST, GlobalScope);
     }
 
-    static void IncludeBuiltinFn(string name)
+    void IncludeBuiltinFn(string name)
     {
         // TODO this is very slow ofc but should work for now
         foreach (INode node in PreloadAST.Nodes)
@@ -80,7 +80,7 @@ static class Elaboration
             }
     }
 
-    static void AnalyseStruct(StructDeclaration structDeclaration)
+    void AnalyseStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
         foreach(TypeNamePair field in structDeclaration.Fields)
@@ -96,7 +96,7 @@ static class Elaboration
         ExitScope();
     }
 
-    static void AnalyseUnion(UnionDeclaration unionDeclaration)
+    void AnalyseUnion(UnionDeclaration unionDeclaration)
     {
         currentScope = unionDeclaration.Scope!;
         foreach(TypeNamePair variant in unionDeclaration.Variants)
@@ -113,7 +113,7 @@ static class Elaboration
     }
 
 
-    static void AnalyseFunctionBody(FunctionDeclaration function)
+    void AnalyseFunctionBody(FunctionDeclaration function)
     {
         currentScope = function.Scope!;
         AnalyseStatements(function.Statements);
@@ -121,7 +121,7 @@ static class Elaboration
         ExitScope();
     }
 
-    static void AnalyseStatements(List<IStatement> statements)
+    void AnalyseStatements(List<IStatement> statements)
     {
         /// we could have dynamic arrays occur in the following places
         /// 1 - declared directly:   []s32
@@ -154,7 +154,7 @@ static class Elaboration
         }
     }
 
-    static bool CanSubstituteDynamicArray(TypeInfo sourceType, out TypeInfo newType)
+    bool CanSubstituteDynamicArray(TypeInfo sourceType, out TypeInfo newType)
     {
         if(sourceType.ArrayLength == 0)
         {
@@ -178,7 +178,7 @@ static class Elaboration
         return true;
     }
 
-    static TypeInfo SubstituteDynamicArray(TypeInfo sourceType)
+    TypeInfo SubstituteDynamicArray(TypeInfo sourceType)
     {
         // Log.Info(typeName);
         // (1) check if that kind of array is already declared as struct
@@ -221,7 +221,7 @@ static class Elaboration
 
     #region Helpers
 
-    static StructDeclaration CreateDynamicArrayStruct(string name, TypeInfo elementType)
+    StructDeclaration CreateDynamicArrayStruct(string name, TypeInfo elementType)
     {
         Scope scope = currentScope;
         currentScope = GlobalScope;
@@ -285,13 +285,13 @@ static class Elaboration
         return sd;
     }
 
-    static Scope EnterNewScope(string name, bool canShadowParent = true, INode? declaringNode = null)
+    Scope EnterNewScope(string name, bool canShadowParent = true, INode? declaringNode = null)
     {
         currentScope = new Scope(name, canShadowParent, declaringNode, currentScope);
         return currentScope;
     }
 
-    static void ExitScope()
+    void ExitScope()
     {
         currentScope = currentScope.Exit();
     }

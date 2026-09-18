@@ -155,7 +155,7 @@ int CompileFile(string filePath,
     (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
 
     parseTimer.Stop();
-    (ast, globalScope) = Elaboration.Lower(preloadScope, preloadAST, globalScope, ast);
+    (ast, globalScope) = new Elaboration().Lower(preloadScope, preloadAST, globalScope, ast);
     printTimer.Start();
 
     string writerPath = $"{DEBUG_PATH_REL}{programName}.ast";
@@ -171,7 +171,7 @@ int CompileFile(string filePath,
     printTimer.Stop();
     analysisTimer.Start();
 
-    (ast, globalScope) = SemanticAnalyser.AnalyseProgram(ast, globalScope);
+    (ast, globalScope) = new SemanticAnalyser().AnalyseProgram(ast, globalScope);
 
     analysisTimer.Stop();
     printTimer.Start();
@@ -195,7 +195,7 @@ int CompileFile(string filePath,
     IRGenTimer.Start();
 
     string irgenPath = $"{OUTPUT_PATH_REL}{programName}.ll";
-    IRGenerator.Emit(ast, globalScope, irgenPath, layout, insertLogs);
+    new IRGenerator().Emit(ast, globalScope, irgenPath, layout, insertLogs);
     Log.Link(irgenPath, "IR: ");
 
     IRGenTimer.Stop();

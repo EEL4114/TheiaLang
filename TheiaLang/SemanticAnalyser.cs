@@ -4,13 +4,13 @@ using static CastOp;
 using static TypeKind;
 using static BuiltinType;
 
-public static class SemanticAnalyser
+public class SemanticAnalyser
 {
-    static Scope currentScope = new Scope("");
-    static Scope GlobalScope;
-    static Stack<ForStatement> loopStack = [];
+    Scope currentScope = new Scope("");
+    Scope GlobalScope;
+    Stack<ForStatement> loopStack = [];
 
-    public static (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
+    public (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
         currentScope = globalScope;
         GlobalScope = currentScope;
@@ -66,7 +66,7 @@ public static class SemanticAnalyser
 
     #region Functions, Structs
 
-    static void ResolveStruct(StructDeclaration structDeclaration)
+    void ResolveStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
         foreach (TypeNamePair field in structDeclaration.Fields)
@@ -96,7 +96,7 @@ public static class SemanticAnalyser
         ExitScope();
     }
 
-    static void ResolveUnion(UnionDeclaration unionDeclaration)
+    void ResolveUnion(UnionDeclaration unionDeclaration)
     {
         currentScope = unionDeclaration.Scope!;
 
@@ -152,7 +152,7 @@ public static class SemanticAnalyser
     }
 
     // TODO: generalise this a bit more (unions etc.)
-    static void ResolveFunctionsInStruct(StructDeclaration structDeclaration)
+    void ResolveFunctionsInStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
@@ -164,7 +164,7 @@ public static class SemanticAnalyser
         ExitScope();
     }
 
-    static void ResolveFunctionTypeAndArgs(FunctionDeclaration function)
+    void ResolveFunctionTypeAndArgs(FunctionDeclaration function)
     {
         currentScope = function.Scope!;
         currentScope.TryLookup(function.Name, out SymbolInfo? functionInfo, out _);
@@ -185,7 +185,7 @@ public static class SemanticAnalyser
         ExitScope();
     }
 
-    static void AnalyseStruct(StructDeclaration structDeclaration)
+    void AnalyseStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
         foreach (FunctionDeclaration function in structDeclaration.Functions)
@@ -194,7 +194,7 @@ public static class SemanticAnalyser
         ExitScope();
     }
 
-    static void AnalyseFunctionBody(FunctionDeclaration function)
+    void AnalyseFunctionBody(FunctionDeclaration function)
     {
         currentScope = function.Scope!;
         foreach (IStatement statement in function.Statements)
@@ -207,7 +207,7 @@ public static class SemanticAnalyser
 
     #region  Statements
 
-    static void AnalyseStatement(IStatement statement)
+    void AnalyseStatement(IStatement statement)
     {
         switch (statement)
         {
@@ -335,7 +335,7 @@ public static class SemanticAnalyser
 
     #region  Expressions
 
-    static IExpression AnalyseExpression(IExpression expression)
+    IExpression AnalyseExpression(IExpression expression)
     {
         switch (expression)
         {
@@ -679,7 +679,7 @@ public static class SemanticAnalyser
 
     #region Helpers
 
-    static void AnalyseArguments(CallExpression call, SymbolInfo sInfo)
+    void AnalyseArguments(CallExpression call, SymbolInfo sInfo)
     {
         if (call.Arguments.Count != sInfo.Parameters.Count)
             throw new Exception($"Function '{sInfo.Name}' expects {sInfo.Parameters.Count}"
@@ -696,7 +696,7 @@ public static class SemanticAnalyser
         call.ResolvedType = sInfo.Type;
     }
 
-    static TypeInfo UpdateTypeInfo(TypeInfo type)
+    TypeInfo UpdateTypeInfo(TypeInfo type)
     {
         if (type.ArrayLength != null)
         {
@@ -712,13 +712,13 @@ public static class SemanticAnalyser
             return ResolveType(type.TypeName);
     }
 
-    static TypeInfo ResolveType(string typeOrIdentifier)
+    TypeInfo ResolveType(string typeOrIdentifier)
     {
         TypeInfo typeInfo = GetTypeInfo(typeOrIdentifier);
         return typeInfo;
     }
 
-    static TypeInfo GetTypeInfo(string typeOrName)
+    TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
             return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..]));
@@ -732,7 +732,7 @@ public static class SemanticAnalyser
         return symbolInfo!.Type;
     }
 
-    static TypeInfo GetSymbolType(string name)
+    TypeInfo GetSymbolType(string name)
     {
         if (!currentScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{name}' is not defined in {currentScope.FullName}");
@@ -740,7 +740,7 @@ public static class SemanticAnalyser
         return symbolInfo!.Type;
     }
     
-    static Scope SetScope(Scope scope)
+    Scope SetScope(Scope scope)
     {
         Scope previous = currentScope;
         currentScope   = scope;
@@ -748,7 +748,7 @@ public static class SemanticAnalyser
         return previous;
     }
 
-    static void EnterScope(Scope scope)
+    void EnterScope(Scope scope)
     {
         if (currentScope == null)
             throw new Exception("'currentScope' is null!");
@@ -759,7 +759,7 @@ public static class SemanticAnalyser
         currentScope = scope;
     }
 
-    static void ExitScope()
+    void ExitScope()
     {
         currentScope = currentScope.Exit();
     }
@@ -793,7 +793,7 @@ public static class SemanticAnalyser
         return expression;
     }
 
-    static FunctionDeclaration GetEnclosingFunction()
+     FunctionDeclaration GetEnclosingFunction()
     {
         Scope? scope = currentScope;
 

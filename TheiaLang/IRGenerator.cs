@@ -7,31 +7,31 @@ using static BlockTermination;
 using System.Text;
 using System.Globalization;
 
-public static class IRGenerator
+public class IRGenerator
 {
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
-    static readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
-    static readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
-    static ulong tmpCounter = 0;
-    static Scope? currentScope;
-    static ulong labelCounter = 0;
-    static string currentBlock;
+    readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
+    readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
+    ulong tmpCounter = 0;
+    Scope? currentScope;
+    ulong labelCounter = 0;
+    string currentBlock;
 
     readonly record struct LoopIRTarget(
         string ContinueLabel,
         string BreakLabel
     );
 
-    static readonly Dictionary<ForStatement, LoopIRTarget> loopTargets = [];
+    readonly Dictionary<ForStatement, LoopIRTarget> loopTargets = [];
 
-    static LayoutCalc Layout;
+    LayoutCalc Layout;
 
-    static bool AutoLog;
+    bool AutoLog;
 
     const string INTRINSICS_PATH = "Intrinsics.ll";
     static readonly string INTRINSICS_PATH_REL = Path.Combine(AppContext.BaseDirectory, INTRINSICS_PATH);
 
-    public static void Emit(ProgramNode program, Scope globalScope, string pathLl, LayoutCalc layout, bool autoLog = true)
+    public void Emit(ProgramNode program, Scope globalScope, string pathLl, LayoutCalc layout, bool autoLog = true)
     {
         if (!File.Exists(INTRINSICS_PATH_REL))
             Log.Error(19, "Intrinsics module could not be located");
@@ -99,7 +99,7 @@ public static class IRGenerator
         File.WriteAllText(pathLl, sb.ToString());
     }
 
-    static void EmitStructType(StructDeclaration sd, StringBuilder sb)
+    void EmitStructType(StructDeclaration sd, StringBuilder sb)
     {
         List<string> fieldLLVMTypes = [];
         foreach (TypeNamePair field in sd.Fields)
@@ -118,7 +118,7 @@ public static class IRGenerator
         varTypes.Peek()[sd.Name] = sd.ResolvedType;
     }
 
-    static void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
+    void EmitUnionType(UnionDeclaration ud, StringBuilder sb)
     {
         TypeLayout unionLayout = Layout.GetLayout(ud.ResolvedType);
         long alignment = unionLayout.Alignment;
@@ -138,7 +138,7 @@ public static class IRGenerator
 
     #region Functions
 
-    static void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
+    void EmitFunction(FunctionDeclaration fn, StringBuilder sb)
     {
         EnterScope(fn.Scope!);
 
@@ -189,7 +189,7 @@ public static class IRGenerator
 
     // true: terminated (return)
     // false: not terminated
-    static BlockTermination EmitStatement(IStatement statement, StringBuilder sb)
+    BlockTermination EmitStatement(IStatement statement, StringBuilder sb)
         => statement switch
         {
             VariableDeclaration v         => EmitVariableDeclaration(v, sb),
@@ -204,7 +204,7 @@ public static class IRGenerator
             _ => throw new Exception($"Unknown Statement: {statement.GetType().Name}"),
         };
 
-    static BlockTermination EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
+    BlockTermination EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
         string LLVMType = TypeToLLVM(variableDeclaration.ResolvedType!)!;
 
@@ -244,7 +244,7 @@ public static class IRGenerator
         return NotTerminated;
     }
 
-    static BlockTermination EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
+    BlockTermination EmitAssignmentStatement(AssignmentStatement assignment, StringBuilder sb)
     {
         (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
@@ -255,7 +255,7 @@ public static class IRGenerator
         return NotTerminated;
     }
 
-    static BlockTermination EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
+    BlockTermination EmitCompoundAssignmentStatement(CompoundAssignmentStatement assignment, StringBuilder sb)
     {
         (string ptr, string LLVMType) = EmitAddressOf(assignment.Target, sb);
 
@@ -276,7 +276,7 @@ public static class IRGenerator
         return NotTerminated;
     }
 
-    static BlockTermination EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
+    BlockTermination EmitIfStatement(IfStatement ifStatement, StringBuilder sb)
     {
         BlockTermination blockTermination = NotTerminated;
         
@@ -347,7 +347,7 @@ public static class IRGenerator
         return blockTermination;
     }
 
-    static BlockTermination EmitForStatement(ForStatement forStatement, StringBuilder sb)
+    BlockTermination EmitForStatement(ForStatement forStatement, StringBuilder sb)
     {
         // Loop init
         EnterScope(forStatement.HeadScope);
@@ -409,7 +409,7 @@ public static class IRGenerator
         return NotTerminated;
     }
 
-    static BlockTermination EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
+    BlockTermination EmitReturnStatement(ReturnStatement returnStatement, StringBuilder sb)
     {
         (StringBuilder code, string val) = EmitExpression(returnStatement.Expression);
         sb.Append(code);
@@ -427,7 +427,7 @@ public static class IRGenerator
         return Terminated;
     }
 
-    static BlockTermination EmitBreakStatement(BreakStatement breakStatement, StringBuilder sb)
+    BlockTermination EmitBreakStatement(BreakStatement breakStatement, StringBuilder sb)
     {
         if(breakStatement.Target == null
         || !loopTargets.TryGetValue(breakStatement.Target, out LoopIRTarget target))
@@ -436,7 +436,7 @@ public static class IRGenerator
         return Terminated;
     }
 
-    static BlockTermination EmitContinueStatement(ContinueStatement continueStatement, StringBuilder sb)
+    BlockTermination EmitContinueStatement(ContinueStatement continueStatement, StringBuilder sb)
     {
         if(continueStatement.Target == null
         || !loopTargets.TryGetValue(continueStatement.Target, out LoopIRTarget target))
@@ -445,7 +445,7 @@ public static class IRGenerator
         return Terminated;
     }
 
-    static BlockTermination EmitExpressionStatement(ExpressionStatement stmt, StringBuilder sb)
+    BlockTermination EmitExpressionStatement(ExpressionStatement stmt, StringBuilder sb)
     {
         (StringBuilder code, _) = EmitExpression(stmt.Expression);
         sb.Append(code);  // discard the result, but emit code for side effects
@@ -456,7 +456,7 @@ public static class IRGenerator
     #endregion
 
     #region Expressions
-    static (StringBuilder, string value) EmitExpression(IExpression expression)
+    (StringBuilder, string value) EmitExpression(IExpression expression)
     {
         StringBuilder code = new StringBuilder();
         return expression switch
@@ -473,7 +473,7 @@ public static class IRGenerator
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
-    static (StringBuilder code, string value) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
+    (StringBuilder code, string value) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType!;
         switch (unaryExpression.Op)
@@ -614,7 +614,7 @@ public static class IRGenerator
         return text;
     }
 
-    static (StringBuilder code, string value) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
+    (StringBuilder code, string value) EmitIdentifierExpression(IdentifierExpression identifier, StringBuilder code)
     {
         if (TryResolveSlot(identifier.Name, out (string ptr, string? ssa) alloc, out TypeInfo? typeInfo))
         {
@@ -644,7 +644,7 @@ public static class IRGenerator
         throw new Exception($"Undefined variable or field '{identifier.Name}'");
     }
 
-    static (StringBuilder code, string value) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
+    (StringBuilder code, string value) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
     {
         if (binaryExpression.Op == BinaryOperator.AND ||
             binaryExpression.Op == BinaryOperator.OR)
@@ -712,8 +712,7 @@ public static class IRGenerator
         return (code, $"%{tmp}");
     }
 
-    static (StringBuilder Code, string Result)
-    EmitShortCircuitBinaryExpression(BinaryExpression binaryExpression)
+    (StringBuilder Code, string Result) EmitShortCircuitBinaryExpression(BinaryExpression binaryExpression)
     {
         StringBuilder code = new();
 
@@ -771,7 +770,7 @@ public static class IRGenerator
         return (code, result);
     }
 
-    static (StringBuilder code, string value) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
+    (StringBuilder code, string value) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
     {
         string irType = TypeToLLVM(instantiation.ResolvedType!)!;
         string ptrName = $"%{NewTempVar()}";
@@ -797,7 +796,7 @@ public static class IRGenerator
         return (code, valueName);
     }
 
-    static (StringBuilder code, string value) EmitCallExpression(CallExpression call, StringBuilder code)
+    (StringBuilder code, string value) EmitCallExpression(CallExpression call, StringBuilder code)
     {
         if (call.Target is IdentifierExpression id)
         {
@@ -843,7 +842,7 @@ public static class IRGenerator
         return (null, null);
     }
 
-    static (StringBuilder code, string value) EmitCastExpression(CastExpression cast, StringBuilder code)
+    (StringBuilder code, string value) EmitCastExpression(CastExpression cast, StringBuilder code)
     {
         (StringBuilder argCode, string argReg) = EmitExpression(cast.Target);
         code.Append(argCode);
@@ -886,7 +885,7 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-    static (StringBuilder code, string value) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
+    (StringBuilder code, string value) EmitMemberAccessExpression(MemberAccessExpression memberAccess, StringBuilder code)
     {
         (string ptr, string llvmType) = EmitAddressOf(memberAccess, code);
 
@@ -895,7 +894,7 @@ public static class IRGenerator
         return (code, tmp);
     }
 
-    static (StringBuilder code, string value) EmitIndexExpression(IndexExpression index, StringBuilder code)
+    (StringBuilder code, string value) EmitIndexExpression(IndexExpression index, StringBuilder code)
     {
         (string ptr, string llvmType) = EmitAddressOf(index, code);
 
@@ -908,7 +907,7 @@ public static class IRGenerator
 
     #region  Helpers
 
-    static (string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
+    (string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
     {
         switch (target)
         {
@@ -972,9 +971,9 @@ public static class IRGenerator
         }
     }
 
-    static string NewTempVar() => $"tmp{tmpCounter++}";
+    string NewTempVar() => $"tmp{tmpCounter++}";
 
-    static bool TryResolveSlot(string name, out (string ptr, string? ssa) alloc, out TypeInfo typeInfo)
+    bool TryResolveSlot(string name, out (string ptr, string? ssa) alloc, out TypeInfo typeInfo)
     {
         // copy the stacks into arrays so that index 0 is the top of the stack
         Dictionary<string, (string ptr, string? ssa)>[] allocArr = allocas.ToArray();
@@ -1054,7 +1053,7 @@ public static class IRGenerator
         throw new Exception($"Unsupported type: '{type.TypeName}'");
     }
 
-    static void EnterScope(Scope scope)
+    void EnterScope(Scope scope)
     {
         allocas.Push([]);
         varTypes.Push([]);
@@ -1062,7 +1061,7 @@ public static class IRGenerator
         currentScope = scope;
     }
 
-    static void ExitScope()
+    void ExitScope()
     {
 #if DEBUG   // this can only fail if there is a bug in the IRGen itself
         if (currentScope == null)
