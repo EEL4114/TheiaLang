@@ -259,7 +259,6 @@ public class Parser(List<Token> tokens)
             fieldTypes: variantTypes);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
-        unionDeclaration.Scope = EnterNewScope(name);
 
         currentScope!.Declare(new SymbolInfo(
                         name,
@@ -268,6 +267,7 @@ public class Parser(List<Token> tokens)
                         variants
         ));
 
+        unionDeclaration.Scope = EnterNewScope(name);
         currentScope!.DeclaringNode = unionDeclaration;
 
         if (!Check(TokenType.Punctuation_BraceR))

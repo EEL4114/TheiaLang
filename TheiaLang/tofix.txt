@@ -13,11 +13,10 @@ realloc(ptr, 0)
 Free(null)                                                      
 Allocator pairing                                               
 memory ownership/lifetime                                       
-static statements                                               
-DynamicArrayCache                                               
-IRGenerator.BuiltinTypes is not a great place                   
-literal parsing                                                 
-loop initializer positioning                                    
+static state                                                    Fixed
+DynamicArrayCache                                               Fixed
+IRGenerator.BuiltinTypes is not a great place                   Fixed
+loop initializer positioning                                    Fixed
 TypeInfo.TypeName not carrying semantics after SemanticAnalyser 
 move some current SemanticAnalyser duties into Elaboration      
 
@@ -40,11 +39,13 @@ DynamicArrayCache                                               Fixed
 short-circuit && / ||                                           Fixed   
 Control block termination                                       Fixed   
 f16 not working                                                 Fixed   
-static state                                                    
+static state                                                    Fixed
 for initializer scope in IRGenerator                            Fixed
 Disallow struct A{B b;} struct B{A a;}                          Fixed
 Disallow struct A{A a;}                                         Fixed
 Disallow struct A{[]A a;}                                       Fixed
+reset instance states upon pass start                           
+literal parsing                                                 
 
 TO BE INVESTIGATED
 

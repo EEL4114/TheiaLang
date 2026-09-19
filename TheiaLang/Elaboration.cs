@@ -1,6 +1,7 @@
 namespace TheiaLang;
 using static TypeKind;
 using static BuiltinType;
+
 class Elaboration
 {
     // the template we use for dynamic arrays

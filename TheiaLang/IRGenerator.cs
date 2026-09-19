@@ -392,6 +392,8 @@ public class IRGenerator
             }
         }
 
+        loopTargets.Remove(forStatement);
+
         ExitScope();    // body
 
         if (bodyTermination == NotTerminated)

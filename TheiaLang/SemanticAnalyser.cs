@@ -12,6 +12,7 @@ public class SemanticAnalyser
 
     public (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
     {
+        loopStack = [];
         currentScope = globalScope;
         GlobalScope = currentScope;
 
