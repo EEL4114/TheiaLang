@@ -45,7 +45,12 @@ Disallow struct A{B b;} struct B{A a;}                          Fixed
 Disallow struct A{A a;}                                         Fixed
 Disallow struct A{[]A a;}                                       Fixed
 reset instance states upon pass start                           
-literal parsing                                                 
+literal parsing / types                                         
+Unary !                                                         
+Union instantiation                                             
+Union member access LLVM                                        
+Elaboration not walking if-/for bodies                          
+global VariableDeclarations post-parser                         
 
 TO BE INVESTIGATED
 

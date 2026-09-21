@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Drawing;
 using TheiaLang;
 using static TimerGroup;
 
@@ -136,6 +135,14 @@ int CompileFile(string filePath,
                 bool writeAST = false,
                 bool writeScope = false)
 {
+    string programName = filePath[(1 + filePath.LastIndexOf('\\'))..];
+
+    string F_OUTPUT_PATH_REL = Path.Combine(OUTPUT_PATH_REL, programName);
+    string F_DEBUG_PATH_REL  = Path.Combine(DEBUG_PATH_REL, programName);
+
+    Directory.CreateDirectory(F_OUTPUT_PATH_REL);
+    Directory.CreateDirectory(F_DEBUG_PATH_REL);
+
     string code = File.ReadAllText(filePath + ".tia");
 
     foreach(TimerGroup group in Enum.GetValues<TimerGroup>())
@@ -147,8 +154,7 @@ int CompileFile(string filePath,
     List<Token> tokens = [];
     Token token;
 
-    string programName = filePath[(1 + filePath.LastIndexOf('\\'))..];
-    string lexPath = $"{DEBUG_PATH_REL}{programName}.lex";
+    string lexPath = $"{F_DEBUG_PATH_REL}{programName}.lex";
     using StreamWriter lexerWriter = new StreamWriter(lexPath);
 
     do {
@@ -179,14 +185,14 @@ int CompileFile(string filePath,
     if (writeAST)
     {
 
-        string writerPath = $"{DEBUG_PATH_REL}{programName}.ast";
+        string writerPath = Path.Combine(F_DEBUG_PATH_REL, $"{programName}.ast");
         using StreamWriter writer = new StreamWriter(writerPath);
         AstPrinter.Print(ast, writer, timestamps);
         Log.Link(writerPath, "Preload AST: ");
     }
     if(writeScope)
     {
-        string sw2Path = $"{DEBUG_PATH_REL}{programName}.scope";
+        string sw2Path = Path.Combine(F_DEBUG_PATH_REL, $"{programName}.scope");
         using StreamWriter sw2 = new StreamWriter(sw2Path);
         ScopePrinter.Print(filePath, globalScope, sw2);
         Log.Link(sw2Path, "Scope Tree: ");
@@ -203,15 +209,15 @@ int CompileFile(string filePath,
 
     if(writeScope)
     {
-        string sw3Path = $"{DEBUG_PATH_REL}{programName}_full.scope";
+        string sw3Path = Path.Combine(F_DEBUG_PATH_REL, $"{programName}_full.scope");
         using StreamWriter sw3 = new StreamWriter(sw3Path);
         ScopePrinter.Print(filePath, globalScope, sw3);
         Log.Link(sw3Path, "Full Scope Tree: ");
     }
     if(writeAST)
     {
-        string writer2Path = $"{DEBUG_PATH_REL}{programName}_full.ast";
-        using StreamWriter writer2 = new StreamWriter($"{DEBUG_PATH_REL}{programName}_full.ast");
+        string writer2Path = Path.Combine(F_DEBUG_PATH_REL, $"{programName}_full.ast");
+        using StreamWriter writer2 = new StreamWriter(writer2Path);
         AstPrinter.Print(ast, writer2, timestamps);
         Log.Link(writer2Path, "Full AST: ");
     }
@@ -232,7 +238,7 @@ int CompileFile(string filePath,
 
     timers[TG_IRGen].Start();
 
-    string irgenPath = $"{OUTPUT_PATH_REL}{programName}.ll";
+    string irgenPath = Path.Combine(F_OUTPUT_PATH_REL, $"{programName}.ll");
     new IRGenerator().Emit(ast, globalScope, irgenPath, layout, insertLogs);
     Log.Link(irgenPath, "IR: ");
 
@@ -242,7 +248,7 @@ int CompileFile(string filePath,
     ProcessStartInfo psi = new ProcessStartInfo
     {
         FileName = @"C:\Program Files\LLVM\bin\clang.exe",
-        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -O0 -rtlib=compiler-rt -o {OUTPUT_PATH_REL}{programName}.exe",
+        Arguments = $"-x ir {irgenPath} -O0 -rtlib=compiler-rt -o {F_OUTPUT_PATH_REL}{programName}.exe",
 
         UseShellExecute = false,
         RedirectStandardOutput = true,
@@ -250,11 +256,11 @@ int CompileFile(string filePath,
         CreateNoWindow = true,
     };
 
-    string asmPath = $"{OUTPUT_PATH_REL}{programName}.s";
+    string asmPath = Path.Combine(F_OUTPUT_PATH_REL, $"{programName}.s");
     ProcessStartInfo psi2 = new ProcessStartInfo
     {
         FileName = @"C:\Program Files\LLVM\bin\clang.exe",
-        Arguments = $"-x ir {OUTPUT_PATH_REL}{programName}.ll -march=native -O3 -S -o " + asmPath,
+        Arguments = $"-x ir {irgenPath} -march=native -O3 -S -o " + asmPath,
 
         UseShellExecute = false,
         RedirectStandardOutput = true,
@@ -416,17 +422,17 @@ public static class Log
 
 enum TimerGroup
 {
-    TG_Compile      = 0,
-    TG_Preload      = 1,
-    TG_Lexer        = 2,
-    TG_Parser       = 3,
-    TG_Elab  = 4,
-    TG_Print        = 5,
-    TG_Analyser     = 6,
-    TG_Layout       = 7,
-    TG_ConstFold    = 8,
-    TG_IRGen        = 9,
-    TG_LLVM         = 10,
+    TG_Compile   = 0,
+    TG_Preload   = 1,
+    TG_Lexer     = 2,
+    TG_Parser    = 3,
+    TG_Elab      = 4,
+    TG_Print     = 5,
+    TG_Analyser  = 6,
+    TG_Layout    = 7,
+    TG_ConstFold = 8,
+    TG_IRGen     = 9,
+    TG_LLVM      = 10,
 }
 
 #endregion

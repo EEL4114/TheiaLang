@@ -1,3 +1,5 @@
+FEATURES
+
 execution                                                       done
 structs                                                         done
 struct functions                                                done
@@ -34,3 +36,6 @@ for body scope without shadowig                                 done
 require return value handling                                   
 allow implicit @T -> @void                                      done
 improve error messages for cyclic type defs                     
+
+OTHER
+simpler lexer ASCII char == token handling                      
