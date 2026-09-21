@@ -628,9 +628,9 @@ public class SemanticAnalyser
                     throw new Exception($"Unknown type '{instantiation.TypeName}'");
 
                 int fieldCount = typeSymbolInfo.Type.FieldNames!.Count;
-                if (instantiation.Arguments.Count != fieldCount)
-                    throw new Exception($"Constructor for type '{instantiation.TypeName}' requires {fieldCount} arguments, got:"
-                                        + $" {instantiation.Arguments.Count}");
+                if (instantiation.Arguments.Count > 0 && instantiation.Arguments.Count != fieldCount)
+                    throw new Exception($"Instantiation for type '{instantiation.TypeName}' requires {fieldCount} arguments, got: "
+                                        + $"{instantiation.Arguments.Count}");
 
                 for (int i = 0; i < instantiation.Arguments.Count; i++)
                 {

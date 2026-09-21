@@ -6,6 +6,9 @@ int main()
     vector.x = 5;
     usedInt -= s32(oneVector.z);
 
+    Transform t = Transform{};
+    t.position.x = 7;
+
     return usedInt;
 }
 
