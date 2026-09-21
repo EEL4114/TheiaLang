@@ -160,9 +160,43 @@ public class Scope : INode
         }
     }
 
+    public bool TryLookupNonType(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)
+    {
+        if (Symbols.TryGetValue(identifier, out symbolInfo) && symbolInfo.Kind != SymbolKind.Type)
+        {
+            symbolScope = this;
+            return true;
+        }
+        else
+        {
+            if (Parent == null)
+            {
+                symbolInfo = null;
+                symbolScope = null;
+                return false;
+            }
+            else
+                return Parent.TryLookupNonType(identifier, out symbolInfo, out symbolScope);
+        }
+    }
+
     public bool TryLookupLocal(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)
     {
         if (Symbols.TryGetValue(identifier, out symbolInfo))
+        {
+            symbolScope = this;
+            return true;
+        }
+        else
+        {
+            symbolScope = null;
+            return false;
+        }
+    }
+
+    public bool TryLookupLocalNonType(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)
+    {
+        if (Symbols.TryGetValue(identifier, out symbolInfo) && symbolInfo.Kind != SymbolKind.Type)
         {
             symbolScope = this;
             return true;

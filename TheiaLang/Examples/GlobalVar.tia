@@ -16,6 +16,12 @@ struct Vector3
     f32 z;
 }
 
+struct Transform {
+    Vector3 position;
+    Vector3 scale;
+    Vector3 rotation;
+}
+
 s32 unusedIntNoInit;
 s32 unusedInt = 5;
 s32 usedIntNoInit;
@@ -27,3 +33,10 @@ f32 globalFloat2 = 5.5;
 
 Vector3 vector;
 Vector3 oneVector = Vector3{1, 1, 1};
+
+Transform trans;
+Transform stdTrans = Transform{
+    Vector3{0, 0, 0},
+    Vector3{1, 1, 1},
+    Vector3{0, 0, 0},
+};

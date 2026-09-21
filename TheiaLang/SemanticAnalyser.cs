@@ -350,8 +350,8 @@ public class SemanticAnalyser
                 // these have already been resolved in the Parser
                 break;
             case IdentifierExpression identifier:
-                if (!currentScope.TryLookup(identifier.Name, out _, out Scope? symbolScope))
-                    Log.Error(21, $"{identifier.Pos} {identifier.Name} is not defined in {currentScope.Name}");
+                if (!currentScope.TryLookupNonType(identifier.Name, out SymbolInfo? si, out Scope? symbolScope))
+                    Log.Error(21, $"{identifier.Pos} a variable '{identifier.Name}' is not defined in {currentScope.Name}");
 
                 TypeInfo identifierInfo = GetSymbolType(identifier.Name);
                 identifier.ResolvedType = identifierInfo;
