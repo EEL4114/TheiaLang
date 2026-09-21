@@ -239,6 +239,7 @@ int CompileFile(string filePath,
     timers[TG_IRGen].Start();
 
     string irgenPath = Path.Combine(F_OUTPUT_PATH_REL, $"{programName}.ll");
+    string exePath   = Path.Combine(F_OUTPUT_PATH_REL, $"{programName}.exe");
     new IRGenerator().Emit(ast, globalScope, irgenPath, layout, insertLogs);
     Log.Link(irgenPath, "IR: ");
 
@@ -248,7 +249,7 @@ int CompileFile(string filePath,
     ProcessStartInfo psi = new ProcessStartInfo
     {
         FileName = @"C:\Program Files\LLVM\bin\clang.exe",
-        Arguments = $"-x ir {irgenPath} -O0 -rtlib=compiler-rt -o {F_OUTPUT_PATH_REL}{programName}.exe",
+        Arguments = $"-x ir {irgenPath} -O0 -rtlib=compiler-rt -o {exePath}",
 
         UseShellExecute = false,
         RedirectStandardOutput = true,
