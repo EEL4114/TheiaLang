@@ -1,0 +1,29 @@
+int main()
+{
+    usedInt = 0;
+    usedIntNoInit = 0;
+
+    vector.x = 5;
+    usedInt -= s32(oneVector.z);
+
+    return usedInt;
+}
+
+struct Vector3
+{
+    f32 x;
+    f32 y;
+    f32 z;
+}
+
+s32 unusedIntNoInit;
+s32 unusedInt = 5;
+s32 usedIntNoInit;
+s32 usedInt = 5;
+
+f32 globalFloatNoInit;
+f32 globalFloat = 5;
+f32 globalFloat2 = 5.5;
+
+Vector3 vector;
+Vector3 oneVector = Vector3{1, 1, 1};

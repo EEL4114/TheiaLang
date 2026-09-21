@@ -11,6 +11,7 @@ public class IRGenerator
 {
     // we won't deal with SSA optimisation for now but once we have all basic features done we will
     readonly Stack<Dictionary<string, (string ptr, string? ssa)>> allocas = [];
+    Dictionary<string, (string ptr, TypeInfo type)> globals = [];
     readonly Stack<Dictionary<string, TypeInfo>> varTypes = [];
     ulong tmpCounter = 0;
     Scope? currentScope;
@@ -75,6 +76,8 @@ public class IRGenerator
                 EmitStructType(sd, sb);
             if(decl is UnionDeclaration ud)
                 EmitUnionType(ud, sb); 
+            if(decl is VariableDeclaration vd)
+                EmitGlobalVariableDeclaration(vd, sb);
         }
 
         sb.AppendLine();
@@ -203,6 +206,38 @@ public class IRGenerator
             ExpressionStatement e         => EmitExpressionStatement(e, sb),
             _ => throw new Exception($"Unknown Statement: {statement.GetType().Name}"),
         };
+
+
+    BlockTermination EmitGlobalVariableDeclaration(VariableDeclaration vd, StringBuilder sb)
+    {
+        string LLVMType = TypeToLLVM(vd.ResolvedType!)!;
+
+        string slot = $"@{vd.Name}_{currentScope!.Name}";
+        sb.Append($"{slot} = global ");
+
+        globals[vd.Name] = (
+            slot,
+            vd.ResolvedType!
+        );
+
+        varTypes.Peek()[vd.Name] = vd.ResolvedType!;
+
+        if(vd.Init == null)
+            sb.AppendLine($"{LLVMType} zeroinitializer");
+        else
+        {
+            if(vd.Init is LiteralExpression lit)
+                sb.Append(LiteralExpressionToString(lit));
+                
+            else if(vd.Init is InstantiationExpression inst)
+                sb.Append(ConstInstantiationExpressionToString(inst));
+        }
+
+        sb.Append("\n");
+
+        
+        return NotTerminated;
+    }
 
     BlockTermination EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
     {
@@ -909,6 +944,38 @@ public class IRGenerator
 
     #region  Helpers
 
+    StringBuilder ConstInstantiationExpressionToString(InstantiationExpression inst)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        // %Type {
+        sb.Append($"%{inst.ResolvedType!.TypeName} {{ \n");
+        
+        for (int i = 0; i < inst.Arguments.Count; i++)
+        {
+            if(inst.Arguments[i] is LiteralExpression lit)
+                sb.Append(LiteralExpressionToString(lit));
+            else if(inst.Arguments[i] is InstantiationExpression subinst)
+                sb.Append(ConstInstantiationExpressionToString(subinst));                
+            else
+                throw new NotSupportedException($"{inst.Pos}, {inst}");
+            if(1 + i != inst.Arguments.Count)
+                sb.Append(", \n");
+        }
+
+        sb.Append("}");
+
+        return sb;
+    }
+
+    string LiteralExpressionToString(LiteralExpression lit)
+    {
+        (_, string value) =
+            EmitLiteralExpression(lit, new StringBuilder());
+
+        return $"{TypeToLLVM(lit.ResolvedType!)} {value}";
+    }
+
     (string ptr, string llvmType) EmitAddressOf(IExpression target, StringBuilder code)
     {
         switch (target)
@@ -989,6 +1056,14 @@ public class IRGenerator
                 return true;
             }
         }
+
+        if (globals.TryGetValue(name, out var global))
+        {
+            alloc = (global.ptr, null);
+            typeInfo = global.type;
+            return true;
+        }
+
         alloc = (null, null)!;
         typeInfo = null!;
         return false;

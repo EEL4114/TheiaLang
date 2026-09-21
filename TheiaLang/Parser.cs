@@ -1,6 +1,7 @@
 namespace TheiaLang;
 using static TypeKind;
 using static BuiltinType;
+using System.Globalization;
 
 public class Parser(List<Token> tokens)
 {
@@ -16,6 +17,8 @@ public class Parser(List<Token> tokens)
     long acc = 0;
 
     List<INode> nodes = [];
+
+    Dictionary<(Scope, string), TypeInfo> types = [];
 
     public (ProgramNode, Scope) ParseProgram(string ProgramName)
     {
@@ -789,8 +792,8 @@ public class Parser(List<Token> tokens)
         {
             (object Value, string Type, TypeKind kind, BuiltinType? builtinType) lit = Previous().Lexeme switch
             {
-                string s when long.TryParse(s, out long i)     => (i, "int",   Scalar, INT),
-                string s when double.TryParse(s, out double d) => (d, "float", Scalar, FLOAT),
+                string s when long.TryParse(s,   NumberStyles.Integer, CultureInfo.InvariantCulture, out long i) => (i, "int",   Scalar, INT),
+                string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) => (d, "float", Scalar, FLOAT),
                 string s when bool.TryParse(s, out bool b)     => (b, "bool",  Scalar, BOOL),
                 _ => throw new Exception("Invalid literal")
             };

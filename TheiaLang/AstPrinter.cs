@@ -169,7 +169,7 @@ static class AstPrinter
         switch (expr)
         {
             case LiteralExpression lit:
-                w.WriteLine($"{Indent(indent)}Literal: {TryType(lit.ResolvedType)} {lit.Lexeme}");
+                w.WriteLine($"{Indent(indent)}Literal: {TryType(lit.ResolvedType)} \"{lit.Lexeme}\" {lit.Value}");
                 break;
 
             case IdentifierExpression id:

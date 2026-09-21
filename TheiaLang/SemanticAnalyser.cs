@@ -25,7 +25,9 @@ public class SemanticAnalyser
             if(node is StructDeclaration sd)
                 ResolveStruct(sd);
             if(node is UnionDeclaration ud)
-                ResolveUnion(ud);   
+                ResolveUnion(ud);
+            if(node is VariableDeclaration vd)
+                AnalyseVariableDeclaration(vd);
         }
 
         // Now, we want to resolve all function return and argument types so we 
@@ -212,33 +214,8 @@ public class SemanticAnalyser
     {
         switch (statement)
         {
-            case VariableDeclaration variable:
-                //Log.Info($"{variable.Name}");
-                if (currentScope.TryLookupLocal(variable.Name, out _, out _))
-                    throw new Exception($"A Variable with the name '{variable.Name}' is already defined in {currentScope.FullName}");
-
-                if (variable.ResolvedType != null)
-                    variable.ResolvedType = UpdateTypeInfo(variable.ResolvedType);
-                else
-                    variable.ResolvedType = ResolveType(variable.TypeName);
-
-                currentScope!.Declare(new SymbolInfo(
-                    variable.Name,
-                    variable.ResolvedType,
-                    SymbolKind.Variable,
-                    
-                    null
-                ));
-
-                if (variable.Init != null)
-                {
-                    variable.Init = AnalyseExpression(variable.Init);
-                    if (variable.Init.ResolvedType == null)
-                        Log.Error(23, $"{variable.Name} gets initialized with an expression that didn't resolve to a type correctly");
-                    variable.Init.ResolvedType = PromoteIfLiteral(variable.Init.ResolvedType!, variable.ResolvedType.TypeName);
-
-                    variable.Init = GenerateImplicitCast(variable.Init, variable.ResolvedType);
-                }
+            case VariableDeclaration vd:
+                AnalyseVariableDeclaration(vd);
                 break;
             case AssignmentStatement assignment:
                 assignment.Target = AnalyseExpression(assignment.Target);
@@ -329,6 +306,35 @@ public class SemanticAnalyser
                 break;
             default:
                 throw new Exception($"Unknown Statement: {statement.GetType().Name}");
+        }
+    }
+
+    void AnalyseVariableDeclaration(VariableDeclaration vd)
+    {
+        if (currentScope.TryLookupLocal(vd.Name, out _, out _))
+            throw new Exception($"A Variable with the name '{vd.Name}' is already defined in {currentScope.FullName}");
+
+        if (vd.ResolvedType != null)
+            vd.ResolvedType = UpdateTypeInfo(vd.ResolvedType);
+        else
+            vd.ResolvedType = ResolveType(vd.TypeName);
+
+        currentScope!.Declare(new SymbolInfo(
+            vd.Name,
+            vd.ResolvedType,
+            SymbolKind.Variable,
+            
+            null
+        ));
+
+        if (vd.Init != null)
+        {
+            vd.Init = AnalyseExpression(vd.Init);
+            if (vd.Init.ResolvedType == null)
+                Log.Error(23, $"{vd.Name} gets initialized with an expression that didn't resolve to a type correctly");
+            vd.Init.ResolvedType = PromoteIfLiteral(vd.Init.ResolvedType!, vd.ResolvedType.TypeName);
+
+            vd.Init = GenerateImplicitCast(vd.Init, vd.ResolvedType);
         }
     }
 
