@@ -154,7 +154,7 @@ int CompileFile(string filePath,
     List<Token> tokens = [];
     Token token;
 
-    string lexPath = $"{F_DEBUG_PATH_REL}{programName}.lex";
+    string lexPath = Path.Combine(F_DEBUG_PATH_REL, $"{programName}.lex");
     using StreamWriter lexerWriter = new StreamWriter(lexPath);
 
     do {
