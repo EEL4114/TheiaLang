@@ -3,6 +3,8 @@ FEATURES
 ENTRY                                                           STATUS
 Count references                                                
 more proper compiler messages                                   
+const eval
+Introduce parameterless struct instantiation                    
 
 STABILITY
 
@@ -19,6 +21,7 @@ IRGenerator.BuiltinTypes is not a great place                   Fixed
 loop initializer positioning                                    Fixed
 TypeInfo.TypeName not carrying semantics after SemanticAnalyser 
 move some current SemanticAnalyser duties into Elaboration      
+AST TypeInfo - SymbolInfo sync                                  
 
 BUGS
 
@@ -50,7 +53,8 @@ Unary !
 Union instantiation                                             
 Union member access LLVM                                        
 Elaboration not walking if-/for bodies                          
-global VariableDeclarations post-parser                         
+global VariableDeclarations post-parser                         Fixed
+Disallow struct Name used as struct literal; should require {}  
 
 TO BE INVESTIGATED
 

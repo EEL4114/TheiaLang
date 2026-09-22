@@ -484,4 +484,18 @@ public sealed class IndexExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
+public sealed class RepeatExpression(
+    uint count, 
+    IExpression value,
+    SourePosition pos = default
+) : IExpression
+{
+    public uint Count = count;
+    public IExpression Value = value;
+
+    public TypeInfo? ResolvedType { get; set; }
+    public bool Assignable => false;
+    public SourePosition Pos { get; } = pos;
+}
+
 #endregion

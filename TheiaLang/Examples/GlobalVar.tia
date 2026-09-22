@@ -6,8 +6,9 @@ int main()
     vector.x = 5;
     usedInt -= s32(oneVector.z);
 
+    Transform n;
+
     Transform t = Transform{};
-    t.position.x = 7;
 
     return usedInt;
 }
@@ -42,4 +43,11 @@ Transform stdTrans = Transform{
     Vector3{0, 0, 0},
     Vector3{1, 1, 1},
     Vector3{0, 0, 0},
+};
+
+Transform transNoArg = Transform{};
+Transform transNoVArg = Transform{
+    Vector3{},
+    Vector3{},
+    Vector3{},
 };

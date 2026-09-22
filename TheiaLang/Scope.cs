@@ -41,6 +41,7 @@ public enum TypeKind
     Struct  = 3,
     Union   = 4,
     Pointer = 5,
+    Type    = 6,
 }
 
 public class TypeInfo(string type,

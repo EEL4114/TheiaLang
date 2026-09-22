@@ -319,11 +319,11 @@ public class SemanticAnalyser
         else
             vd.ResolvedType = ResolveType(vd.TypeName);
 
+
         currentScope!.Declare(new SymbolInfo(
             vd.Name,
             vd.ResolvedType,
             SymbolKind.Variable,
-            
             null
         ));
 
@@ -332,10 +332,13 @@ public class SemanticAnalyser
             vd.Init = AnalyseExpression(vd.Init);
             if (vd.Init.ResolvedType == null)
                 Log.Error(23, $"{vd.Name} gets initialized with an expression that didn't resolve to a type correctly");
+
             vd.Init.ResolvedType = PromoteIfLiteral(vd.Init.ResolvedType!, vd.ResolvedType.TypeName);
 
             vd.Init = GenerateImplicitCast(vd.Init, vd.ResolvedType);
         }
+        else
+            vd.Init = DefaultInit(vd.ResolvedType);
     }
 
     #endregion
@@ -350,11 +353,16 @@ public class SemanticAnalyser
                 // these have already been resolved in the Parser
                 break;
             case IdentifierExpression identifier:
-                if (!currentScope.TryLookupNonType(identifier.Name, out SymbolInfo? si, out Scope? symbolScope))
+                if (!currentScope.TryLookup(identifier.Name, out SymbolInfo? si, out Scope? symbolScope))
                     Log.Error(21, $"{identifier.Pos} a variable '{identifier.Name}' is not defined in {currentScope.Name}");
 
                 TypeInfo identifierInfo = GetSymbolType(identifier.Name);
+
                 identifier.ResolvedType = identifierInfo;
+
+                if(si!.Kind == SymbolKind.Type)
+                    identifier.ResolvedType = new TypeInfo($"T:{identifierInfo.TypeName}", TypeKind.Type, null, pointee: identifierInfo);
+
                 identifier.Scope = symbolScope;
                 break;
             case CallExpression call:
@@ -632,15 +640,21 @@ public class SemanticAnalyser
                     throw new Exception($"Instantiation for type '{instantiation.TypeName}' requires {fieldCount} arguments, got: "
                                         + $"{instantiation.Arguments.Count}");
 
-                for (int i = 0; i < instantiation.Arguments.Count; i++)
+                if(instantiation.Arguments.Count == 0 && fieldCount > 0)
                 {
-                    instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
-                    // check implicit cast from arg type -> field type
-                    instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
-                                                                               typeSymbolInfo.Parameters![i].ResolvedType.TypeName);
-
-                    instantiation.Arguments[i] = GenerateImplicitCast(instantiation.Arguments[i], typeSymbolInfo.Parameters![i].ResolvedType!);
+                    expression = DefaultInit(typeSymbolInfo.Type);
+                    break;
                 }
+                else
+                    for (int i = 0; i < instantiation.Arguments.Count; i++)
+                    {
+                        instantiation.Arguments[i] = AnalyseExpression(instantiation.Arguments[i]);
+                        // check implicit cast from arg type -> field type
+                        instantiation.Arguments[i].ResolvedType = PromoteIfLiteral(instantiation.Arguments[i].ResolvedType!,
+                                                                                typeSymbolInfo.Parameters![i].ResolvedType.TypeName);
+
+                        instantiation.Arguments[i] = GenerateImplicitCast(instantiation.Arguments[i], typeSymbolInfo.Parameters![i].ResolvedType!);
+                    }
                 instantiation.ResolvedType = typeSymbolInfo.Type;
                 break;
             case IndexExpression indexExpression:
@@ -685,6 +699,68 @@ public class SemanticAnalyser
     #endregion
 
     #region Helpers
+
+    IExpression DefaultInit(TypeInfo type)
+    {
+        switch(type.TypeKind)
+        {
+            case Void or Unresolved or TypeKind.Type:
+                throw new NotSupportedException($"{type}: {type.TypeKind}");
+            case Scalar:
+                return type.BuiltinType switch
+                {
+                    BOOL => new LiteralExpression(false, "false") {
+                        ResolvedType = new TypeInfo("bool", Scalar, BOOL)
+                    },
+                    S8 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s8", Scalar, S8)
+                    },
+                    S16 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s16", Scalar, S16)
+                    },
+                    S32 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s32", Scalar, S32)
+                    },
+                    S64 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s64", Scalar, S64)
+                    },
+                    S128 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s128", Scalar, S128)
+                    },
+                    S256 => new LiteralExpression(0L, "0") {
+                        ResolvedType = new TypeInfo("s256", Scalar, S256)
+                    },
+                    // floats need to be handled separately due to no implicit casting 
+                    F16 => new LiteralExpression(0.0, "0.0") {
+                        ResolvedType = new TypeInfo("f16", Scalar, F16)
+                    },
+                    F32 => new LiteralExpression(0.0, "0.0") {
+                        ResolvedType = new TypeInfo("f32", Scalar, F32)
+                    },
+                    F64 => new LiteralExpression(0.0, "0.0") {
+                        ResolvedType = new TypeInfo("f64", Scalar, F64)
+                    },
+                    F128 => new LiteralExpression(0.0, "0.0") {
+                        ResolvedType = new TypeInfo("f128", Scalar, F128)
+                    },
+                    VOIDPTR => new LiteralExpression(null!, "null") {
+                        ResolvedType = new TypeInfo($"@{type.TypeName}", Pointer, VOIDPTR, pointee: type)
+                    },
+                    _ => throw new NotSupportedException($"{type}: {type.BuiltinType} has no implemented default value"),
+                };
+            case Array: 
+                return AnalyseExpression(new RepeatExpression((uint)type.ArrayLength!, DefaultInit(type.ElementType!)));
+            case Struct:
+                List<IExpression> arguments = [];
+                for(int i = 0; i < type.FieldTypes!.Count; i++)
+                    arguments.Add(DefaultInit(type.FieldTypes[i]));
+
+                return AnalyseExpression(new InstantiationExpression(type.TypeName, arguments));
+           default: // includes Union
+                throw new Exception(
+                    $"Union type '{type.TypeName}' has no default value");
+        };
+    }
 
     void AnalyseArguments(CallExpression call, SymbolInfo sInfo)
     {
@@ -989,7 +1065,7 @@ public class SemanticAnalyser
         int indexB = Builtins.BuiltinTypeIndex(toType.BuiltinType);
 
         if (indexA < 0 || indexB < 0)   // composite: can only assign to same type
-            return fromType == toType;
+            return fromType == toType && fromType.TypeKind == toType.TypeKind;
 
         return LosslessTypeInterop[indexA, indexB];
     }
