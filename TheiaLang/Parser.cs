@@ -209,6 +209,7 @@ public class Parser(List<Token> tokens)
             fields);
 
         currentScope!.Declare(symbolInfo);
+        DeclarePtr(structDeclaration.ResolvedType);
 
         structDeclaration.Scope = EnterNewScope(name);
         currentScope.DeclaringNode = structDeclaration;
@@ -262,6 +263,7 @@ public class Parser(List<Token> tokens)
             fieldTypes: variantTypes);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
+        DeclarePtr(unionDeclaration.ResolvedType);
 
         currentScope!.Declare(new SymbolInfo(
                         name,
@@ -471,6 +473,15 @@ public class Parser(List<Token> tokens)
             string typeName = $"__anonymousStruct_{currentScope!.Name}_{acc++}";
 
             StructDeclaration structDeclaration = new StructDeclaration(typeName, fields, functions, sourcePos);
+            
+            structDeclaration.ResolvedType = new TypeInfo(
+                typeName,
+                Struct,
+                null,
+                fieldNames: fieldNames,
+                fieldTypes: fieldTypes);
+            DeclarePtr(structDeclaration.ResolvedType);
+
             structDeclaration.Scope = EnterNewScope(typeName);
             currentScope!.DeclaringNode = structDeclaration;
 
@@ -500,12 +511,6 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.Punctuation_BraceR, "Expected '}' after struct fields");
             ExitScope();
 
-            structDeclaration.ResolvedType = new TypeInfo(
-                typeName,
-                Struct,
-                null,
-                fieldNames: fieldNames,
-                fieldTypes: fieldTypes);
 
             SymbolInfo symbolInfo = new SymbolInfo(
                 typeName,
@@ -539,6 +544,7 @@ public class Parser(List<Token> tokens)
                 fieldTypes: variantTypes);
 
             UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, variants, unionInfo, sourcePos);
+            DeclarePtr(unionDeclaration.ResolvedType);
             unionDeclaration.Scope = EnterNewScope(typeName);
             currentScope!.DeclaringNode = unionDeclaration;
 
@@ -1025,6 +1031,17 @@ public class Parser(List<Token> tokens)
     void ExitScope()
     {
         currentScope = currentScope!.Exit();
+    }
+
+    void DeclarePtr(TypeInfo typeInfo)
+    {
+        globalScope!.Declare(
+            new SymbolInfo(
+                "@" + typeInfo.TypeName,
+                new TypeInfo("@" + typeInfo.TypeName, Pointer, VOIDPTR, pointee: typeInfo),
+                SymbolKind.Type,
+                null
+            ));
     }
 
     void DeclareBuiltin(BuiltinType builtinType)
