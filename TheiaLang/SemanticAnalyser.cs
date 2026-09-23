@@ -357,7 +357,8 @@ public class SemanticAnalyser
             BinaryExpression        binary        => AnalyseBinaryExpression(binary),
             InstantiationExpression instantiation => AnalyseInstantiationExpression(instantiation),
             IndexExpression         index         => AnalyseIndexExpression(index),
-            CastExpression          cast          => expression,
+            CastExpression                        => expression,
+            RepeatExpression        repeat        => AnalyseRepeatExpression(repeat),
             _   => throw new Exception($"Unsupported expression: {expression.GetType()}")
         };
     }
@@ -381,8 +382,8 @@ public class SemanticAnalyser
     IExpression AnalyseCallExpression(CallExpression call)
     {
         IExpression expression = call;
-        foreach (IExpression arg in call.Arguments)
-            AnalyseExpression(arg);
+        for(int i = 0; i < call.Arguments.Count; i++)
+            call.Arguments[i] = AnalyseExpression(call.Arguments[i]);
         if (call.Target is IdentifierExpression id)
         {
             if (id.Name == "TypeSize")
@@ -723,6 +724,21 @@ public class SemanticAnalyser
             index.ResolvedType = index.Target.ResolvedType.ElementType;
 
         return index;
+    }
+
+    IExpression AnalyseRepeatExpression(RepeatExpression repeat)
+    {
+        IExpression rex = AnalyseExpression(repeat.Expression);
+        repeat.Expression = rex;
+
+        if(rex is not LiteralExpression and not IdentifierExpression and not InstantiationExpression)
+            Log.Error(31, $"Unsupported repeat expression: {rex}");
+        repeat.ResolvedType = new TypeInfo($"[{repeat.Count}]{rex.ResolvedType!.TypeName}",
+                                           Array,
+                                           null,
+                                           elementType: rex.ResolvedType,
+                                           arrayLength: repeat.Count);
+        return repeat;
     }
 
     #endregion

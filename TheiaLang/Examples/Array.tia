@@ -1,0 +1,8 @@
+int main()
+{
+    [8]s8 byteArray;
+    return byteArray[0];
+}
+
+
+// [8]s8 GlobalByteArray;

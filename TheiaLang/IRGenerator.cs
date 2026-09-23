@@ -235,7 +235,6 @@ public class IRGenerator
 
         sb.Append("\n");
 
-        
         return NotTerminated;
     }
 
@@ -498,15 +497,16 @@ public class IRGenerator
         StringBuilder code = new StringBuilder();
         return expression switch
         {
-            UnaryExpression unaryExpression       => EmitUnaryExpression(unaryExpression, code),
-            LiteralExpression literal             => EmitLiteralExpression(literal, code),
-            IdentifierExpression identifier       => EmitIdentifierExpression(identifier, code),
-            BinaryExpression binaryExpression     => EmitBinaryExpression(binaryExpression, code),
-            InstantiationExpression instantiation => EmitInstantiationExpression(instantiation, code),
-            CallExpression call                   => EmitCallExpression(call, code),
-            MemberAccessExpression memberAccess   => EmitMemberAccessExpression(memberAccess, code),
-            IndexExpression index                 => EmitIndexExpression(index, code),
-            CastExpression cast                   => EmitCastExpression(cast, code),
+            UnaryExpression         unaryExpression  => EmitUnaryExpression(unaryExpression, code),
+            LiteralExpression       literal          => EmitLiteralExpression(literal, code),
+            IdentifierExpression    identifier       => EmitIdentifierExpression(identifier, code),
+            BinaryExpression        binaryExpression => EmitBinaryExpression(binaryExpression, code),
+            InstantiationExpression instantiation    => EmitInstantiationExpression(instantiation, code),
+            CallExpression          call             => EmitCallExpression(call, code),
+            MemberAccessExpression  memberAccess     => EmitMemberAccessExpression(memberAccess, code),
+            IndexExpression         index            => EmitIndexExpression(index, code),
+            CastExpression          cast             => EmitCastExpression(cast, code),
+            RepeatExpression        repeat           => EmitRepeatExpresion(repeat, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
@@ -938,6 +938,21 @@ public class IRGenerator
         string tmp = $"%{NewTempVar()}";
         code.AppendLine($"  {tmp} = load {llvmType}, ptr {ptr}");
         return (code, tmp);
+    }
+
+    (StringBuilder code, string value) EmitRepeatExpresion(RepeatExpression repeat, StringBuilder code)
+    {
+        string retType     = TypeToLLVM(repeat.ResolvedType!)!;
+        string elementType = TypeToLLVM(repeat.Expression.ResolvedType!)!;
+        string arrayPtr  = $"%{NewTempVar()}";
+
+        code.AppendLine($"  {arrayPtr} = alloca {retType}");
+
+        (StringBuilder valueCode, string repeatedValue) = EmitExpression(repeat.Expression);
+        
+        string result  = $"%{NewTempVar()}";
+        code.AppendLine($"  {result} = load {retType}, ptr {arrayPtr}");
+        return (code, result);
     }
 
     #endregion

@@ -222,8 +222,14 @@ static class AstPrinter
                 w.WriteLine($"{Indent(indent + 1)}Target:");
                 PrintExpression(cast.Target, w, indent + 2);
                 break;
+            case RepeatExpression repeat:
+                w.WriteLine($"{Indent(indent)}Repeat: {TryType(repeat.ResolvedType)}");
+                w.WriteLine($"{Indent(indent + 1)}Expression:");
+                PrintExpression(repeat.Expression, w, indent + 2);
+                w.WriteLine($"{Indent(indent + 1)}Count: {repeat.Count}");
+                break;
             default:
-                w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>");
+                w.WriteLine($"{Indent(indent)}<unknown expression {expr.GetType().Name}>: {expr.ResolvedType}");
                 w.WriteLine($"{Indent(indent + 1)}<{expr}>");
                 break;
         }

@@ -491,7 +491,7 @@ public sealed class RepeatExpression(
 ) : IExpression
 {
     public uint Count = count;
-    public IExpression Value = value;
+    public IExpression Expression = value;
 
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
