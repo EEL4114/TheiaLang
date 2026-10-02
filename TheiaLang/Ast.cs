@@ -70,6 +70,22 @@ public enum Type
 }
 
 #region  Declarations
+
+public class ModuleInitialiser : INode
+{
+    public SourePosition Pos => default;
+    public List<IStatement> Statements;
+    public Scope Scope;
+
+    public ModuleInitialiser(
+        List<IStatement> statements,
+        Scope scope)
+    {
+        Statements = statements;
+        Scope = scope;
+    }
+}
+
 public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
@@ -77,9 +93,7 @@ public class FunctionDeclaration : IDeclaration
     public string Name { get; }
     public readonly List<TypeNamePair> Parameters;
     public readonly List<IStatement> Statements;    // the { … } body
-
     public SourePosition Pos { get; }
-
 
     public FunctionDeclaration(TypeInfo resolvedType,
                                string name,
@@ -283,20 +297,23 @@ public sealed class IfStatement(
 
 
 public sealed class ForStatement(
-    IStatement? initialiser,
+    List<IStatement>? initialiser,
     IExpression? Condition,
-    IStatement? iterator,
+    List<IStatement>? iterator,
     List<IStatement> body,
     Scope headScope,
     Scope bodyScope,
-    SourePosition Pos = default
+    SourePosition Pos = default,
+    List<IStatement>? conditionPrelude = null
 ) : IStatement
 { 
 
-    public IStatement? Initialiser = initialiser;
+    public List<IStatement>? Initialiser = initialiser;
+    
+    public List<IStatement>? ConditionPrelude { get; set; } = conditionPrelude;
     public IExpression? Condition { get; set; } = Condition;
 
-    public IStatement? Iterator = iterator;
+    public List<IStatement>? Iterator = iterator;
     public List<IStatement> Body = body;
     public Scope HeadScope = headScope;
     public Scope BodyScope = bodyScope;
@@ -441,19 +458,36 @@ public sealed class BinaryExpression(
     public SourePosition Pos { get; } = Pos;
 }
 
+public enum LiteralKind
+{
+    Lit_Bool, 
+    Lit_Int, 
+    Lit_Float, 
+    Lit_Null, 
+    Lit_ZeroInit,
+    Lit_NoInit,
+}
+
 public sealed class LiteralExpression(
     object value,       // boxed int, float, bool
     string lexeme,
+    LiteralKind literalKind,
     SourePosition Pos = default
 ) : IExpression
 {
 
     public object Value = value;
     public string Lexeme = lexeme;
+    public LiteralKind LiteralKind = literalKind;
     public TypeInfo? ResolvedType { get; set; }
     public bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
+
+    public override string ToString()
+    {
+        return $"LIT:{Lexeme} ->{value}:{LiteralKind} {ResolvedType}";
+    }
 }
 
 public sealed class IdentifierExpression(

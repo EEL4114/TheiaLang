@@ -1,3 +1,6 @@
+ARCH                                                            STATUS
+DeclaringScope on VariableDeclaration                           
+
 FEATURES
 
 ENTRY                                                           STATUS
@@ -22,6 +25,7 @@ loop initializer positioning                                    Fixed
 TypeInfo.TypeName not carrying semantics after SemanticAnalyser 
 move some current SemanticAnalyser duties into Elaboration      
 AST TypeInfo - SymbolInfo sync                                  
+remove duplicate short-circuit logic from IRGen                 
 
 BUGS
 

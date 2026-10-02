@@ -261,13 +261,15 @@ public class SemanticAnalyser
                 break;
             case ForStatement forStatement:
                 EnterScope(forStatement.HeadScope);
-                AnalyseStatement(forStatement.Initialiser!);
+                foreach (IStatement s in forStatement.Initialiser!)
+                    AnalyseStatement(s!);
                 forStatement.Condition = AnalyseExpression(forStatement.Condition!);
 
                 if (forStatement.Condition.ResolvedType!.BuiltinType != BOOL)
                     throw new Exception($"Condition of for loop must resolve to type 'bool', got: {forStatement.Condition.ResolvedType.TypeName}");
 
-                AnalyseStatement(forStatement.Iterator!);
+                foreach (IStatement s in forStatement.Iterator!)
+                    AnalyseStatement(s);
 
                 EnterScope(forStatement.BodyScope);
                 loopStack.Push(forStatement);
@@ -284,7 +286,7 @@ public class SemanticAnalyser
                     returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
                 else
                 {
-                    returnStatement.Expression = new LiteralExpression(null!, "void", SourePosition.None);
+                    returnStatement.Expression = new LiteralExpression(null!, "void", LiteralKind.Lit_Null, SourePosition.None);
                     returnStatement.Expression.ResolvedType = new TypeInfo("void", Void, VOID);
                 }
 
@@ -602,7 +604,7 @@ public class SemanticAnalyser
                     v = j;
                 }
 
-                LiteralExpression literalExpression = new LiteralExpression(v, lexeme, SourePosition.None);
+                LiteralExpression literalExpression = new LiteralExpression(v, lexeme, literal.LiteralKind, SourePosition.None);
                 literalExpression.ResolvedType = literal.ResolvedType;
                 expression = literalExpression;
                 AnalyseExpression(expression);
@@ -754,41 +756,41 @@ public class SemanticAnalyser
             case Scalar:
                 return type.BuiltinType switch
                 {
-                    BOOL => new LiteralExpression(false, "false") {
+                    BOOL => new LiteralExpression(false, "false", LiteralKind.Lit_Bool) {
                         ResolvedType = new TypeInfo("bool", Scalar, BOOL)
                     },
-                    S8 => new LiteralExpression(0L, "0") {
+                    S8 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s8", Scalar, S8)
                     },
-                    S16 => new LiteralExpression(0L, "0") {
+                    S16 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s16", Scalar, S16)
                     },
-                    S32 => new LiteralExpression(0L, "0") {
+                    S32 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s32", Scalar, S32)
                     },
-                    S64 => new LiteralExpression(0L, "0") {
+                    S64 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s64", Scalar, S64)
                     },
-                    S128 => new LiteralExpression(0L, "0") {
+                    S128 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s128", Scalar, S128)
                     },
-                    S256 => new LiteralExpression(0L, "0") {
+                    S256 => new LiteralExpression(0L, "0", LiteralKind.Lit_Int) {
                         ResolvedType = new TypeInfo("s256", Scalar, S256)
                     },
                     // floats need to be handled separately due to no implicit casting 
-                    F16 => new LiteralExpression(0.0, "0.0") {
+                    F16 => new LiteralExpression(0.0, "0.0", LiteralKind.Lit_Float) {
                         ResolvedType = new TypeInfo("f16", Scalar, F16)
                     },
-                    F32 => new LiteralExpression(0.0, "0.0") {
+                    F32 => new LiteralExpression(0.0, "0.0", LiteralKind.Lit_Float) {
                         ResolvedType = new TypeInfo("f32", Scalar, F32)
                     },
-                    F64 => new LiteralExpression(0.0, "0.0") {
+                    F64 => new LiteralExpression(0.0, "0.0", LiteralKind.Lit_Float) {
                         ResolvedType = new TypeInfo("f64", Scalar, F64)
                     },
-                    F128 => new LiteralExpression(0.0, "0.0") {
+                    F128 => new LiteralExpression(0.0, "0.0", LiteralKind.Lit_Float) {
                         ResolvedType = new TypeInfo("f128", Scalar, F128)
                     },
-                    VOIDPTR => new LiteralExpression(null!, "null") {
+                    VOIDPTR => new LiteralExpression(null!, "null", LiteralKind.Lit_Null) {
                         ResolvedType = new TypeInfo($"@{type.TypeName}", Pointer, VOIDPTR, pointee: type)
                     },
                     _ => throw new NotSupportedException($"{type}: {type.BuiltinType} has no implemented default value"),

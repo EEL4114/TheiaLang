@@ -36,6 +36,7 @@ for body scope without shadowig                                 done
 require return value handling                                   
 allow implicit @T -> @void                                      done
 improve error messages for cyclic type defs                     
+array slices                                                    
 
 OTHER
 simpler lexer ASCII char == token handling                      

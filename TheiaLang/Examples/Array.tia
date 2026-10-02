@@ -1,8 +1,10 @@
 int main()
 {
     [8]s8 byteArray;
+    [12]s8 longByteArray;
     return byteArray[0];
 }
 
 
-// [8]s8 GlobalByteArray;
+[8]s8 GlobalByteArray;
+[12]s8 LongGlobalByteArray;

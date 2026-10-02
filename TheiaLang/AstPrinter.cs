@@ -70,8 +70,8 @@ static class AstPrinter
     static void PrintBlock(List<IStatement> block, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}BlockSatement:");
-        foreach (IStatement stmt in block)
-            PrintStatement(stmt, w, indent + 1);
+        foreach (IStatement statement in block)
+            PrintStatement(statement, w, indent + 1);
         w.WriteLine();
     }
 
@@ -114,11 +114,16 @@ static class AstPrinter
             case ForStatement forStatement:
                 w.WriteLine($"{Indent(indent)}For:{TryScope(forStatement.HeadScope)}");
                 w.WriteLine($"{Indent(indent + 1)}Initialiser:");
-                PrintStatement(forStatement.Initialiser!, w, indent + 2);
+                PrintBlock(forStatement.Initialiser!, w, indent + 2);
+                if(forStatement.ConditionPrelude != null)
+                {
+                    w.WriteLine($"{Indent(indent + 1)}Condition Prelude:");
+                    PrintBlock(forStatement.ConditionPrelude, w, indent + 2);
+                }
                 w.WriteLine($"{Indent(indent + 1)}Condition:");
                 PrintExpression(forStatement.Condition!, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Iterator:");
-                PrintStatement(forStatement.Iterator!, w, indent + 2);
+                PrintBlock(forStatement.Iterator!, w, indent + 2);
                 w.WriteLine($"{Indent(indent + 1)}Body:{TryScope(forStatement.BodyScope)}");
                 PrintBlock(forStatement.Body, w, indent + 2);
                 break;

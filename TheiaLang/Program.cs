@@ -236,6 +236,9 @@ int CompileFile(string filePath,
 
     timers[TG_ConstFold].Stop();
 
+    Lowering lowering = new Lowering();
+    lowering.Lower(ast, globalScope);
+
     timers[TG_IRGen].Start();
 
     string irgenPath = Path.Combine(F_OUTPUT_PATH_REL, $"{programName}.ll");

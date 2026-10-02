@@ -85,6 +85,10 @@ public class IRGenerator
         foreach (INode node in program.Nodes)
             switch (node)
             {
+                case ModuleInitialiser init:
+                    EmitModuleInitialiser(init, sb);
+                    break;
+
                 case FunctionDeclaration fn:
                     EmitFunction(fn, sb);
                     break;
@@ -100,6 +104,38 @@ public class IRGenerator
             }
 
         File.WriteAllText(pathLl, sb.ToString());
+    }
+
+    void EmitModuleInitialiser(ModuleInitialiser init, StringBuilder sb)
+    {
+        Scope previousScope = currentScope!;
+        currentScope = init.Scope;
+
+        allocas.Push([]);
+        varTypes.Push([]);
+
+        sb.AppendLine("define internal void @__theia_module_init() {");
+        sb.AppendLine("entry:");
+
+        BlockTermination termination = NotTerminated;
+
+        foreach (IStatement statement in init.Statements)
+        {
+            termination = EmitStatement(statement, sb);
+
+            if (termination == Terminated)
+                break;
+        }
+
+        if (termination == NotTerminated)
+            sb.AppendLine("  ret void");
+
+        sb.AppendLine("}");
+
+        varTypes.Pop();
+        allocas.Pop();
+
+        currentScope = previousScope;
     }
 
     void EmitStructType(StructDeclaration sd, StringBuilder sb)
@@ -208,34 +244,17 @@ public class IRGenerator
         };
 
 
-    BlockTermination EmitGlobalVariableDeclaration(VariableDeclaration vd, StringBuilder sb)
+    void EmitGlobalVariableDeclaration(
+        VariableDeclaration vd,
+        StringBuilder sb)
     {
-        string LLVMType = TypeToLLVM(vd.ResolvedType!)!;
-
+        string llvmType = TypeToLLVM(vd.ResolvedType!)!;
         string slot = $"@{vd.Name}_{currentScope!.Name}";
-        sb.Append($"{slot} = global ");
 
-        globals[vd.Name] = (
-            slot,
-            vd.ResolvedType!
-        );
+        globals[vd.Name] = (slot, vd.ResolvedType!);
 
-        varTypes.Peek()[vd.Name] = vd.ResolvedType!;
-
-        if(vd.Init == null)
-            sb.AppendLine($"{LLVMType} zeroinitializer");
-        else
-        {
-            if(vd.Init is LiteralExpression lit)
-                sb.Append(LiteralExpressionToString(lit));
-                
-            else if(vd.Init is InstantiationExpression inst)
-                sb.Append(ConstInstantiationExpressionToString(inst));
-        }
-
-        sb.Append("\n");
-
-        return NotTerminated;
+        sb.AppendLine(
+            $"{slot} = global {llvmType} zeroinitializer");
     }
 
     BlockTermination EmitVariableDeclaration(VariableDeclaration variableDeclaration, StringBuilder sb)
@@ -267,12 +286,30 @@ public class IRGenerator
             }
             sb.AppendLine();
         }
+        else if(variableDeclaration.Init is LiteralExpression literal)
+        {
+            switch (literal.LiteralKind)
+            {
+                case LiteralKind.Lit_NoInit:
+                    // alloca already happened; emit no store
+                    return NotTerminated;
+
+                case LiteralKind.Lit_ZeroInit:
+                    sb.AppendLine(
+                        $"  store {TypeToLLVM(variableDeclaration.ResolvedType!)} zeroinitializer, ptr {slot}");
+                    return NotTerminated;
+                default:
+                    (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
+                    sb.Append(initCode);
+                    sb.AppendLine($"  store {LLVMType} {initReg}, ptr {slot}");
+                    return NotTerminated;
+            }
+        }
         else if (variableDeclaration.Init != null)
         {
             (StringBuilder initCode, string initReg) = EmitExpression(variableDeclaration.Init);
             sb.Append(initCode);
-            sb.AppendLine(
-              $"  store {LLVMType} {initReg}, ptr {slot}");
+            sb.AppendLine($"  store {LLVMType} {initReg}, ptr {slot}");
         }
         
         return NotTerminated;
@@ -385,7 +422,8 @@ public class IRGenerator
     {
         // Loop init
         EnterScope(forStatement.HeadScope);
-        EmitStatement(forStatement.Initialiser!, sb);
+        foreach (IStatement statement in forStatement.Initialiser!)
+                _ = EmitStatement(statement, sb);
         string condLabel = $"for_cond{labelCounter}";
         string bodyLabel = $"for_body{labelCounter}";
         string iterLabel = $"for_iter{labelCounter}";
@@ -435,7 +473,9 @@ public class IRGenerator
         // Loop Iterator
         sb.AppendLine($"{iterLabel}:");
         currentBlock = iterLabel;
-        EmitStatement(forStatement.Iterator!, sb);
+
+        foreach (IStatement statement in forStatement.Iterator!)
+            _ = EmitStatement(statement, sb);
         sb.AppendLine($"  br label %{condLabel}");
         // Loop End
         sb.AppendLine($"{endLabel}:");
@@ -506,12 +546,15 @@ public class IRGenerator
             MemberAccessExpression  memberAccess     => EmitMemberAccessExpression(memberAccess, code),
             IndexExpression         index            => EmitIndexExpression(index, code),
             CastExpression          cast             => EmitCastExpression(cast, code),
-            RepeatExpression        repeat           => EmitRepeatExpresion(repeat, code),
             _ => throw new Exception($"Unsupported expression: {expression.GetType().Name}"),
         };
     }
+    int square(int num) {
+        return num * num;
+    }
     (StringBuilder code, string value) EmitUnaryExpression(UnaryExpression unaryExpression, StringBuilder code)
     {
+
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType!;
         switch (unaryExpression.Op)
         {
@@ -562,7 +605,7 @@ public class IRGenerator
         StringBuilder code)
     {
         TypeInfo type = literal.ResolvedType
-            ?? throw new InvalidOperationException("Literal has no ResolvedType");
+            ?? throw new InvalidOperationException($"Literal {literal} has no ResolvedType");
 
         return type.BuiltinType switch
         {
@@ -940,21 +983,6 @@ public class IRGenerator
         return (code, tmp);
     }
 
-    (StringBuilder code, string value) EmitRepeatExpresion(RepeatExpression repeat, StringBuilder code)
-    {
-        string retType     = TypeToLLVM(repeat.ResolvedType!)!;
-        string elementType = TypeToLLVM(repeat.Expression.ResolvedType!)!;
-        string arrayPtr  = $"%{NewTempVar()}";
-
-        code.AppendLine($"  {arrayPtr} = alloca {retType}");
-
-        (StringBuilder valueCode, string repeatedValue) = EmitExpression(repeat.Expression);
-        
-        string result  = $"%{NewTempVar()}";
-        code.AppendLine($"  {result} = load {retType}, ptr {arrayPtr}");
-        return (code, result);
-    }
-
     #endregion
 
     #region  Helpers
@@ -1048,7 +1076,7 @@ public class IRGenerator
                 string gep = $"%{NewTempVar()}";
 
                 code.AppendLine(
-                    $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, ptr {targetPtr}, i32 0, i32 {indexReg}");
+                    $"  {gep} = getelementptr inbounds {arrayTypeLLVM}, ptr {targetPtr}, i64 0, i64 {indexReg}");
                 return (gep, elementType);
 
             default: throw new Exception($"Unsupported expression type: {target.GetType()}");

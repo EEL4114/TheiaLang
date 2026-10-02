@@ -1,7 +1,5 @@
 namespace TheiaLang;
 
-using static BuiltinType;
-
 public class ConstantFolding(LayoutCalc layout)
 {
     public LayoutCalc Layout = layout;
@@ -52,9 +50,9 @@ public class ConstantFolding(LayoutCalc layout)
                     WalkBlock(ifStatement.ElseBranch);
                 return ifStatement;
             case ForStatement forStatement:
-                forStatement.Initialiser = WalkStatement(forStatement.Initialiser!);
+                WalkBlock(forStatement.Initialiser!);
                 forStatement.Condition = WalkExpression(forStatement.Condition!);
-                forStatement.Iterator = WalkStatement(forStatement.Iterator!);
+                WalkBlock(forStatement.Iterator!);
                 WalkBlock(forStatement.Body);
                 return forStatement;
             case ReturnStatement r:
@@ -92,6 +90,7 @@ public class ConstantFolding(LayoutCalc layout)
                     return new LiteralExpression(
                         (long)typeLayout.Size,
                         typeLayout.Size.ToString(),
+                        LiteralKind.Lit_Int,
                         call.Pos)
                     {
                         ResolvedType = call.ResolvedType

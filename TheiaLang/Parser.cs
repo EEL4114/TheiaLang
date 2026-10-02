@@ -374,7 +374,7 @@ public class Parser(List<Token> tokens)
             ExitScope();    // body
             ExitScope();    // head
 
-            return new ForStatement(initialiser, condition, iterator, body, headScope, bodyScope, startPosition);
+            return new ForStatement([initialiser], condition, [iterator], body, headScope, bodyScope, startPosition);
         }
 
         if (Match(TokenType.Keyword_return))
@@ -796,16 +796,16 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Literal))
         {
-            (object Value, string Type, TypeKind kind, BuiltinType? builtinType) lit = Previous().Lexeme switch
+            (object Value, LiteralKind literalKind, string Type, TypeKind typeKind, BuiltinType? builtinType) lit = Previous().Lexeme switch
             {
-                string s when long.TryParse(s,   NumberStyles.Integer, CultureInfo.InvariantCulture, out long i) => (i, "int",   Scalar, INT),
-                string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) => (d, "float", Scalar, FLOAT),
-                string s when bool.TryParse(s, out bool b)     => (b, "bool",  Scalar, BOOL),
+                string s when long.TryParse(s,   NumberStyles.Integer, CultureInfo.InvariantCulture, out long i) => (i, LiteralKind.Lit_Int,   "int",   Scalar, INT),
+                string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) => (d, LiteralKind.Lit_Float, "float", Scalar, FLOAT),
+                string s when bool.TryParse(s, out bool b)                                                       => (b, LiteralKind.Lit_Bool,   "bool",  Scalar, BOOL),
                 _ => throw new Exception("Invalid literal")
             };
 
-            LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme, startPosition);
-            literal.ResolvedType = new TypeInfo(lit.Type, lit.kind, lit.builtinType);
+            LiteralExpression literal = new LiteralExpression(lit.Value, Previous().Lexeme, lit.literalKind, startPosition);
+            literal.ResolvedType = new TypeInfo(lit.Type, lit.typeKind, lit.builtinType);
             expression = literal;
         }
         else if (Peek().TokenType == TokenType.Identifier)
