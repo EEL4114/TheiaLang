@@ -7,7 +7,7 @@ ENTRY                                                           STATUS
 Count references                                                
 more proper compiler messages                                   
 const eval
-Introduce parameterless struct instantiation                    
+Introduce parameterless struct instantiation                    Done
 
 STABILITY
 
@@ -25,7 +25,7 @@ loop initializer positioning                                    Fixed
 TypeInfo.TypeName not carrying semantics after SemanticAnalyser 
 move some current SemanticAnalyser duties into Elaboration      
 AST TypeInfo - SymbolInfo sync                                  
-remove duplicate short-circuit logic from IRGen                 
+remove duplicate short-circuit logic from IRGen                 Done
 
 BUGS
 
@@ -46,19 +46,19 @@ DynamicArrayCache                                               Fixed
 short-circuit && / ||                                           Fixed   
 Control block termination                                       Fixed   
 f16 not working                                                 Fixed   
-static state                                                    Fixed
-for initializer scope in IRGenerator                            Fixed
-Disallow struct A{B b;} struct B{A a;}                          Fixed
-Disallow struct A{A a;}                                         Fixed
-Disallow struct A{[]A a;}                                       Fixed
+static state                                                    Fixed   
+for initializer scope in IRGenerator                            Fixed   
+Disallow struct A{B b;} struct B{A a;}                          Fixed   
+Disallow struct A{A a;}                                         Fixed   
+Disallow struct A{[]A a;}                                       Fixed   
 reset instance states upon pass start                           
 literal parsing / types                                         
-Unary !                                                         
+Unary !                                                         Fixed   
 Union instantiation                                             
 Union member access LLVM                                        
-Elaboration not walking if-/for bodies                          
-global VariableDeclarations post-parser                         Fixed
-Disallow struct Name used as struct literal; should require {}  
+Elaboration not walking if-/for bodies                          Fixed   
+global VariableDeclarations post-parser                         Fixed   
+Disallow struct Name used as struct literal; should require {}  Fixed   
 
 TO BE INVESTIGATED
 

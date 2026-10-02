@@ -150,7 +150,37 @@ class Elaboration
 
                 VariableDeclaration vd = new VariableDeclaration(newType.TypeName, varDeclaration.Name, varDeclaration.Init, SourePosition.None);
                 vd.ResolvedType = newType;
+                
+                if (currentScope.TryLookupLocal(vd.Name, out SymbolInfo? symbol, out _))
+                    symbol!.Type = newType;
+                
                 statements[i] = vd;
+            }
+            else if (statement is IfStatement ifStatement)
+            {
+                Scope tmp = currentScope;
+                currentScope = ifStatement.ThenScope;
+                AnalyseStatements(ifStatement.ThenBranch);
+                if(ifStatement.ElseBranch != null)
+                {
+                    currentScope = ifStatement.ElseScope!;   
+                    AnalyseStatements(ifStatement.ElseBranch);
+                }
+
+                currentScope = tmp;
+            }
+            else if(statement is ForStatement forStatement)
+            {
+                Scope tmp = currentScope;
+                currentScope = forStatement.HeadScope;
+                if(forStatement.Initialiser != null)
+                    AnalyseStatements(forStatement.Initialiser);
+                if(forStatement.Iterator != null)
+                    AnalyseStatements(forStatement.Iterator);
+                currentScope = forStatement.BodyScope;
+                AnalyseStatements(forStatement.Body);
+
+                currentScope = tmp;
             }
         }
     }

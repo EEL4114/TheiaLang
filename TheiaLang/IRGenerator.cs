@@ -224,8 +224,6 @@ public class IRGenerator
 
     #region Statements
 
-    // true: terminated (return)
-    // false: not terminated
     BlockTermination EmitStatement(IStatement statement, StringBuilder sb)
         => statement switch
         {
@@ -240,7 +238,6 @@ public class IRGenerator
             ExpressionStatement e         => EmitExpressionStatement(e, sb),
             _ => throw new Exception($"Unknown Statement: {statement.GetType().Name}"),
         };
-
 
     void EmitGlobalVariableDeclaration(
         VariableDeclaration vd,
