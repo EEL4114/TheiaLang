@@ -16,7 +16,6 @@ public class IRGenerator
     ulong tmpCounter = 0;
     Scope? currentScope;
     ulong labelCounter = 0;
-    string currentBlock;
 
     readonly record struct LoopIRTarget(
         string ContinueLabel,
@@ -198,7 +197,6 @@ public class IRGenerator
 
         sb.AppendLine($"define {returnTypeLLVM} @{fn.Scope!.FullName}({paramList}) {{");
         sb.AppendLine("entry:");
-        currentBlock = "entry";
 
         foreach (TypeNamePair parameter in fn.Parameters)
         {
@@ -365,7 +363,6 @@ public class IRGenerator
               $"  br i1 {condReg}, label %{thenLabel}, label %{elseLabel ?? mergeLabel}");
 
         sb.AppendLine($"{thenLabel}:");
-        currentBlock = thenLabel;
         EnterScope(ifStatement.ThenScope);
 
         BlockTermination thenTermination = NotTerminated;
@@ -391,7 +388,6 @@ public class IRGenerator
         {
             EnterScope(ifStatement.ElseScope!);
             sb.AppendLine($"{elseLabel}:");
-            currentBlock = elseLabel!;
 
             foreach (IStatement statement in ifStatement.ElseBranch)
             {
@@ -413,7 +409,6 @@ public class IRGenerator
         if(blockTermination == NotTerminated)
         {
             sb.AppendLine($"{mergeLabel}:");
-            currentBlock = mergeLabel;   
         }
         return blockTermination;
     }
@@ -434,13 +429,11 @@ public class IRGenerator
 
         // Loop Condition
         sb.AppendLine($"{condLabel}:");
-        currentBlock = condLabel;
         (StringBuilder condCode, string condReg) = EmitExpression(forStatement.Condition!);
         sb.Append(condCode);
         sb.AppendLine($"  br i1 {condReg}, label %{bodyLabel}, label %{endLabel}");
         // Loop Body
         sb.AppendLine($"{bodyLabel}:");
-        currentBlock = bodyLabel;
 
         BlockTermination bodyTermination = NotTerminated;
 
@@ -472,14 +465,12 @@ public class IRGenerator
             sb.AppendLine($"  br label %{iterLabel}");
         // Loop Iterator
         sb.AppendLine($"{iterLabel}:");
-        currentBlock = iterLabel;
 
         foreach (IStatement statement in forStatement.Iterator!)
             _ = EmitStatement(statement, sb);
         sb.AppendLine($"  br label %{condLabel}");
         // Loop End
         sb.AppendLine($"{endLabel}:");
-        currentBlock = endLabel;
 
         ExitScope();    // head
         return NotTerminated;
