@@ -804,7 +804,7 @@ public class SemanticAnalyser
 
                 return AnalyseExpression(new InstantiationExpression(type.TypeName, arguments));
             case Pointer:
-                return new LiteralExpression(null!, "", LiteralKind.Lit_Null) {ResolvedType = Builtins.GetTypeInfo(VOIDPTR) };
+                return new LiteralExpression(null!, "", LiteralKind.Lit_Null) {ResolvedType = type };
            default: // includes Union
                 throw new Exception(
                     $"Union type '{type.TypeName}' has no default value");
