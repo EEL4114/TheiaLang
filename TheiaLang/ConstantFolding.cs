@@ -84,8 +84,14 @@ public class ConstantFolding(LayoutCalc layout)
                 if (call.Target is IdentifierExpression id &&
                     id.Name == "TypeSize")
                 {
-                    TypeLayout typeLayout =
-                        Layout.GetLayout(call.Arguments[0].ResolvedType!);
+                    TypeInfo typeLiteral = call.Arguments[0].ResolvedType!;
+
+                    if (typeLiteral.TypeKind != TypeKind.Type ||
+                        typeLiteral.Pointee == null)
+                        throw new InvalidOperationException($"TypeSize expected a type literal, got {typeLiteral}");
+                    
+                    // use the Type struct to compute the layout
+                    TypeLayout typeLayout = Layout.GetLayout(typeLiteral.Pointee);
 
                     return new LiteralExpression(
                         (long)typeLayout.Size,

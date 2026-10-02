@@ -63,7 +63,7 @@ public class LayoutCalc(CompilationTarget target)
             case Struct or Union:
                 return Layouts[type.TypeName];
             default:
-                throw new NotImplementedException($"No layout implemented for {type.TypeKind}");
+                throw new NotImplementedException($"No layout implemented for TypeKind {type.TypeKind}");
         }
     }
 
