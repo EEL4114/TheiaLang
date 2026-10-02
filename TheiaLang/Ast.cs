@@ -466,6 +466,7 @@ public enum LiteralKind
     Lit_Null, 
     Lit_ZeroInit,
     Lit_NoInit,
+    Lit_Void,
 }
 
 public sealed class LiteralExpression(

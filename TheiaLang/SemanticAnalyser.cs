@@ -286,7 +286,7 @@ public class SemanticAnalyser
                     returnStatement.Expression = AnalyseExpression(returnStatement.Expression);
                 else
                 {
-                    returnStatement.Expression = new LiteralExpression(null!, "void", LiteralKind.Lit_Null, SourePosition.None);
+                    returnStatement.Expression = new LiteralExpression(null!, "void", LiteralKind.Lit_Void, SourePosition.None);
                     returnStatement.Expression.ResolvedType = new TypeInfo("void", Void, VOID);
                 }
 
@@ -803,6 +803,8 @@ public class SemanticAnalyser
                     arguments.Add(DefaultInit(type.FieldTypes[i]));
 
                 return AnalyseExpression(new InstantiationExpression(type.TypeName, arguments));
+            case Pointer:
+                return new LiteralExpression(null!, "", LiteralKind.Lit_Null) {ResolvedType = Builtins.GetTypeInfo(VOIDPTR) };
            default: // includes Union
                 throw new Exception(
                     $"Union type '{type.TypeName}' has no default value");

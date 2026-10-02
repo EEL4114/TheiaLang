@@ -604,6 +604,10 @@ public class IRGenerator
         LiteralExpression literal,
         StringBuilder code)
     {
+        if(literal.LiteralKind == LiteralKind.Lit_Null)
+        {
+            return (code, "null");
+        }
         TypeInfo type = literal.ResolvedType
             ?? throw new InvalidOperationException($"Literal {literal} has no ResolvedType");
 
