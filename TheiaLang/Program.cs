@@ -205,6 +205,9 @@ int CompileFile(string filePath,
     (ast, globalScope) = new SemanticAnalyser().AnalyseProgram(ast, globalScope);
 
     timers[TG_Analyser].Stop();
+    Lowering lowering = new Lowering();
+    lowering.Lower(ast, globalScope);
+
     timers[TG_Print].Start();
 
     if(writeScope)
@@ -235,9 +238,6 @@ int CompileFile(string filePath,
     cf.ConstFold(ast);
 
     timers[TG_ConstFold].Stop();
-
-    Lowering lowering = new Lowering();
-    lowering.Lower(ast, globalScope);
 
     timers[TG_IRGen].Start();
 

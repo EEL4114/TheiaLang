@@ -755,13 +755,13 @@ public class Parser(List<Token> tokens)
         {
             // we’ve consumed the ‘-’
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.Negate, operand, startPosition);
+            return new UnaryExpression(UnaryOperator.Invert, operand, startPosition);
         }
 
-        if (Match(TokenType.Operator_Invert))
+        if (Match(TokenType.Operator_Negate))
         {
             IExpression operand = ParseUnary();
-            return new UnaryExpression(UnaryOperator.Invert, operand, startPosition);
+            return new UnaryExpression(UnaryOperator.Negate, operand, startPosition);
         }
 
         if (Match(TokenType.Punctuation_Dollar))

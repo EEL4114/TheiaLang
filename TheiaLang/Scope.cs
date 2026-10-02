@@ -134,7 +134,7 @@ public class Scope : INode
     public Scope Exit()
     {
         if (Parent == null)
-            throw new Exception("Attempted to exit global scope");
+            throw new Exception($"{Name}: Attempted to exit global scope");
 
         return Parent;
     }

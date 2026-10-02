@@ -49,8 +49,8 @@ public enum TokenType
     Operator_AND        = 610,
     Operator_OR         = 611,
     Operator_EqualEqual = 612,
-    Operator_NotEqual    = 613,
-    Operator_Invert     = 614,
+    Operator_NotEqual   = 613,
+    Operator_Negate     = 614,
 
     Operator_PlusEqual  = 620,
     Operator_MinusEqual = 621,
@@ -140,7 +140,7 @@ class Lexer(string sourceCode)
                     Advance();
                     return MakeToken(TokenType.Operator_NotEqual, "!=");
                 }
-                return MakeToken(TokenType.Operator_Invert, "!");
+                return MakeToken(TokenType.Operator_Negate, "!");
             case '=':
                 if (Peek() == '=')
                 {

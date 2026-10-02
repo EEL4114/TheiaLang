@@ -288,7 +288,7 @@ public class Lowering
         }
 
         Scope tmp = currentScope;
-        Scope thenScope = new Scope($"if_then_lw_{tmpscope++}", true, currentScope);
+        Scope thenScope = new Scope($"if_then_lw_{tmpscope++}", true, parent: currentScope);
         
         currentScope = thenScope;
         (IExpression right, List<IStatement> rightPrelude) = LowerExpression(binary.Right);
@@ -308,7 +308,7 @@ public class Lowering
         }
         else if(binary.Op == BinaryOperator.OR)
         {
-            UnaryExpression notTmp = new UnaryExpression(UnaryOperator.Invert, NewIdentifierExpression(tempVar, currentScope));
+            UnaryExpression notTmp = new UnaryExpression(UnaryOperator.Negate, NewIdentifierExpression(tempVar, currentScope));
             notTmp.ResolvedType = Builtins.GetTypeInfo(BOOL);
             IfStatement ifStatement = new IfStatement(Condition: notTmp, thenBranch: thenStatements, null, thenScope, null);
             prelude.Add(ifStatement);

@@ -34,8 +34,8 @@ public interface IExpression : INode
 #region  Operators
 public enum UnaryOperator
 {
-    Negate,     // -1
-    Invert,     // !false
+    Invert,     // -1
+    Negate,     // !false
     AddressOf,
     Dereference,
 }

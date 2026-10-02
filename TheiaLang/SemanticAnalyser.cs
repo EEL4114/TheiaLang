@@ -585,7 +585,7 @@ public class SemanticAnalyser
     {
         IExpression expression = unary;
         unary.Operand = AnalyseExpression(unary.Operand);
-        if (unary.Op == UnaryOperator.Negate && unary.Operand is LiteralExpression literal)
+        if (unary.Op == UnaryOperator.Invert && unary.Operand is LiteralExpression literal)
         {
             if (unary.Operand.ResolvedType!.TypeName == "bool")
                 Log.Info("Invalid operation '-' on type 'bool'");

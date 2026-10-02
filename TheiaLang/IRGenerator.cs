@@ -558,7 +558,7 @@ public class IRGenerator
         TypeInfo typeInfo = unaryExpression.Operand.ResolvedType!;
         switch (unaryExpression.Op)
         {
-            case UnaryOperator.Negate:
+            case UnaryOperator.Invert:
                 (StringBuilder cl, string val) = EmitExpression(unaryExpression.Operand);
                 code.Append(cl);
 
@@ -582,8 +582,14 @@ public class IRGenerator
 
                 string llvmType = TypeToLLVM(typeInfo)!;
 
-                code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
+                code.AppendLine($"  c{tmp} = {instr} {llvmType} {zero}, {val}");
                 return (code, $"%{tmp}");
+            case UnaryOperator.Negate:
+                (StringBuilder oc, string ov) = EmitExpression(unaryExpression.Operand);
+                code.Append(oc);
+                string result = $"%{NewTempVar()}"; 
+                code.AppendLine($"  {result} = xor i1 {ov}, true");
+                return (code, result);
             case UnaryOperator.AddressOf:
                 (string ptr, _) = EmitAddressOf(unaryExpression.Operand, code);
                 return (code, ptr);
@@ -730,12 +736,6 @@ public class IRGenerator
 
     (StringBuilder code, string value) EmitBinaryExpression(BinaryExpression binaryExpression, StringBuilder code)
     {
-        if (binaryExpression.Op == BinaryOperator.AND ||
-            binaryExpression.Op == BinaryOperator.OR)
-        {
-            return EmitShortCircuitBinaryExpression(binaryExpression);
-        }
-
         (StringBuilder cl, string vl) = EmitExpression(binaryExpression.Left);
         (StringBuilder cr, string vr) = EmitExpression(binaryExpression.Right);
         code.Append(cl);
@@ -794,64 +794,6 @@ public class IRGenerator
         code.AppendLine();
 
         return (code, $"%{tmp}");
-    }
-
-    (StringBuilder Code, string Result) EmitShortCircuitBinaryExpression(BinaryExpression binaryExpression)
-    {
-        StringBuilder code = new();
-
-        (StringBuilder leftCode, string leftReg) =
-            EmitExpression(binaryExpression.Left);
-
-        code.Append(leftCode);
-
-        ulong id = labelCounter++;
-
-        string rhsLabel = $"logic_rhs_{id}";
-        string endLabel = $"logic_end_{id}";
-
-        string leftBlockLabel = currentBlock;
-
-        if (binaryExpression.Op == BinaryOperator.AND)
-        {
-            code.AppendLine(
-                $"  br i1 {leftReg}, label %{rhsLabel}, label %{endLabel}");
-        }
-        else
-        {
-            code.AppendLine(
-                $"  br i1 {leftReg}, label %{endLabel}, label %{rhsLabel}");
-        }
-
-        code.AppendLine($"{rhsLabel}:");
-        currentBlock = rhsLabel;
-
-        (StringBuilder rightCode, string rightReg) =
-            EmitExpression(binaryExpression.Right);
-
-        code.Append(rightCode);
-
-        string rightBlockLabel = currentBlock;
-
-        code.AppendLine($"  br label %{endLabel}");
-
-        code.AppendLine($"{endLabel}:");
-        currentBlock = endLabel;
-
-        string result = $"%{NewTempVar()}";
-
-        if (binaryExpression.Op == BinaryOperator.AND)
-        {
-            code.AppendLine(
-                $"  {result} = phi i1 [ 0, %{leftBlockLabel} ], [ {rightReg}, %{rightBlockLabel} ]");
-        }
-        else
-        {
-            code.AppendLine(
-                $"  {result} = phi i1 [ 1, %{leftBlockLabel} ], [ {rightReg}, %{rightBlockLabel} ]");
-        }
-
-        return (code, result);
     }
 
     (StringBuilder code, string value) EmitInstantiationExpression(InstantiationExpression instantiation, StringBuilder code)
