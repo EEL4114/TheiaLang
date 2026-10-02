@@ -957,9 +957,9 @@ public class SemanticAnalyser
         /*s128  */  {   false,  true,   false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false,  false,  false},
         /*s256  */  {   false,  true,   false,  false,  false,  false,  false,  true,   false,  false,  false,  false,  false,  false,  false},
         /*float */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false,  false},
-        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false,  false,  false},
-        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false,  false,  false},
-        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false,  false,  false},
+        /*f16   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true,   false,  false},
+        /*f32   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  true,   true,   true,   false,  false},
+        /*f64   */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   true,   false,  false},
         /*f128  */  {   false,  false,  false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true,   false,  false},
         /*void  */  {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   true },
         /*ptr  */   {   false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  false,  true,   true },
@@ -977,10 +977,10 @@ public class SemanticAnalyser
         /*s128  */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
         /*s256  */  {   false,  true,   true,   true,   true,   true,   true,   true,   false,  false,  false,  false,  false },
         /*float */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
-        /*f16   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   false,  false,  false },
-        /*f32   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  true,   false,  false },
-        /*f64   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  false,  true,   false },
-        /*f128  */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   false,  false,  false,  true  },
+        /*f16   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
+        /*f32   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
+        /*f64   */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
+        /*f128  */  {   false,  true,   false,  false,  false,  false,  false,  false,  true,   true,   true,   true,   true  },
     };
 
     static BuiltinType? StringToBuiltin(string s)
@@ -1030,9 +1030,9 @@ public class SemanticAnalyser
         /*s128  */  {   null,   S128,   S128,   S128,   S128,   S128,   S128,   S256,   null,   null,   null,   null,   null },
         /*s256  */  {   null,   S256,   S256,   S256,   S256,   S256,   S256,   S256,   null,   null,   null,   null,   null },
         /*float */  {   null,   FLOAT,  null,   null,   null,   null,   null,   null,   FLOAT,  F16,    F32,    F64,    F128 },
-        /*f16   */  {   null,   F16,    null,   null,   null,   null,   null,   null,   F16,    F16,    null,   null,   null },
-        /*f32   */  {   null,   F32,    null,   null,   null,   null,   null,   null,   F32,    null,   F32,    null,   null },
-        /*f64   */  {   null,   F64,    null,   null,   null,   null,   null,   null,   F64,    null,   null,   F64,    null },
+        /*f16   */  {   null,   F16,    null,   null,   null,   null,   null,   null,   F16,    F16,    F32,    F64,    F128 },
+        /*f32   */  {   null,   F32,    null,   null,   null,   null,   null,   null,   F32,    null,   F32,    F64,    F128 },
+        /*f64   */  {   null,   F64,    null,   null,   null,   null,   null,   null,   F64,    null,   null,   F64,    F128 },
         /*f128  */  {   null,   F128,   null,   null,   null,   null,   null,   null,   F128,   null,   null,   null,   F128 },
     };
 

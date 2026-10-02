@@ -1,0 +1,9 @@
+int main()
+{
+    f16 a = 4;
+    f32 b = 5;
+
+    b = a + b;
+    
+    return 0;
+}

@@ -8,15 +8,15 @@ public enum SymbolKind
     Namespace,
 }
 
-    public class SymbolInfo(string name,
-                            TypeInfo type,
-                            SymbolKind symbolKind,
-                            List<TypeNamePair>? parameters)
-    {
-        public string Name { get; init; } = name;
-        public TypeInfo Type = type;
-        public SymbolKind Kind { get; init; } = symbolKind;
-        public List<TypeNamePair>? Parameters { get; init; } = parameters;
+public class SymbolInfo(string name,
+                        TypeInfo type,
+                        SymbolKind symbolKind,
+                        List<TypeNamePair>? parameters)
+{
+    public string Name { get; init; } = name;
+    public TypeInfo Type = type;
+    public SymbolKind Kind { get; init; } = symbolKind;
+    public List<TypeNamePair>? Parameters { get; init; } = parameters;
 
     public override string ToString()
     {

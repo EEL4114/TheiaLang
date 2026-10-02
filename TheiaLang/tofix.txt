@@ -6,7 +6,7 @@ FEATURES
 ENTRY                                                           STATUS
 Count references                                                
 more proper compiler messages                                   
-const eval
+const eval                                                      
 Introduce parameterless struct instantiation                    Done
 
 STABILITY
