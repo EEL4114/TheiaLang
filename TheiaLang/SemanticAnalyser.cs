@@ -733,13 +733,13 @@ public class SemanticAnalyser
         IExpression rex = AnalyseExpression(repeat.Expression);
         repeat.Expression = rex;
 
-        if(rex is not LiteralExpression and not IdentifierExpression and not InstantiationExpression)
+        if(rex is not LiteralExpression and not IdentifierExpression and not InstantiationExpression and not RepeatExpression)
             Log.Error(31, $"Unsupported repeat expression: {rex}");
         repeat.ResolvedType = new TypeInfo($"[{repeat.Count}]{rex.ResolvedType!.TypeName}",
-                                           Array,
-                                           null,
-                                           elementType: rex.ResolvedType,
-                                           arrayLength: repeat.Count);
+                                            Array,
+                                            null,
+                                            elementType: rex.ResolvedType,
+                                            arrayLength: repeat.Count);
         return repeat;
     }
 

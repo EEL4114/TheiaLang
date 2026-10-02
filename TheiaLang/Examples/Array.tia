@@ -2,6 +2,7 @@ int main()
 {
     [8]s8 byteArray;
     [12]s8 longByteArray;
+    [8][8] s8 array2d;
 
     return byteArray[0];
 }
