@@ -112,14 +112,15 @@ public class Lowering
     List<IStatement> LowerStatement(IStatement statement)
         => statement switch
         {
-            VariableDeclaration vd                => LowerVariableDeclaration(vd),
-            AssignmentStatement assignment        => LowerAssignmentStatement(assignment),
-            IfStatement         ifStatement       => LowerIfStatement(ifStatement),
-            ForStatement        forStatement      => LowerForStatement(forStatement),
-            ReturnStatement     returnStatement   => LowerReturnStatement(returnStatement),
-            BreakStatement      breakStatement    => [breakStatement],
-            ContinueStatement   continueStatement => [continueStatement],
-            ExpressionStatement expression        => LowerExpressionStatement(expression),
+            VariableDeclaration         vd                => LowerVariableDeclaration(vd),
+            AssignmentStatement         assignment        => LowerAssignmentStatement(assignment),
+            IfStatement                 ifStatement       => LowerIfStatement(ifStatement),
+            ForStatement                forStatement      => LowerForStatement(forStatement),
+            ReturnStatement             returnStatement   => LowerReturnStatement(returnStatement),
+            BreakStatement              breakStatement    => [breakStatement],
+            ContinueStatement           continueStatement => [continueStatement],
+            ExpressionStatement         expression        => LowerExpressionStatement(expression),
+            CompoundAssignmentStatement compound          => LowerCompoundAssignmentStatement(compound),
         };
 
     List<IStatement> LowerVariableDeclaration(VariableDeclaration vd)
