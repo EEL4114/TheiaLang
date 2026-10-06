@@ -152,4 +152,56 @@ public static class Builtins
 
             _ => throw new NotImplementedException(),
         };
+
+    public static string BuiltinTypeToString(BuiltinType builtinType)
+        => builtinType switch
+        {
+            VOID  => "void",
+
+            BOOL  => "bool",
+
+            INT   => "int",
+            S8    => "s8",
+            S16   => "s16",
+            S32   => "s32",
+            S64   => "s64",
+            S128  => "s128",
+            S256  => "s256",
+
+            U8    => "u8",
+            U16   => "u16",
+            U32   => "u32",
+            U64   => "u64",
+            U128  => "u128",
+            U256  => "u256",
+
+            FLOAT => "float",
+            F16   => "f16",
+            F32   => "f32",
+            F64   => "f64",
+            F128  => "f128",
+            _     => throw new NotImplementedException()
+        };
+
+    public static BuiltinType GetBuiltinTypeByToken(TokenType tokenType)
+        => tokenType switch
+        {
+            TokenType.Keyword_void  => VOID,
+ 
+            TokenType.Keyword_bool  => BOOL,
+ 
+            TokenType.Keyword_s8    => S8,
+            TokenType.Keyword_s16   => S16,
+            TokenType.Keyword_s32   => S32,
+            TokenType.Keyword_s64   => S64,
+            TokenType.Keyword_s128  => S128,
+            TokenType.Keyword_s256  => S256,
+ 
+            TokenType.Keyword_f16  => F16,
+            TokenType.Keyword_f32  => F32,
+            TokenType.Keyword_f64  => F64,
+            TokenType.Keyword_f128 => F128,
+ 
+            _                      => throw new NotImplementedException(), 
+        };
 }
