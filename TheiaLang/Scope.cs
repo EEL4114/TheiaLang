@@ -9,18 +9,18 @@ public enum SymbolKind
 }
 
 public class SymbolInfo(string name,
-                        TypeInfo type,
+                        int typeId,
                         SymbolKind symbolKind,
                         List<TypeNamePair>? parameters)
 {
     public string Name { get; init; } = name;
-    public TypeInfo Type = type;
+    public int TypeId = typeId;
     public SymbolKind Kind { get; init; } = symbolKind;
     public List<TypeNamePair>? Parameters { get; init; } = parameters;
 
     public override string ToString()
     {
-        string s = $"{Kind} {Name}: {Type}";
+        string s = $"{Kind} {Name}: {TypeId}";
         if (Parameters != null && Parameters.Count > 0)
         {
             s += $" (\n    {Parameters[0].ResolvedType.TypeName} {Parameters[0].Identifier}";
@@ -54,6 +54,7 @@ public class TypeInfo(string type,
                       List<TypeInfo>? fieldTypes = null)
 {
     public string TypeName { get; init; } = type;
+    public int TypeId;
     
     public TypeKind TypeKind {get; set; } = typeKind; 
     public BuiltinType? BuiltinType {get; set; } = builtinType; 
@@ -159,6 +160,14 @@ public class Scope : INode
             else
                 return Parent.TryLookup(identifier, out symbolInfo, out symbolScope);
         }
+    }
+
+    public (SymbolInfo symbol, Scope scope) Lookup(string identifier)
+    {
+        if(!TryLookup(identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope))
+            throw new Exception($"{identifier} does not exist in {Name}");
+
+        return (symbolInfo!, symbolScope!);
     }
 
     public bool TryLookupNonType(string identifier, out SymbolInfo? symbolInfo, out Scope? symbolScope)

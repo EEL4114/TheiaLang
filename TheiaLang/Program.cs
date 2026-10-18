@@ -48,7 +48,7 @@ do
 } while (token.TokenType != TokenType.EOF);
 
 Parser preloadParser = new Parser(preloadTokens);
-(ProgramNode preloadAST, Scope preloadScope) = preloadParser.ParseProgram("__preload__");
+(ProgramNode preloadAST, Scope preloadScope, List<TypeInfo> preloadTypes) = preloadParser.ParseProgram("__preload__");
 
 #if PRINT_PRELOAD
     using StreamWriter writer = new StreamWriter($"{DEBUG_PATH_REL}__preload__.ast");
@@ -174,11 +174,11 @@ int CompileFile(string filePath,
 
     Parser parser = new Parser(tokens);
 
-    (ProgramNode ast, Scope globalScope) = parser.ParseProgram(programName);
+    (ProgramNode ast, Scope globalScope, List<TypeInfo> types) = parser.ParseProgram(programName);
 
     timers[TG_Parser].Stop();
     timers[TG_Elab].Start();
-    (ast, globalScope) = new Elaboration().Lower(preloadScope, preloadAST, globalScope, ast);
+    (ast, globalScope, types) = new Elaboration().Lower(preloadScope, preloadAST, globalScope, ast, types);
     timers[TG_Elab].Stop();
 
     timers[TG_Print].Start();
@@ -194,7 +194,7 @@ int CompileFile(string filePath,
     {
         string sw2Path = Path.Combine(F_DEBUG_PATH_REL, $"{programName}.scope");
         using StreamWriter sw2 = new StreamWriter(sw2Path);
-        ScopePrinter.Print(filePath, globalScope, sw2);
+        ScopePrinter.Print(filePath, globalScope, types, sw2);
         Log.Link(sw2Path, "Scope Tree: ");
     }
 
@@ -202,7 +202,7 @@ int CompileFile(string filePath,
 
     timers[TG_Analyser].Start();
 
-    (ast, globalScope) = new SemanticAnalyser().AnalyseProgram(ast, globalScope);
+    (ast, globalScope) = new SemanticAnalyser().AnalyseProgram(ast, globalScope, types);
 
     timers[TG_Analyser].Stop();
     Lowering lowering = new Lowering();
@@ -214,7 +214,7 @@ int CompileFile(string filePath,
     {
         string sw3Path = Path.Combine(F_DEBUG_PATH_REL, $"{programName}_full.scope");
         using StreamWriter sw3 = new StreamWriter(sw3Path);
-        ScopePrinter.Print(filePath, globalScope, sw3);
+        ScopePrinter.Print(filePath, globalScope, types, sw3);
         Log.Link(sw3Path, "Full Scope Tree: ");
     }
     if(writeAST)

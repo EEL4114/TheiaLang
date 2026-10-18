@@ -10,9 +10,14 @@ public class SemanticAnalyser
     Scope GlobalScope;
     Stack<ForStatement> loopStack = [];
 
-    public (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope)
+    List<TypeInfo> types;
+
+    public (ProgramNode, Scope) AnalyseProgram(ProgramNode program, Scope globalScope, List<TypeInfo> types)
     {
         loopStack = [];
+        
+        this.types = types;
+        
         currentScope = globalScope;
         GlobalScope = currentScope;
 
@@ -30,7 +35,7 @@ public class SemanticAnalyser
                 AnalyseVariableDeclaration(vd);
         }
 
-        // Now, we want to resolve all function return and argument types so we 
+        // Now, we want to resolve all function return and argument types so we
         // don't get into order dependency issues later.
         // This of course includes functions that are defined in the scope of
         // composite types!
@@ -72,6 +77,9 @@ public class SemanticAnalyser
     void ResolveStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
+        if(!currentScope.TryLookup(structDeclaration.Name, out SymbolInfo? structInfo, out _))
+            throw new Exception("Definitely a parser error");
+
         foreach (TypeNamePair field in structDeclaration.Fields)
         {
             // TODO: simplify!!
@@ -80,16 +88,15 @@ public class SemanticAnalyser
             if (fieldInfo == null)
                 throw new Exception($"Could not find struct field '{field.Identifier}' in {currentScope.FullName}");
 #endif
-            if (fieldInfo.Type != null)
+            if (fieldInfo.TypeId != 0)
             {
                 // Log.Info(fieldInfo.Type.TypeName);   
-                fieldInfo.Type = UpdateTypeInfo(fieldInfo.Type);
+                field.ResolvedType = UpdateTypeInfo(field.ResolvedType);
             }
             else
-                fieldInfo.Type = ResolveType(field.ResolvedType.TypeName);
-            field.ResolvedType = fieldInfo.Type;
+                field.ResolvedType = ResolveType(field.ResolvedType.TypeName);
+            fieldInfo.TypeId = field.ResolvedType.TypeId;
         }
-
 
         structDeclaration.ResolvedType.FieldTypes = structDeclaration.Fields
                                                         .Select(f => f.ResolvedType)
@@ -111,10 +118,9 @@ public class SemanticAnalyser
             if (variantInfo == null)
                 throw new Exception($"Could not find union variant '{variant.Identifier}' in {currentScope.FullName}");
 // #endif
-            variantInfo.Type = UpdateTypeInfo(variantInfo.Type);
-            variant.ResolvedType = variantInfo.Type;
+            variant.ResolvedType = UpdateTypeInfo(variant.ResolvedType);
+            variantInfo.TypeId = variant.ResolvedType.TypeId;
         }
-
 
         unionDeclaration.ResolvedType.FieldTypes = unionDeclaration.Variants
                                                        .Select(v => v.ResolvedType)
@@ -171,18 +177,19 @@ public class SemanticAnalyser
     {
         currentScope = function.Scope!;
         currentScope.TryLookup(function.Name, out SymbolInfo? functionInfo, out _);
-        functionInfo!.Type = GetTypeInfo(function.ResolvedType.TypeName);
-        function.ResolvedType = functionInfo.Type;
+        function.ResolvedType = GetTypeInfo(function.ResolvedType.TypeName);
+        functionInfo!.TypeId = function.ResolvedType.TypeId;
 
         foreach (TypeNamePair arg in function.Parameters)
         {
             // TODO: simplify!!
             arg.ResolvedType = GetTypeInfo(arg.ResolvedType.TypeName);
-
+            arg.TypeId = arg.ResolvedType.TypeId;
+;
             if(currentScope.TryLookupLocal(arg.Identifier, out SymbolInfo? argInfo, out _))
-                argInfo!.Type = arg.ResolvedType;
+                argInfo!.TypeId = arg.ResolvedType.TypeId;
             else
-                currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType, SymbolKind.Variable, null));
+                currentScope.Declare(new SymbolInfo(arg.Identifier, arg.ResolvedType.TypeId, SymbolKind.Variable, null));
         }
 
         ExitScope();
@@ -324,7 +331,7 @@ public class SemanticAnalyser
 
         currentScope!.Declare(new SymbolInfo(
             vd.Name,
-            vd.ResolvedType,
+            vd.ResolvedType.TypeId,
             SymbolKind.Variable,
             null
         ));
@@ -371,7 +378,7 @@ public class SemanticAnalyser
             Log.Error(21, $"{id.Pos} a variable '{id.Name}' is not defined in {currentScope.Name}");
 
         TypeInfo identifierInfo = GetSymbolType(id.Name);
-
+        // Log.Info(currentScope.ToString());
         id.ResolvedType = identifierInfo;
 
         if(si!.Kind == SymbolKind.Type)
@@ -398,7 +405,7 @@ public class SemanticAnalyser
 
                 TypeInfo typeInfo;
                 if (currentScope.TryLookup(id.Name, out SymbolInfo? symbolInfo, out _))
-                    typeInfo = symbolInfo!.Type;
+                    typeInfo = types[symbolInfo!.TypeId];
                 else
                     throw new Exception($"Could not resolve type {id.Name}");
 
@@ -414,7 +421,7 @@ public class SemanticAnalyser
                 
                 TypeInfo typeInfo;
                 if (currentScope.TryLookup(argIdent.Name, out SymbolInfo? symbolInfo, out _))
-                    typeInfo = symbolInfo!.Type;
+                    typeInfo = types[symbolInfo!.TypeId];
                 else
                     throw new Exception($"Could not resolve type {argIdent.Name}");
 
@@ -433,7 +440,7 @@ public class SemanticAnalyser
                 id.Name = "__th_free";
                 expression = AnalyseExpression(call);
             }
-            else if (StringToBuiltin(id.Name) != null)
+            else if (StringToBuiltin(id.Name) != null)  // Casting
             {
                 BuiltinType builtinType = (BuiltinType)StringToBuiltin(id.Name)!;
                 for (int i = 0; i < call.Arguments.Count; i++)
@@ -668,14 +675,14 @@ public class SemanticAnalyser
             || typeSymbolInfo!.Kind != SymbolKind.Type)
             throw new Exception($"Unknown type '{instantiation.TypeName}'");
 
-        int fieldCount = typeSymbolInfo.Type.FieldNames!.Count;
+        int fieldCount = types[typeSymbolInfo.TypeId].FieldNames!.Count;
         if (instantiation.Arguments.Count > 0 && instantiation.Arguments.Count != fieldCount)
             throw new Exception($"Instantiation for type '{instantiation.TypeName}' requires {fieldCount} arguments, got: "
                                 + $"{instantiation.Arguments.Count}");
 
         if(instantiation.Arguments.Count == 0 && fieldCount > 0)
         {
-            expression = DefaultInit(typeSymbolInfo.Type);
+            expression = DefaultInit(types[typeSymbolInfo.TypeId]);
             return expression;
         }
         else
@@ -688,7 +695,7 @@ public class SemanticAnalyser
 
                 instantiation.Arguments[i] = GenerateImplicitCast(instantiation.Arguments[i], typeSymbolInfo.Parameters![i].ResolvedType!);
             }
-        instantiation.ResolvedType = typeSymbolInfo.Type;
+        instantiation.ResolvedType = types[typeSymbolInfo.TypeId];
         return expression;
     }
 
@@ -822,10 +829,10 @@ public class SemanticAnalyser
 
             call.Arguments[i] = argument;
             call.Arguments[i].ResolvedType = PromoteIfLiteral(argument.ResolvedType!,
-                                                            sInfo.Parameters[i].ResolvedType!.TypeName);
+                                                              sInfo.Parameters[i].ResolvedType!.TypeName);
             call.Arguments[i] = GenerateImplicitCast(call.Arguments[i], sInfo.Parameters[i].ResolvedType!);
         }
-        call.ResolvedType = sInfo.Type;
+        call.ResolvedType = types[sInfo.TypeId];
     }
 
     TypeInfo UpdateTypeInfo(TypeInfo type)
@@ -853,7 +860,7 @@ public class SemanticAnalyser
     TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..]));
+            return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..])) {TypeId = GlobalScope.Lookup(typeOrName).symbol.TypeId};
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
@@ -861,7 +868,7 @@ public class SemanticAnalyser
         if(symbolInfo!.Kind != SymbolKind.Type)
             throw new Exception($"'{typeOrName}' is not a valid type in {currentScope.FullName}");
 
-        return symbolInfo!.Type;
+        return types[symbolInfo!.TypeId];
     }
 
     TypeInfo GetSymbolType(string name)
@@ -869,7 +876,7 @@ public class SemanticAnalyser
         if (!currentScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{name}' is not defined in {currentScope.FullName}");
 
-        return symbolInfo!.Type;
+        return types[symbolInfo!.TypeId];
     }
     
     Scope SetScope(Scope scope)

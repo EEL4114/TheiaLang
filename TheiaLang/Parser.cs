@@ -17,25 +17,31 @@ public class Parser(List<Token> tokens)
     long acc = 0;
 
     List<INode> nodes = [];
+    List<TypeInfo> types = [];
 
-    Dictionary<(Scope, string), TypeInfo> types = [];
+    Dictionary<BuiltinType, int> builtinsToIds = [];
 
-    public (ProgramNode, Scope) ParseProgram(string ProgramName)
+    public (ProgramNode, Scope, List<TypeInfo>) ParseProgram(string ProgramName)
     {
         programName = ProgramName;
         globalScope = new Scope("");
         currentScope = globalScope;   // global scope
+        types = [];
+        types.Add(new TypeInfo("INVALID", Unresolved, null));
 
-        foreach(BuiltinType builtinType in Builtins.AllTypes)
+        // first collect all builtin types and their pointers
+        foreach(BuiltinType builtin in Builtins.AllTypes)
         {
-            if(builtinType != VOIDPTR)
-                DeclareBuiltin(builtinType);
+            if(builtin == VOIDPTR)
+                continue;
+            DeclareBuiltin(builtin);
         }
 
+        // we don't really want to require special-casing for those in the parser
         globalScope.Declare(
             new SymbolInfo(
                 "__th_allocB",
-                Builtins.GetTypeInfo(VOIDPTR),
+                currentScope.Lookup(Builtins.BuiltinTypeToString(VOIDPTR)).symbol.TypeId,
                 SymbolKind.Function,
                 [new TypeNamePair(Builtins.GetTypeInfo(S64), "size", SourePosition.None)]
             ));
@@ -43,16 +49,16 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_reallocB",
-                new TypeInfo("@void", Pointer, VOIDPTR, pointee: new TypeInfo("void", Void, VOID)),
+                currentScope.Lookup(Builtins.BuiltinTypeToString(VOIDPTR)).symbol.TypeId,
                 SymbolKind.Function,
-                [   new TypeNamePair(Builtins.GetTypeInfo(VOIDPTR), "alloc", SourePosition.None),
-                    new TypeNamePair(Builtins.GetTypeInfo(S64), "newSize", SourePosition.None)]
+                [   new TypeNamePair(Builtins.GetTypeInfo(VOIDPTR), "alloc",   SourePosition.None),
+                    new TypeNamePair(Builtins.GetTypeInfo(S64),     "newSize", SourePosition.None)]
             ));
 
         globalScope.Declare(
             new SymbolInfo(
                 "__th_free",
-                Builtins.GetTypeInfo(VOID),
+                currentScope.Lookup(Builtins.BuiltinTypeToString(VOID)).symbol.TypeId,
                 SymbolKind.Function,
                 [new TypeNamePair(Builtins.GetTypeInfo(VOIDPTR), "ptr", SourePosition.None)
             ]));
@@ -60,13 +66,13 @@ public class Parser(List<Token> tokens)
         globalScope.Declare(
             new SymbolInfo(
                 "__th_alloc",
-                Builtins.GetTypeInfo(VOIDPTR),
+                currentScope.Lookup(Builtins.BuiltinTypeToString(VOIDPTR)).symbol.TypeId,
                 SymbolKind.Function,
                 [new TypeNamePair(Builtins.GetTypeInfo(S64), "size", SourePosition.None)]
             ));
 
         List<INode> nodes = ParseDeclarations();
-        return (new ProgramNode(ProgramName, nodes), globalScope);
+        return (new ProgramNode(ProgramName, nodes), globalScope, types);
     }
 
     #region Declarations
@@ -146,10 +152,10 @@ public class Parser(List<Token> tokens)
         FunctionDeclaration functionDeclaration = new FunctionDeclaration(returnTypeInfo, name, parameters, body, startPosition);
         currentScope!.Declare(new SymbolInfo(
                         functionDeclaration.Name,
-                        returnTypeInfo,
+                        0,
                         SymbolKind.Function,
                         functionDeclaration.Parameters
-                        ));
+        ));
 
         EnterNewScope(name, true, functionDeclaration);
         functionDeclaration.Scope = currentScope;
@@ -166,7 +172,7 @@ public class Parser(List<Token> tokens)
                 TypeNamePair parameter = new TypeNamePair(parameterInfo, identifierToken.Lexeme, startPosition);
                 // Log.Info($"Parameter {fieldType} '{identifierToken.Lexeme}' defined in '{currentScope.FullName}'");
                 parameters.Add(parameter);
-                currentScope!.Declare(new SymbolInfo(parameter.Identifier, parameter.ResolvedType, SymbolKind.Variable, null));
+                currentScope!.Declare(new SymbolInfo(parameter.Identifier, 0, SymbolKind.Variable, null));
             } while (Match(TokenType.Punctuation_Comma));
         }
 
@@ -195,16 +201,21 @@ public class Parser(List<Token> tokens)
         List<FunctionDeclaration> functions = [];
 
         StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
-        structDeclaration.ResolvedType = new TypeInfo(
+        TypeInfo structTypeInfo = new TypeInfo(
             name,
             Struct,
             null,
             fieldNames: fieldNames,
             fieldTypes: fieldTypes);
 
+        _ = AddTypeAndPatchId(structTypeInfo);
+        
+        structDeclaration.ResolvedType = structTypeInfo;
+        structDeclaration.TypeId = structTypeInfo.TypeId;
+
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
-            structDeclaration.ResolvedType,
+            structDeclaration.TypeId,
             SymbolKind.Type,
             fields);
 
@@ -222,7 +233,7 @@ public class Parser(List<Token> tokens)
                 if(declaration is VariableDeclaration vd)
                 {
                     currentScope.Declare(new SymbolInfo(vd.Name,
-                                                        vd.ResolvedType!,
+                                                        0!,
                                                         SymbolKind.Variable,
                                                         null));
                     fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
@@ -262,12 +273,14 @@ public class Parser(List<Token> tokens)
             fieldNames: variantNames,
             fieldTypes: variantTypes);
 
+        _ = AddTypeAndPatchId(unionInfo);
+
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
         DeclarePtr(unionDeclaration.ResolvedType);
 
         currentScope!.Declare(new SymbolInfo(
                         name,
-                        unionInfo,
+                        unionInfo.TypeId,
                         SymbolKind.Type,
                         variants
         ));
@@ -293,7 +306,7 @@ public class Parser(List<Token> tokens)
                 currentScope.Declare(
                      new SymbolInfo(
                         identifierToken.Lexeme,
-                        variantType,
+                        0,
                         SymbolKind.Variable,
                         null
                      ));
@@ -474,12 +487,18 @@ public class Parser(List<Token> tokens)
 
             StructDeclaration structDeclaration = new StructDeclaration(typeName, fields, functions, sourcePos);
             
-            structDeclaration.ResolvedType = new TypeInfo(
+            TypeInfo structTypeInfo = new TypeInfo(
                 typeName,
                 Struct,
                 null,
                 fieldNames: fieldNames,
                 fieldTypes: fieldTypes);
+
+            _ = AddTypeAndPatchId(structTypeInfo);
+
+            structDeclaration.ResolvedType = structTypeInfo;
+            structDeclaration.TypeId = structTypeInfo.TypeId;
+
             DeclarePtr(structDeclaration.ResolvedType);
 
             structDeclaration.Scope = EnterNewScope(typeName);
@@ -493,7 +512,7 @@ public class Parser(List<Token> tokens)
                     if (declaration is VariableDeclaration vd)
                     {
                         currentScope.Declare(new SymbolInfo(vd.Name,
-                                                            vd.ResolvedType!,
+                                                            0,
                                                             SymbolKind.Variable,
                                                             null));
                         fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
@@ -514,7 +533,7 @@ public class Parser(List<Token> tokens)
 
             SymbolInfo symbolInfo = new SymbolInfo(
                 typeName,
-                structDeclaration.ResolvedType,
+                structTypeInfo.TypeId,
                 SymbolKind.Type,
                 fields);
 
@@ -543,6 +562,8 @@ public class Parser(List<Token> tokens)
                 fieldNames: variantNames,
                 fieldTypes: variantTypes);
 
+            _ = AddTypeAndPatchId(unionInfo);
+
             UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, variants, unionInfo, sourcePos);
             DeclarePtr(unionDeclaration.ResolvedType);
             unionDeclaration.Scope = EnterNewScope(typeName);
@@ -556,7 +577,7 @@ public class Parser(List<Token> tokens)
                     if (declaration is VariableDeclaration vd)
                     {
                         currentScope.Declare(new SymbolInfo(vd.Name,
-                                                            vd.ResolvedType!,
+                                                            0,
                                                             SymbolKind.Variable,
                                                             null));
                         variants.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
@@ -574,7 +595,7 @@ public class Parser(List<Token> tokens)
 
             SymbolInfo symbolInfo = new SymbolInfo(
                 typeName,
-                unionDeclaration.ResolvedType,
+                unionInfo.TypeId,
                 SymbolKind.Type,
                 variants);
 
@@ -800,7 +821,7 @@ public class Parser(List<Token> tokens)
             {
                 string s when long.TryParse(s,   NumberStyles.Integer, CultureInfo.InvariantCulture, out long i) => (i, LiteralKind.Lit_Int,   "int",   Scalar, INT),
                 string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) => (d, LiteralKind.Lit_Float, "float", Scalar, FLOAT),
-                string s when bool.TryParse(s, out bool b)                                                       => (b, LiteralKind.Lit_Bool,   "bool",  Scalar, BOOL),
+                string s when bool.TryParse(s, out bool b)                                                       => (b, LiteralKind.Lit_Bool,  "bool",  Scalar, BOOL),
                 _ => throw new Exception("Invalid literal")
             };
 
@@ -927,6 +948,14 @@ public class Parser(List<Token> tokens)
 
     #region Helpers
 
+    int AddTypeAndPatchId(TypeInfo type)
+    {
+        int id = types.Count;
+        type.TypeId = id;
+        types.Add(type);
+        return id;
+    }
+
     bool Match(TokenType type)
     {
         if (Check(type)) { Advance(); return true; }
@@ -938,14 +967,6 @@ public class Parser(List<Token> tokens)
         if (Check(type))
             return Advance();
         Log.Error(3, $"{programName}.tia {Peek().Pos.Row + 1}:{Peek().Pos.Column}: {message}, got: {Peek().TokenType} '{Peek().Lexeme}'");
-        return null!;
-    }
-
-    Token ConsumeTypeKeyword()
-    {
-        Token t = Peek();
-        if (IsBuiltinType(t.TokenType) || t.TokenType == TokenType.Identifier) return Advance();
-        Log.Error(4, $"Unxpected type keyword '{t.Lexeme}' at {programName} {t.Pos.Row}:{t.Pos.Column}");
         return null!;
     }
 
@@ -985,10 +1006,14 @@ public class Parser(List<Token> tokens)
 
     void DeclarePtr(TypeInfo typeInfo)
     {
+
+        TypeInfo ptrInfo = new TypeInfo("@" + typeInfo.TypeName, Pointer, VOIDPTR, pointee: typeInfo);
+        _ = AddTypeAndPatchId(ptrInfo);
+
         globalScope!.Declare(
             new SymbolInfo(
                 "@" + typeInfo.TypeName,
-                new TypeInfo("@" + typeInfo.TypeName, Pointer, VOIDPTR, pointee: typeInfo),
+                ptrInfo.TypeId,
                 SymbolKind.Type,
                 null
             ));
@@ -1006,20 +1031,34 @@ public class Parser(List<Token> tokens)
         string typeName = Builtins.BuiltinTypeToString(builtinType);
 
         TypeInfo typeInfo = new TypeInfo(typeName, kind, builtinType);
+        
+        _ = AddTypeAndPatchId(typeInfo);
+
+        builtinsToIds.Add(builtinType, typeInfo.TypeId);
+
         globalScope!.Declare(
             new SymbolInfo(
                 typeName,
-                typeInfo,
+                typeInfo.TypeId,
                 SymbolKind.Type,
                 null
             ));
+
+        if(builtinType == INT || builtinType == FLOAT)
+            return;
+
+        TypeInfo ptrInfo = new TypeInfo("@" + typeName, Pointer, VOIDPTR, pointee: typeInfo);
+        AddTypeAndPatchId(ptrInfo);
+
         globalScope!.Declare(
             new SymbolInfo(
                 "@" + typeName,
-                new TypeInfo("@" + typeName, Pointer, VOIDPTR, pointee: typeInfo),
+                ptrInfo.TypeId,
                 SymbolKind.Type,
                 null
             ));
+
+        return;
     }
 
     #endregion

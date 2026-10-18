@@ -15,6 +15,8 @@ class Elaboration
     Scope GlobalScope;
     Scope PreloadScope;
 
+    List<TypeInfo> types;
+
     static readonly string[] builtinFunctions =
     [
         "AllocB",
@@ -23,14 +25,17 @@ class Elaboration
         "TypeSize",
     ];
 
-    public (ProgramNode programAST, Scope programScope) Lower(Scope preloadScope, ProgramNode preloadAST,
-                                                                     Scope programScope, ProgramNode programAST)
+    public (ProgramNode, Scope, List<TypeInfo>) Lower(Scope preloadScope, ProgramNode preloadAST,
+                                                      Scope programScope, ProgramNode programAST,
+                                                      List<TypeInfo> types)
     {
         GlobalScope = programScope;
         ProgramAST = programAST;
         PreloadAST = preloadAST;
         PreloadScope = preloadScope;
         
+        this.types = types;
+
         currentScope = GlobalScope;
 
         foreach (string functionName in builtinFunctions)
@@ -54,7 +59,7 @@ class Elaboration
                     if(fn.Parameters[j].ResolvedType?.ArrayLength == 0)
                     {
                         fn.Parameters[j].ResolvedType = SubstituteDynamicArray(fn.Parameters[j].ResolvedType);
-                        currentScope.Symbols[fn.Parameters[j].Identifier].Type = fn.Parameters[j].ResolvedType;
+                        currentScope.Symbols[fn.Parameters[j].Identifier].TypeId = fn.Parameters[j].ResolvedType.TypeId;
                     }
                 }
                 ExitScope();
@@ -63,7 +68,7 @@ class Elaboration
             }
         }
 
-        return (ProgramAST, GlobalScope);
+        return (ProgramAST, GlobalScope, types);
     }
 
     void IncludeBuiltinFn(string name)
@@ -74,9 +79,13 @@ class Elaboration
              && functionDeclaration.Name == name)
             {
                 ProgramAST.Nodes.Add(node);
-                if (!PreloadScope.TryLookup(name, out SymbolInfo? symbolInfo, out _))
+                if (!PreloadScope.TryLookup(name, out SymbolInfo? symbolInfo, out Scope? definitionScope))
                     throw new Exception($"Could not find template {name}");
+                definitionScope!.TryFindChild(symbolInfo!.Name, out Scope? functionScope);
+                
                 functionDeclaration.Scope = new Scope(name, true, node, GlobalScope);
+                foreach(KeyValuePair<string, SymbolInfo> pair in functionScope!.Symbols)
+                    functionDeclaration.Scope.Declare(pair.Value);
                 GlobalScope.Declare(symbolInfo!);
             }
     }
@@ -88,7 +97,7 @@ class Elaboration
             if(CanSubstituteDynamicArray(field.ResolvedType, out TypeInfo newType))
             {
                 field.ResolvedType = newType;
-                currentScope.Symbols[field.Identifier].Type = field.ResolvedType;   
+                currentScope.Symbols[field.Identifier].TypeId = field.ResolvedType.TypeId;
             }
 
         foreach (FunctionDeclaration function in structDeclaration.Functions)
@@ -104,7 +113,7 @@ class Elaboration
             if(CanSubstituteDynamicArray(variant.ResolvedType, out TypeInfo newType))
             {
                 variant.ResolvedType = newType;
-                currentScope.Symbols[variant.Identifier].Type = variant.ResolvedType;   
+                currentScope.Symbols[variant.Identifier].TypeId = variant.ResolvedType.TypeId;
             }
 
         // foreach (FunctionDeclaration function in unionDeclaration.Functions)
@@ -152,7 +161,7 @@ class Elaboration
                 vd.ResolvedType = newType;
                 
                 if (currentScope.TryLookupLocal(vd.Name, out SymbolInfo? symbol, out _))
-                    symbol!.Type = newType;
+                    symbol!.TypeId = newType.TypeId;
                 
                 statements[i] = vd;
             }
@@ -215,7 +224,7 @@ class Elaboration
         // (1) check if that kind of array is already declared as struct
         if (DynamicArrayCache.TryGetValue(sourceType.TypeName, out SymbolInfo? symbolInfo))
         {
-            return symbolInfo.Type;
+            return types[symbolInfo.TypeId];
             //currentScope!.Symbols[varDeclaration.Name] = symbolInfo;
         }
         // (2) if no -> declare the struct
@@ -227,7 +236,7 @@ class Elaboration
             // TODO: make this work with inits once we have them for arrays
             TypeInfo newType = sd.ResolvedType;
             SymbolInfo varInfo = new SymbolInfo(sourceType.TypeName,
-                                                sd.ResolvedType,
+                                                sd.ResolvedType.TypeId,
                                                 SymbolKind.Variable,
                                                 null);
             //currentScope!.Symbols[vd.Name] = varInfo;
@@ -235,22 +244,30 @@ class Elaboration
 
             ProgramAST.Nodes.Add(sd);
             GlobalScope.Declare(new SymbolInfo(sd.Name,
-                                               sd.ResolvedType,
+                                               sd.ResolvedType.TypeId,
                                                SymbolKind.Type,
                                                sd.Fields));
             GlobalScope.Declare(
-            new SymbolInfo(
-                "@" + sd.Name,
-                new TypeInfo("@" + sd.Name, Pointer, VOIDPTR, pointee: sd.ResolvedType),
-                SymbolKind.Type,
-                null
-            ));
+                new SymbolInfo(
+                    "@" + sd.Name,
+                    AddTypeAndPatchId(new TypeInfo("@" + sd.Name, Pointer, VOIDPTR, pointee: sd.ResolvedType)),
+                    SymbolKind.Type,
+                    null
+                ));
 
             return newType;
         }
     }
 
     #region Helpers
+
+    int AddTypeAndPatchId(TypeInfo type)
+    {
+        int id = types.Count;
+        type.TypeId = id;
+        types.Add(type);
+        return id;
+    }
 
     StructDeclaration CreateDynamicArrayStruct(string name, TypeInfo elementType)
     {
@@ -273,7 +290,7 @@ class Elaboration
             new FunctionDeclaration(
                 resolvedType:   elementType, 
                 name:       DYNAMIC_ARRAY_INDEX,
-                paramaters: [new TypeNamePair(new TypeInfo("s64", Scalar, S64), "index")],
+                paramaters: [new TypeNamePair(Builtins.GetTypeInfo(S64), "index")],
                 statements: [new ReturnStatement(new UnaryExpression(UnaryOperator.Dereference,
                                 new CallExpression(new IdentifierExpression($"@{elementType.TypeName}"),[
                                     new CallExpression(new IdentifierExpression($"@void"),[
@@ -294,16 +311,17 @@ class Elaboration
 
         foreach (TypeNamePair field in fields)
             currentScope.Declare(new SymbolInfo(field.Identifier,
-                                                new TypeInfo(field.ResolvedType.TypeName, 
-                                                             field.ResolvedType.TypeKind,
-                                                             field.ResolvedType.BuiltinType),
+                                                AddTypeAndPatchId(
+                                                    new TypeInfo(field.ResolvedType.TypeName, 
+                                                                 field.ResolvedType.TypeKind,
+                                                                 field.ResolvedType.BuiltinType)),
                                                 SymbolKind.Variable,
                                                 null));
 
         foreach(FunctionDeclaration function in functions)
             currentScope.Declare(new SymbolInfo(
                         function.Name,
-                        function.ResolvedType,
+                        function.ResolvedType.TypeId,
                         SymbolKind.Function,
                         function.Parameters));
 

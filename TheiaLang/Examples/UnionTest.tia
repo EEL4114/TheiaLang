@@ -1,8 +1,8 @@
 int main()
 {
-    StringData s;
+    // StringData s;
 
-    union {s8 by; @s8 ptr;} inlineUnion;
+    // union {s8 by; @s8 ptr;} inlineUnion;
 
     return s.inlineStruct.a;
 }

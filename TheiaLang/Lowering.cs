@@ -516,7 +516,7 @@ public class Lowering
 
         currentScope.Declare(new SymbolInfo(
                              vd.Name,
-                             typeInfo,
+                             typeInfo.TypeId,
                              SymbolKind.Variable,
                              null));
         

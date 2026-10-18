@@ -59,6 +59,7 @@ Union member access LLVM
 Elaboration not walking if-/for bodies                          Fixed   
 global VariableDeclarations post-parser                         Fixed   
 Disallow struct Name used as struct literal; should require {}  Fixed   
+ptr types to non-builtins shouldn't end up in global scope      
 
 TO BE INVESTIGATED
 

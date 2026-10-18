@@ -17,7 +17,8 @@ public interface INode
 public interface IDeclaration : INode, IStatement
 {
     string Name { get; }
-    TypeInfo ResolvedType { get; set; }
+    TypeInfo? ResolvedType { get; set; }
+    int TypeId { get; set; }
 }
 
 public interface IStatement : INode
@@ -28,10 +29,12 @@ public interface IStatement : INode
 public interface IExpression : INode
 {
     TypeInfo? ResolvedType { get; set; }
+    int TypeId { get; set; }
     bool Assignable { get; }
 }
 
 #region  Operators
+
 public enum UnaryOperator
 {
     Invert,     // -1
@@ -61,14 +64,6 @@ public enum BinaryOperator
 }
 #endregion
 
-public enum Type
-{
-    s32,
-    f32,
-    Bool,
-    Struct,
-}
-
 #region  Declarations
 
 public class ModuleInitialiser : INode
@@ -90,6 +85,7 @@ public class FunctionDeclaration : IDeclaration
 {
     public Scope? Scope;
     public TypeInfo ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public string Name { get; }
     public readonly List<TypeNamePair> Parameters;
     public readonly List<IStatement> Statements;    // the { … } body
@@ -128,6 +124,7 @@ public class StructDeclaration : IDeclaration
     public Scope? Scope;
     public string Name { get; }
     public TypeInfo ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
     public SourePosition Pos { get; }
@@ -183,6 +180,7 @@ public class UnionDeclaration(
     public List<TypeNamePair> Variants = variants;
 
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
+    public int TypeId { get; set; }
     public Scope? Scope { get; set; }
     public SourePosition Pos { get; } = Pos;
 }
@@ -197,6 +195,7 @@ public sealed class VariableDeclaration(
     public string Name {get; set;} = name;
     public string TypeName = typeName;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public IExpression? Init { get; set; } = Init;
 
     public SourePosition Pos { get; } = Pos;
@@ -221,6 +220,7 @@ public class TypeNamePair(
 {
     public string Identifier { get; init; } = identifier;
     public TypeInfo ResolvedType { get; set; } = resolvedType;
+    public int TypeId { get; set; }
     public static bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
@@ -232,14 +232,6 @@ public class TypeNamePair(
 }
 
 #region  Statements
-
-/// A “new” expression for any nominal type (struct, union, etc.)
-/*
-public sealed record CallArgument(
-    string? Name,                     // null for positional, or the parameter/field name
-    IExpression Value
-) : INode;*/
-
 public sealed class ExpressionStatement(
     IExpression Expression,
     SourePosition Pos = default
@@ -366,6 +358,7 @@ public sealed class MemberAccessExpression(
     public IdentifierExpression Member = Member;
     public Scope? Scope = Scope;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => true;
 
     public SourePosition Pos { get; } = Pos;
@@ -381,6 +374,7 @@ public sealed class CallExpression(
     public IExpression Target { get; set; } = Target;
     public List<IExpression> Arguments = arguments;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => false;
     public Scope? Scope { get; set; } = Scope;
 
@@ -395,6 +389,7 @@ public sealed class CastExpression(
 {
     public TypeInfo? ResolvedType { get; set; }
     public IExpression Target = target;
+    public int TypeId { get; set; }
     public bool Assignable => false;
     public CastOp CastKind { get; set; } = CastKind;
 
@@ -410,6 +405,7 @@ public sealed class InstantiationExpression(
     public string TypeName = typeName;
     public List<IExpression> Arguments = arguments;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
@@ -425,6 +421,7 @@ public sealed class UnaryExpression(
     public UnaryOperator Op = op;
     public bool Assignable => assignable;
     public IExpression Operand = Operand;
+    public int TypeId { get; set; }
     private TypeInfo? _resolvedType;
     public TypeInfo? ResolvedType
     {
@@ -451,6 +448,7 @@ public sealed class BinaryExpression(
 {
     public BinaryOperator Op = op;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => false;
     public IExpression Left { get; set; } = Left;
     public IExpression Right { get; set; } = Right;
@@ -481,6 +479,7 @@ public sealed class LiteralExpression(
     public string Lexeme = lexeme;
     public LiteralKind LiteralKind = literalKind;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => false;
 
     public SourePosition Pos { get; } = Pos;
@@ -499,6 +498,7 @@ public sealed class IdentifierExpression(
 {
     public string Name = name;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public Scope? Scope = Scope;
     public bool Assignable => true;
 
@@ -514,6 +514,7 @@ public sealed class IndexExpression(
     public IExpression Target { get; set; } = Target;
     public IExpression Index { get; set; } = Index;
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => true;
 
     public SourePosition Pos { get; } = Pos;
@@ -529,6 +530,7 @@ public sealed class RepeatExpression(
     public IExpression Expression = value;
 
     public TypeInfo? ResolvedType { get; set; }
+    public int TypeId { get; set; }
     public bool Assignable => false;
     public SourePosition Pos { get; } = pos;
 }
