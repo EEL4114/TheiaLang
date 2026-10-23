@@ -137,6 +137,8 @@ public class Parser(List<Token> tokens)
         VariableDeclaration variable = new VariableDeclaration(typeInfo.TypeName, name, init, startPosition);
         variable.ResolvedType = typeInfo;
 
+        currentScope!.Declare(new SymbolInfo(name, variable.ResolvedType.TypeId, SymbolKind.Variable, null));
+
         return variable;
     }
 
@@ -232,10 +234,10 @@ public class Parser(List<Token> tokens)
                 IDeclaration declaration = ParseDeclaration();
                 if(declaration is VariableDeclaration vd)
                 {
-                    currentScope.Declare(new SymbolInfo(vd.Name,
-                                                        0!,
-                                                        SymbolKind.Variable,
-                                                        null));
+                    // currentScope.Declare(new SymbolInfo(vd.Name,
+                    //                                     0!,
+                    //                                     SymbolKind.Variable,
+                    //                                     null));
                     fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
                     fieldNames.Add(vd.Name);
                     fieldTypes.Add(vd.ResolvedType!);
@@ -511,10 +513,10 @@ public class Parser(List<Token> tokens)
                     IDeclaration declaration = ParseDeclaration();
                     if (declaration is VariableDeclaration vd)
                     {
-                        currentScope.Declare(new SymbolInfo(vd.Name,
-                                                            0,
-                                                            SymbolKind.Variable,
-                                                            null));
+                        // currentScope.Declare(new SymbolInfo(vd.Name,
+                        //                                     0,
+                        //                                     SymbolKind.Variable,
+                        //                                     null));
                         fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
                         fieldNames.Add(vd.Name);
                         fieldTypes.Add(vd.ResolvedType!);
@@ -576,10 +578,10 @@ public class Parser(List<Token> tokens)
                     IDeclaration declaration = ParseDeclaration();
                     if (declaration is VariableDeclaration vd)
                     {
-                        currentScope.Declare(new SymbolInfo(vd.Name,
-                                                            0,
-                                                            SymbolKind.Variable,
-                                                            null));
+                        // currentScope.Declare(new SymbolInfo(vd.Name,
+                        //                                     0,
+                        //                                     SymbolKind.Variable,
+                        //                                     null));
                         variants.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
                         variantNames.Add(vd.Name);
                         variantTypes.Add(vd.ResolvedType!);

@@ -243,11 +243,19 @@ class Elaboration
             DynamicArrayCache.Add(sourceType.TypeName, varInfo);
 
             ProgramAST.Nodes.Add(sd);
-            GlobalScope.Declare(new SymbolInfo(sd.Name,
+
+            Scope definitionScope;
+            if(sourceType.ElementType.BuiltinType != null)
+                definitionScope = GlobalScope;
+            else
+                currentScope.TryLookup(sourceType.ElementType.TypeName, out _, out definitionScope!);
+
+
+            definitionScope.Declare(new SymbolInfo(sd.Name,
                                                sd.ResolvedType.TypeId,
                                                SymbolKind.Type,
                                                sd.Fields));
-            GlobalScope.Declare(
+            definitionScope.Declare(
                 new SymbolInfo(
                     "@" + sd.Name,
                     AddTypeAndPatchId(new TypeInfo("@" + sd.Name, Pointer, VOIDPTR, pointee: sd.ResolvedType)),
@@ -330,6 +338,11 @@ class Elaboration
         currentScope.DeclaringNode = sd;
         
         currentScope = scope;
+        int typeId = types.Count;
+        types.Add(sd.ResolvedType);
+
+        sd.TypeId = typeId;
+        sd.ResolvedType.TypeId = typeId;
 
         return sd;
     }

@@ -320,21 +320,17 @@ public class SemanticAnalyser
 
     void AnalyseVariableDeclaration(VariableDeclaration vd)
     {
-        if (currentScope.TryLookupLocal(vd.Name, out _, out _))
-            throw new Exception($"A Variable with the name '{vd.Name}' is already defined in {currentScope.FullName}");
-
         if (vd.ResolvedType != null)
             vd.ResolvedType = UpdateTypeInfo(vd.ResolvedType);
         else
             vd.ResolvedType = ResolveType(vd.TypeName);
 
+        if(vd.ResolvedType.TypeId == 0)
+        {
+            vd.TypeId = AddTypeAndPatchId(vd.ResolvedType);
+        }
 
-        currentScope!.Declare(new SymbolInfo(
-            vd.Name,
-            vd.ResolvedType.TypeId,
-            SymbolKind.Variable,
-            null
-        ));
+        currentScope.Symbols[vd.Name].TypeId = vd.ResolvedType.TypeId;
 
         if (vd.Init != null)
         {
@@ -727,7 +723,7 @@ public class SemanticAnalyser
                 }        
             }
             else
-                throw new Exception($"Expected array type, got: {index.Target.ResolvedType.TypeName}");
+                throw new Exception($"{index.Pos} Expected array type, got: {index.Target.ResolvedType.TypeName}");
         }
         else
             index.ResolvedType = index.Target.ResolvedType.ElementType;
@@ -753,6 +749,14 @@ public class SemanticAnalyser
     #endregion
 
     #region Helpers
+
+    int AddTypeAndPatchId(TypeInfo type)
+    {
+        int id = types.Count;
+        type.TypeId = id;
+        types.Add(type);
+        return id;
+    }
 
     IExpression DefaultInit(TypeInfo type)
     {
@@ -860,7 +864,7 @@ public class SemanticAnalyser
     TypeInfo GetTypeInfo(string typeOrName)
     {
         if (typeOrName.StartsWith('@'))
-            return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..])) {TypeId = GlobalScope.Lookup(typeOrName).symbol.TypeId};
+            return new TypeInfo(typeOrName, Pointer, VOIDPTR, GetTypeInfo(typeOrName[1..])) {TypeId = currentScope.Lookup(typeOrName).symbol.TypeId};
 
         if (!currentScope.TryLookup(typeOrName, out SymbolInfo? symbolInfo, out _))
             throw new Exception($"Type or Name '{typeOrName}' is not defined in {currentScope.FullName}");
