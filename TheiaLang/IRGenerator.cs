@@ -570,7 +570,7 @@ public class IRGenerator
 
                 string llvmType = TypeToLLVM(typeInfo)!;
 
-                code.AppendLine($"  c{tmp} = {instr} {llvmType} {zero}, {val}");
+                code.AppendLine($"  %{tmp} = {instr} {llvmType} {zero}, {val}");
                 return (code, $"%{tmp}");
             case UnaryOperator.Negate:
                 (StringBuilder oc, string ov) = EmitExpression(unaryExpression.Operand);
