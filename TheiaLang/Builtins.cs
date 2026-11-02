@@ -180,6 +180,8 @@ public static class Builtins
             F32   => "f32",
             F64   => "f64",
             F128  => "f128",
+
+            VOIDPTR => "@void",
             _     => throw new NotImplementedException()
         };
 

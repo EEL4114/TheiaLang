@@ -61,14 +61,6 @@ public enum BinaryOperator
 }
 #endregion
 
-public enum Type
-{
-    s32,
-    f32,
-    Bool,
-    Struct,
-}
-
 #region  Declarations
 
 public class ModuleInitialiser : INode
@@ -232,13 +224,6 @@ public class TypeNamePair(
 }
 
 #region  Statements
-
-/// A “new” expression for any nominal type (struct, union, etc.)
-/*
-public sealed record CallArgument(
-    string? Name,                     // null for positional, or the parameter/field name
-    IExpression Value
-) : INode;*/
 
 public sealed class ExpressionStatement(
     IExpression Expression,
