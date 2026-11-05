@@ -50,8 +50,7 @@ public class TypeInfo(string type,
                       TypeInfo? pointee = null,
                       TypeInfo? elementType = null,
                       uint? arrayLength = null,
-                      List<string>? fieldNames = null,
-                      List<TypeInfo>? fieldTypes = null)
+                      List<TypeNamePair>? fields = null)
 {
     public string TypeName { get; init; } = type;
     
@@ -63,8 +62,7 @@ public class TypeInfo(string type,
     public TypeInfo? ElementType { get; set; } = elementType;
     public uint? ArrayLength { get; set; } = arrayLength;    // non-null for static arrays
 
-    public List<string>? FieldNames { get; set; } = fieldNames;
-    public List<TypeInfo>? FieldTypes { get; set; } = fieldTypes;
+    public List<TypeNamePair>? Fields { get; set; } = fields;
     public override string ToString()
     {
         string s = $"{TypeKind}:{BuiltinType}:{TypeName}";
@@ -76,12 +74,12 @@ public class TypeInfo(string type,
         if (ArrayLength != null)
             s += $", Length = {ArrayLength}";
         // @Robust
-        if (FieldNames != null && FieldNames.Count != 0)
+        if (Fields != null && Fields.Count != 0)
         {
             s += ",\n  Fields = {";
-            s += $"\n    {FieldTypes![0]} {FieldNames[0]}";
-            for (int i = 1; i < FieldNames.Count; i++)
-                s += $",\n    {FieldTypes![i]} {FieldNames[i]}";
+            s += $"\n    {Fields![0].ResolvedType} {Fields[0].Identifier}";
+            for (int i = 1; i < Fields.Count; i++)
+                s += $",\n    {Fields[i].ResolvedType} {Fields[i].Identifier}";
             s += "\n}";
         }
         return s;

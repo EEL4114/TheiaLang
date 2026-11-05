@@ -190,17 +190,15 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct name");
 
         List<TypeNamePair> fields = [];
-        List<string> fieldNames   = [];
-        List<TypeInfo> fieldTypes = [];
         List<FunctionDeclaration> functions = [];
 
-        StructDeclaration structDeclaration = new StructDeclaration(name, fields, functions, startPos);
+        StructDeclaration structDeclaration = new StructDeclaration(name, functions, startPos);
         structDeclaration.ResolvedType = new TypeInfo(
             name,
             Struct,
             null,
-            fieldNames: fieldNames,
-            fieldTypes: fieldTypes);
+            fields: fields
+        );
 
         SymbolInfo symbolInfo = new SymbolInfo(
             name,
@@ -226,8 +224,6 @@ public class Parser(List<Token> tokens)
                                                         SymbolKind.Variable,
                                                         null));
                     fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
-                    fieldNames.Add(vd.Name);
-                    fieldTypes.Add(vd.ResolvedType!);
                 }
                 else if (declaration is FunctionDeclaration fd)
                 {
@@ -259,8 +255,7 @@ public class Parser(List<Token> tokens)
             name,
             Union,
             null,
-            fieldNames: variantNames,
-            fieldTypes: variantTypes);
+            fields: variants);
 
         UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
         DeclarePtr(unionDeclaration.ResolvedType);
@@ -466,20 +461,18 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_BraceL, "Expected '{' after struct keyword");
             List<TypeNamePair> fields = [];
-            List<string> fieldNames = [];
-            List<TypeInfo> fieldTypes = [];
             List<FunctionDeclaration> functions = [];
 
             string typeName = $"__anonymousStruct_{currentScope!.Name}_{acc++}";
 
-            StructDeclaration structDeclaration = new StructDeclaration(typeName, fields, functions, sourcePos);
+            StructDeclaration structDeclaration = new StructDeclaration(typeName, functions, sourcePos);
             
             structDeclaration.ResolvedType = new TypeInfo(
                 typeName,
                 Struct,
                 null,
-                fieldNames: fieldNames,
-                fieldTypes: fieldTypes);
+                fields: fields);
+                
             DeclarePtr(structDeclaration.ResolvedType);
 
             structDeclaration.Scope = EnterNewScope(typeName);
@@ -497,8 +490,6 @@ public class Parser(List<Token> tokens)
                                                             SymbolKind.Variable,
                                                             null));
                         fields.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
-                        fieldNames.Add(vd.Name);
-                        fieldTypes.Add(vd.ResolvedType!);
                     }
                     else if (declaration is FunctionDeclaration fd)
                     {
@@ -531,8 +522,6 @@ public class Parser(List<Token> tokens)
 
             Consume(TokenType.Punctuation_BraceL, "Expected '{' after union keyword");
             List<TypeNamePair> variants = [];
-            List<string> variantNames = [];
-            List<TypeInfo> variantTypes = [];
 
             string typeName = $"__anonymousUnion_{currentScope!.Name}_{acc++}";
 
@@ -540,8 +529,7 @@ public class Parser(List<Token> tokens)
                 typeName,
                 Union,
                 null,
-                fieldNames: variantNames,
-                fieldTypes: variantTypes);
+                fields: variants);
 
             UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, variants, unionInfo, sourcePos);
             DeclarePtr(unionDeclaration.ResolvedType);
@@ -560,8 +548,6 @@ public class Parser(List<Token> tokens)
                                                             SymbolKind.Variable,
                                                             null));
                         variants.Add(new TypeNamePair(vd.ResolvedType!, vd.Name, vd.Pos));
-                        variantNames.Add(vd.Name);
-                        variantTypes.Add(vd.ResolvedType!);
                     }
                     else 
                         throw new Exception();

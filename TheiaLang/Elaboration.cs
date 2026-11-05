@@ -84,7 +84,7 @@ class Elaboration
     void AnalyseStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
-        foreach(TypeNamePair field in structDeclaration.Fields)
+        foreach(TypeNamePair field in structDeclaration.ResolvedType.Fields!)
             if(CanSubstituteDynamicArray(field.ResolvedType, out TypeInfo newType))
             {
                 field.ResolvedType = newType;
@@ -221,7 +221,7 @@ class Elaboration
         // (2) if no -> declare the struct
         else
         {
-            string structName = $"{DYNAMIC_ARRAY_PREFIX}-{sourceType.ElementType.TypeName}";
+            string structName = $"{DYNAMIC_ARRAY_PREFIX}-{sourceType.ElementType!.TypeName}";
             StructDeclaration sd = CreateDynamicArrayStruct(structName, sourceType.ElementType);
 
             // TODO: make this work with inits once we have them for arrays
@@ -237,14 +237,15 @@ class Elaboration
             GlobalScope.Declare(new SymbolInfo(sd.Name,
                                                sd.ResolvedType,
                                                SymbolKind.Type,
-                                               sd.Fields));
+                                               sd.ResolvedType.Fields)
+            );
+            
             GlobalScope.Declare(
-            new SymbolInfo(
-                "@" + sd.Name,
-                new TypeInfo("@" + sd.Name, Pointer, VOIDPTR, pointee: sd.ResolvedType),
-                SymbolKind.Type,
-                null
-            ));
+                new SymbolInfo("@" + sd.Name,
+                                new TypeInfo("@" + sd.Name, Pointer, VOIDPTR, pointee: sd.ResolvedType),
+                                SymbolKind.Type,
+                                null)
+            );
 
             return newType;
         }
@@ -307,7 +308,11 @@ class Elaboration
                         SymbolKind.Function,
                         function.Parameters));
 
-        StructDeclaration sd = new StructDeclaration(name, fields, functions);
+        TypeInfo structType = new TypeInfo(name, Struct, builtinType: null, fields: fields);
+
+        StructDeclaration sd = new StructDeclaration(name, functions);
+        sd.ResolvedType = structType;
+
         sd.Scope = currentScope;
         currentScope.DeclaringNode = sd;
         

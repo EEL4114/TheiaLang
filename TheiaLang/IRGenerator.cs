@@ -140,7 +140,7 @@ public class IRGenerator
     void EmitStructType(StructDeclaration sd, StringBuilder sb)
     {
         List<string> fieldLLVMTypes = [];
-        foreach (TypeNamePair field in sd.Fields)
+        foreach (TypeNamePair field in sd.ResolvedType.Fields!)
             fieldLLVMTypes.Add(TypeToLLVM(field.ResolvedType!)!);
 
         string fieldIr = string.Join(
@@ -705,10 +705,10 @@ public class IRGenerator
 
         if (currentScope!.Parent?.DeclaringNode is StructDeclaration sd)
         {
-            int index = sd.Fields.FindIndex(f => f.Identifier == identifier.Name);
+            int index = sd.ResolvedType.Fields!.FindIndex(f => f.Identifier == identifier.Name);
             if (index >= 0)
             {
-                string LLVMType = TypeToLLVM(sd.Fields[index].ResolvedType!)!;
+                string LLVMType = TypeToLLVM(sd.ResolvedType.Fields[index].ResolvedType!)!;
 
                 string tmp = $"%{NewTempVar()}";
                 code.AppendLine($"  {tmp} = load %{sd.ResolvedType.TypeName}, ptr %this");
@@ -984,7 +984,13 @@ public class IRGenerator
 
                 if(targetType.TypeKind == Struct)
                 {
-                    int memberIndex = targetType.FieldNames!.IndexOf(memberAccess.Member.Name);
+                    int memberIndex = -1;
+                    for(int i = 0; i < targetType.Fields!.Count; i++)
+                    {
+                        if(targetType.Fields[i].Identifier == memberAccess.Member.Name)
+                            memberIndex = i;
+                    }
+                    
                     if (memberIndex < 0)
                         throw new Exception($"Type '{targetType.TypeName}' has no member '{memberAccess.Member.Name}'");
 

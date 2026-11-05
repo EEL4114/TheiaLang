@@ -45,7 +45,7 @@ public class Lowering
     {
         Scope tmp = currentScope;
         currentScope = sd.Scope!;
-        foreach(TypeNamePair typeNamePair in sd.Fields)
+        foreach(TypeNamePair typeNamePair in sd.ResolvedType.Fields!)
             LowerTypeNamePair(typeNamePair);
         
         foreach (FunctionDeclaration function in sd.Functions)

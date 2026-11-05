@@ -86,9 +86,9 @@ public class LayoutCalc(CompilationTarget target)
 
                 List<uint> fieldOffsets = [];
 
-                foreach(TypeInfo fieldInfo in type.FieldTypes!)
+                foreach(TypeNamePair field in type.Fields!)
                 {
-                    TypeLayout fieldLayout = GenerateLayout(fieldInfo);
+                    TypeLayout fieldLayout = GenerateLayout(field.ResolvedType);
                     maxFieldAlignment = Math.Max(maxFieldAlignment, fieldLayout.Alignment);
                     offset = AlignUp(offset, fieldLayout.Alignment);
                     fieldOffsets.Add(offset);
@@ -100,9 +100,9 @@ public class LayoutCalc(CompilationTarget target)
                 uint maxVariantAlignment = 0;
                 uint maxVariantSize = 0;
 
-                foreach(TypeInfo variantInfo in type.FieldTypes!)
+                foreach(TypeNamePair variant in type.Fields!)
                 {
-                    TypeLayout variantLayout = GenerateLayout(variantInfo);
+                    TypeLayout variantLayout = GenerateLayout(variant.ResolvedType);
                     maxVariantAlignment = Math.Max(maxVariantAlignment, variantLayout.Alignment);
                     maxVariantSize = Math.Max(maxVariantSize, variantLayout.Size);
                 }

@@ -72,7 +72,7 @@ public class SemanticAnalyser
     void ResolveStruct(StructDeclaration structDeclaration)
     {
         currentScope = structDeclaration.Scope!;
-        foreach (TypeNamePair field in structDeclaration.Fields)
+        foreach (TypeNamePair field in structDeclaration.ResolvedType.Fields!)
         {
             // TODO: simplify!!
             currentScope.TryLookupLocal(field.Identifier, out SymbolInfo? fieldInfo, out _);
@@ -90,10 +90,9 @@ public class SemanticAnalyser
             field.ResolvedType = fieldInfo.Type;
         }
 
-
-        structDeclaration.ResolvedType.FieldTypes = structDeclaration.Fields
-                                                        .Select(f => f.ResolvedType)
-                                                        .ToList();
+        // structDeclaration.ResolvedType.FieldTypes = structDeclaration.Fields
+                                                        // .Select(f => f.ResolvedType)
+                                                        // .ToList();
 
         ValidateType(structDeclaration.ResolvedType, []);
         ExitScope();
@@ -115,10 +114,9 @@ public class SemanticAnalyser
             variant.ResolvedType = variantInfo.Type;
         }
 
-
-        unionDeclaration.ResolvedType.FieldTypes = unionDeclaration.Variants
-                                                       .Select(v => v.ResolvedType)
-                                                       .ToList();
+        // unionDeclaration.ResolvedType.FieldTypes = unionDeclaration.Variants
+                                                    //    .Select(v => v.ResolvedType)
+                                                    //    .ToList();
 
         ValidateType(unionDeclaration.ResolvedType, []);
         ExitScope();
@@ -138,9 +136,9 @@ public class SemanticAnalyser
 
                 active.Add(type);
 
-                foreach(TypeInfo fieldtype in type.FieldTypes!)
+                foreach(TypeNamePair field in type.Fields!)
                 {
-                    if(!ValidateType(fieldtype, active))
+                    if(!ValidateType(field.ResolvedType, active))
                     {
                         Log.Error(29, $"{type.TypeName}: Cyclic type definition.");
                         return false;
@@ -668,7 +666,7 @@ public class SemanticAnalyser
             || typeSymbolInfo!.Kind != SymbolKind.Type)
             throw new Exception($"Unknown type '{instantiation.TypeName}'");
 
-        int fieldCount = typeSymbolInfo.Type.FieldNames!.Count;
+        int fieldCount = typeSymbolInfo.Type.Fields!.Count;
         if (instantiation.Arguments.Count > 0 && instantiation.Arguments.Count != fieldCount)
             throw new Exception($"Instantiation for type '{instantiation.TypeName}' requires {fieldCount} arguments, got: "
                                 + $"{instantiation.Arguments.Count}");
@@ -799,8 +797,8 @@ public class SemanticAnalyser
                 return AnalyseExpression(new RepeatExpression((uint)type.ArrayLength!, DefaultInit(type.ElementType!)));
             case Struct:
                 List<IExpression> arguments = [];
-                for(int i = 0; i < type.FieldTypes!.Count; i++)
-                    arguments.Add(DefaultInit(type.FieldTypes[i]));
+                for(int i = 0; i < type.Fields!.Count; i++)
+                    arguments.Add(DefaultInit(type.Fields[i].ResolvedType));
 
                 return AnalyseExpression(new InstantiationExpression(type.TypeName, arguments));
             case Pointer:

@@ -120,22 +120,15 @@ public class StructDeclaration : IDeclaration
     public Scope? Scope;
     public string Name { get; }
     public TypeInfo ResolvedType { get; set; }
-    public readonly List<TypeNamePair> Fields;
     public readonly List<FunctionDeclaration> Functions;
     public SourePosition Pos { get; }
 
     public StructDeclaration(string name,
-                             List<TypeNamePair> fields,
                              List<FunctionDeclaration> functions,
                              SourePosition pos = default)
     {
         Name = name;
-        Fields = fields;
         Functions = functions;
-
-        ResolvedType = new TypeInfo(name, TypeKind.Struct, null,
-                                    fieldNames: fields.Select(f => f.Identifier).ToList(),
-                                    fieldTypes: fields.Select(f => f.ResolvedType).ToList());
 
         Pos = pos;
     }
@@ -143,11 +136,11 @@ public class StructDeclaration : IDeclaration
     public override string ToString()
     {
         string s = $"struct {Name}: (\n";
-        if (Fields != null)
+        if (ResolvedType != null && ResolvedType.Fields != null && ResolvedType.Fields.Count > 0)
         {
-            s += $"    {Fields[0]}\n";
-            for (int i = 1; i < Fields.Count; i++)
-                s += $"    {Fields[i]}\n";
+            s += $"    {ResolvedType.Fields[0].Identifier}\n";
+            for (int i = 1; i < ResolvedType.Fields.Count; i++)
+                s += $"    {ResolvedType.Fields[i].Identifier}\n";
         }
         s += ")";
         if(Functions != null)

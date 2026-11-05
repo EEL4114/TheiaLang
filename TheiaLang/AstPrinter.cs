@@ -34,8 +34,11 @@ static class AstPrinter
     {
         w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}{TryScope(structDeclaration.Scope!)}{TryPos(structDeclaration.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Fields:");
-        foreach (TypeNamePair typeNamePair in structDeclaration.Fields)
-            PrintTypeNamePair(typeNamePair, w, indent + 2);
+
+        for(int i = 0; i < structDeclaration.ResolvedType.Fields!.Count; i++)
+        {
+            PrintTypeNamePair(structDeclaration.ResolvedType.Fields![i], w, indent + 2);
+        }
 
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
