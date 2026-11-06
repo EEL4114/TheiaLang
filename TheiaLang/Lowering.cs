@@ -45,8 +45,8 @@ public class Lowering
     {
         Scope tmp = currentScope;
         currentScope = sd.Scope!;
-        foreach(TypeNamePair typeNamePair in sd.ResolvedType.Fields!)
-            LowerTypeNamePair(typeNamePair);
+        foreach(TypeNamePair field in sd.ResolvedType.Fields!)
+            LowerTypeNamePair(field);
         
         foreach (FunctionDeclaration function in sd.Functions)
             LowerFunction(function);
@@ -57,8 +57,8 @@ public class Lowering
     {
         Scope tmp = currentScope;
         currentScope = ud.Scope!;
-        foreach(TypeNamePair typeNamePair in ud.Variants)
-            LowerTypeNamePair(typeNamePair);        
+        foreach(TypeNamePair variant in ud.ResolvedType.Fields!)
+            LowerTypeNamePair(variant);        
         currentScope = tmp;
     }
 

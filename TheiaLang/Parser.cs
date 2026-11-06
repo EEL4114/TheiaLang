@@ -257,7 +257,7 @@ public class Parser(List<Token> tokens)
             null,
             fields: variants);
 
-        UnionDeclaration unionDeclaration = new UnionDeclaration(name, variants, unionInfo, nameToken.Pos);
+        UnionDeclaration unionDeclaration = new UnionDeclaration(name, unionInfo, nameToken.Pos);
         DeclarePtr(unionDeclaration.ResolvedType);
 
         currentScope!.Declare(new SymbolInfo(
@@ -531,7 +531,7 @@ public class Parser(List<Token> tokens)
                 null,
                 fields: variants);
 
-            UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, variants, unionInfo, sourcePos);
+            UnionDeclaration unionDeclaration = new UnionDeclaration(typeName, unionInfo, sourcePos);
             DeclarePtr(unionDeclaration.ResolvedType);
             unionDeclaration.Scope = EnterNewScope(typeName);
             currentScope!.DeclaringNode = unionDeclaration;

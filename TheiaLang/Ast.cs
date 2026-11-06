@@ -157,7 +157,6 @@ public class StructDeclaration : IDeclaration
 
 public class UnionDeclaration(
     string name,
-    List<TypeNamePair> variants,
     // List<FunctionDeclaration> Functions,
     TypeInfo ResolvedType,
     SourePosition Pos = default
@@ -165,7 +164,6 @@ public class UnionDeclaration(
 {
     // public List<FunctionDeclaration> Functions {get; set;} = Functions;
     public string Name { get; } = name;
-    public List<TypeNamePair> Variants = variants;
 
     public TypeInfo ResolvedType { get; set; } = ResolvedType;
     public Scope? Scope { get; set; }

@@ -100,7 +100,7 @@ class Elaboration
     void AnalyseUnion(UnionDeclaration unionDeclaration)
     {
         currentScope = unionDeclaration.Scope!;
-        foreach(TypeNamePair variant in unionDeclaration.Variants)
+        foreach(TypeNamePair variant in unionDeclaration.ResolvedType.Fields!)
             if(CanSubstituteDynamicArray(variant.ResolvedType, out TypeInfo newType))
             {
                 variant.ResolvedType = newType;

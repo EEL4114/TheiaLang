@@ -35,10 +35,8 @@ static class AstPrinter
         w.WriteLine($"{Indent(indent)}StructDeclaration: {structDeclaration.Name}{TryScope(structDeclaration.Scope!)}{TryPos(structDeclaration.Pos)}");
         w.WriteLine($"{Indent(indent + 1)}Fields:");
 
-        for(int i = 0; i < structDeclaration.ResolvedType.Fields!.Count; i++)
-        {
-            PrintTypeNamePair(structDeclaration.ResolvedType.Fields![i], w, indent + 2);
-        }
+        foreach(TypeNamePair field in structDeclaration.ResolvedType.Fields!)
+            PrintTypeNamePair(field, w, indent + 2);
 
         if (structDeclaration.Functions.Count == 0)
             w.WriteLine();
@@ -51,7 +49,7 @@ static class AstPrinter
     static void PrintUnion(UnionDeclaration unionDeclaration, TextWriter w, int indent)
     {
         w.WriteLine($"{Indent(indent)}UnionDeclaration: {unionDeclaration.Name}{TryScope(unionDeclaration.Scope!)}{TryPos(unionDeclaration.Pos)}");
-        foreach (TypeNamePair variant in unionDeclaration.Variants)
+        foreach (TypeNamePair variant in unionDeclaration.ResolvedType.Fields!)
             PrintTypeNamePair(variant, w, indent + 1);
         w.WriteLine();
     }

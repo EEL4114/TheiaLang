@@ -102,7 +102,7 @@ public class SemanticAnalyser
     {
         currentScope = unionDeclaration.Scope!;
 
-        foreach (TypeNamePair variant in unionDeclaration.Variants)
+        foreach (TypeNamePair variant in unionDeclaration.ResolvedType.Fields!)
         {
             // TODO: simplify!!
             currentScope.TryLookupLocal(variant.Identifier, out SymbolInfo? variantInfo, out _);
